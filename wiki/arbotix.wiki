@@ -1,0 +1,34 @@
+#summary Package Documentation: arbotix
+
+= Introduction =
+The arbotix-ros driver consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection. The ArbotiX firmware provides:
+ * Control of up to 252 Dynamixel servos
+ * Control of up to 10 hobby (PWM) servos
+ * Access to 8 analog channels
+ * Control and access of 8 digital channels (multiplexed with the hobby servo channels)
+ * Full, tunable PID control of 2 motors.
+ * IK-based control of walking robots (this requires a special NUKE-based firmware).
+
+On top of the firmware capabilities, the _arbotix-ros_ node provides high level control of a differential drive or IK-based walking robot, including components necessary for using the ROS navigation stack. 
+
+= Messages =
+Coming Soon.
+
+= Services and Topics = 
+The _arbotix-ros_ node subscribes to the following topics: 
+ * cmd_vel
+
+_arbotix-ros_ publishes to the following topics: 
+ * joint_states
+
+The _arbotix-ros_ node provides the following services:
+ * /arbotix/ismoving
+
+= YAML Specification =
+The _arbotix-ros_ node uses a YAML file specify many parameters. 
+
+= Launch File = 
+In order to load the YAML specification, it is recommended to use a launch file like the following: 
+
+= Example: Nelson =
+Coming Soon.
