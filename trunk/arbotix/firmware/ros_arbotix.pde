@@ -24,7 +24,11 @@
   OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */ 
- 
+
+/* Build Configuration */ 
+#define ROS_ARBOTIX
+#define USE_GP_LIDAR
+
 #include <ax12.h>
 #include <BioloidController.h>
 #include <Motors2.h>
@@ -36,79 +40,19 @@ BioloidController bioloid = BioloidController(1000000);
 Motors2 drive = Motors2();
 Servo servos[10];
 
-/* ArbotiX (id:253) Instruction Definitions */
-#define ARB_SIZE_POSE       7    // pose size: a single param for size of pose
-#define ARB_LOAD_POSE       8    // load pose: index, then pose positions (# of params = 2*pose_size)
-#define ARB_LOAD_SEQ        9    // seq size: a single param for the size of the seq
-#define ARB_PLAY_SEQ        10   // load seq: index/times (# of params = 3*seq_size)
-#define ARB_LOOP_SEQ        11   // play seq: no params
-#define ARB_TEST            25   // hardware test: no params
-#define ARB_MOVE_BASE       30   // move the base, using the motor speeds and encoder endpoints
-#define ARB_STOP_BASE       31   // cancel current movement
-#define ARB_RESUME_BASE     32   // resume a movement that had previously been stopped
-#define ARB_RESET_BASE      33   // reset base encoder
-#define ARB_SYNC_READ       0x84
+#include "ros.h"
+#include "pid.h"
 
-/* ArbotiX (id:253) Register Table Definitions */
-#define REG_MODEL_NUMBER_L  0
-#define REG_MODEL_NUMBER_H  1
-#define REG_VERSION         2
-#define REG_ID              3
-#define REG_BAUD_RATE       4
-#define REG_DIG_BASE        5   // Read all 8 digital pins
-                                // base + index, bit 1 = value (0,1), bit 0 = direction (0,1)
-#define REG_RETURN_LEVEL    16
-#define REG_ALARM_LED       17
-#define REG_ANA_BASE        18  // First Analog Port
-#define REG_SERVO_BASE      26  // Up to 10 servos, each uses 2 bytes (L, then H), pulse width (0, 1000-2000ms)
-#define REG_MOVING          46
-#define REG_LM_SIGN         47  // Raw motor pwm (-255 to 255), 1 byte sign + 1 byte speed per side
-#define REG_LM_PWM          48
-#define REG_RM_SIGN         49
-#define REG_RM_PWM          50
-
-#define REG_LM_SPEED_L      51  // Motor Speed (ticks/sec, 2 bytes, signed)
-#define REG_LM_SPEED_H      52
-#define REG_RM_SPEED_L      53
-#define REG_RM_SPEED_H      54
-#define REG_LM_COUNT_L      55  // Desired Encoder Endpoint (ticks, 4 bytes, signed)
-#define REG_RM_COUNT_L      59
-#define REG_ENC_LEFT_L      63  // Current Encoder Values (ticks, 4 bytes, signed)    
-#define REG_ENC_RIGHT_L     67
-
-// Motor Control Parameters - not currently implemented
-#define REG_KP              71  // PID parameters ... 
-#define REG_KD              72
-#define REG_KI              73
-#define REG_KO              74
-
-/* Packet Decoding */
-int mode = 0;                   // where we are in the frame
-
-unsigned char id = 0;           // id of this frame
-unsigned char length = 0;       // length of this frame
-unsigned char ins = 0;          // instruction of this frame
-
-unsigned char params[50];       // parameters
-unsigned char index = 0;        // index in param buffer
-
-int checksum;                   // checksum
-
-#define INSTRUCTION_ERROR   0x40
-#define CHECKSUM_ERROR      0x10
+#ifdef USE_GP_LIDAR 
+  #define LIDAR_SERVO     3
+  #include "gp_lidar.h"
+#endif
 
 /* Register Storage */
 unsigned char baud = 7;         // ?
 unsigned char ret_level = 1;    // ?
 unsigned char alarm_led = 0;    // ?
 int servo_vals[10];             // in millis
-int left_pwm;
-int right_pwm;
-int left_speed;
-int right_speed;
-long left_endpoint;
-long right_endpoint;
-#include "pid.h"
 
 /* Pose & Sequence Structures */
 typedef struct{
@@ -126,6 +70,9 @@ void setup(){
   Serial.begin(38400);    
   Encoders.Begin();
   setupPID();
+#ifdef USE_GP_LIDAR
+  init_gp_lidar();
+#endif
   pinMode(0,OUTPUT);     // status LED
 }
 
@@ -202,20 +149,8 @@ unsigned char handleWrite(){
     }else if(addr == REG_RM_SPEED_H){
       right_speed += (params[k]<<8);
       
-    }else if(addr == REG_LM_COUNT_L){       // Desired Encoder Endpoint (ticks, 4 bytes, signed)
-      left_endpoint = params[k];
-    }else if(addr < REG_RM_COUNT_L){
-      int d = addr - REG_LM_COUNT_L;
-      left_endpoint += (params[k]<<(8*d));
-    }else if(addr == REG_RM_COUNT_L){       
-      right_endpoint = params[k];
-    }else if(addr < REG_ENC_LEFT_L){
-      int d = addr - REG_RM_COUNT_L;
-      right_endpoint += (params[k]<<(8*d));
-    
     }else if(addr < REG_KP){
-      // can't write encoders?
-    
+      // can't write encoders?    
     }else if(addr == REG_KP){
 
     }else if(addr == REG_KD){
@@ -224,6 +159,10 @@ unsigned char handleWrite(){
 
     }else if(addr == REG_KO){
 
+#ifdef USE_GP_LIDAR
+    }else if(addr == REG_GP_SCAN){
+      gp_enable = params[k];
+#endif
     }else{
       return INSTRUCTION_ERROR;
     }
@@ -281,6 +220,10 @@ int handleRead(){
       v = Ki;
     }else if(addr == REG_KO){
       v = Ko;
+#ifdef USE_GP_LIDAR
+    }else if(addr < REG_GP_BASE + 60){
+      v = gp_readings[addr-REG_GP_BASE];
+#endif
     }else{
       v = 0;        
     }
@@ -446,23 +389,6 @@ void loop(){
              statusPacket(id,0);
              doTest();
              break;
-             
-           case ARB_MOVE_BASE:                  // Execute the movement
-             statusPacket(id,0);
-             doMoveBase();
-             break;
-             
-           case ARB_STOP_BASE:                  //
-             statusPacket(id,doPauseBase());
-             break;
-
-           case ARB_RESUME_BASE:                //
-             statusPacket(id, doResumeBase());
-             break;
-             
-           case ARB_RESET_BASE:                 //
-             statusPacket(id, doResetBase());
-             break;
          }
        }else if(id == 0xFE){
          // sync read or write
@@ -485,13 +411,14 @@ void loop(){
              }
            }
            Serial.print(255-((checksum)%256),BYTE);
-         }else{    // sync write
+         }else{    // TODO: sync write pass thru
          
            
            // no return
          }       
        }else{ // ID != 253, pass thru 
          switch(ins){
+           // TODO: streamline this
            case AX_READ_DATA:
              ax12GetRegister(id, params[0], params[1]);
              // return a packet: FF FF id Len Err params check
@@ -521,4 +448,7 @@ void loop(){
  bioloid.interpolateStep();
  // update pid
  updatePID();
+#ifdef USE_GP_LIDAR
+ step_gp_lidar();
+#endif
 }

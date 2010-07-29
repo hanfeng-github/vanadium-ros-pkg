@@ -1,12 +1,38 @@
-/******************************************************************************
- * Cerebellum Motor Controller (Version A.0)
- * Copyright 2009-2010 Vanadium Labs LLC
- *
- * This PID loop runs at ~30hz
- *****************************************************************************/ 
+/* 
+  ArbotiX Firmware for ROS driver
+  Copyright (c) 2009-2010 Vanadium Labs LLC.  All right reserved.
+ 
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+      * Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+      * Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+      * Neither the name of the Vanadium Labs LLC nor the names of its 
+        contributors may be used to endorse or promote products derived 
+        from this software without specific prior written permission.
+  
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL VANADIUM LABS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+  OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/ 
 
 #include <WProgram.h>
 #include <math.h>
+
+/* Register Storage */
+int left_pwm;
+int right_pwm;
+int left_speed;
+int right_speed;
 
 /* PID Parameters */
 int Kp;
@@ -19,8 +45,6 @@ int maxAccel;                // maximum acceleration per frame (ticks)
 unsigned int PIDmode;
 #define PID_NONE        0
 #define PID_SPEED       1
-#define PID_DISTANCE    2
-#define PID_BOTH        3
 
 #define FRAME_RATE      33   // frame rate in millis (30Hz)
 #define FRAMES          30
@@ -32,8 +56,7 @@ unsigned char paused = 0;    // base was in motion, can resume
 
 /* Setpoint Info For a Motor */
 typedef struct{
-  // These 2 are set up by user
-  long Endpoint;             // desired distance to travel (in counts)
+  // setup by user
   int  VelocitySetpoint;     // desired average speed to travel (in counts/frame)
   // 
   long Encoder;              // actual reading
@@ -103,19 +126,6 @@ void updatePID(){
       // update encoders
       left.Encoder = Encoders.left;
       right.Encoder = Encoders.right;
-      // check endpoints (do we need to start ramping down)
-      if(PIDmode & PID_DISTANCE){
-        if( (abs(left.Endpoint) - abs(left.Encoder)) < left.rampdown ){
-          left.VelocitySetpoint = 0;
-          if(abs(left.Velocity) < 50 && abs(right.Velocity) < 50)
-            PIDmode = 0;  
-        }
-        if( (abs(right.Endpoint) - abs(right.Encoder)) < right.rampdown ){
-          right.VelocitySetpoint = 0; 
-          if(abs(left.Velocity) < 50 && abs(right.Velocity) < 50)
-            PIDmode = 0;  
-        }
-      }
       // update velocity setpoints (ramping to velocity)
       Ramp(&left);
       Ramp(&right);      
@@ -145,60 +155,4 @@ void clearAll(){
   right.output = 0;
   Encoders.Reset();  
 }
-
-int doResetBase(){ 
-  moving = 0; 
-  paused = 0;
-  PIDmode = 0;
-  left.Encoder = 0;
-  right.Encoder = 0;
-  left.PrevEnc = 0;
-  right.PrevEnc = 0;
-  left.output = 0;
-  right.output = 0;
-  left.Velocity = 0;
-  right.Velocity = 0;
-  Encoders.Reset();  
-  return 0;
-}   
-  
-int doMoveBase(){
-  doResetBase();
-    
-  left.VelocitySetpoint = left_speed;
-  right.VelocitySetpoint = right_speed;
-  left.Endpoint = left_endpoint;
-  right.Endpoint = right_endpoint;
-  
-  left.rampdown = abs(left.VelocitySetpoint/maxAccel * left.VelocitySetpoint/2);
-  right.rampdown = abs(right.VelocitySetpoint/maxAccel * right.VelocitySetpoint/2);
-
-  if(left_endpoint == 0 && right_endpoint == 0)
-    PIDmode = PID_SPEED;
-  else
-    PIDmode = PID_BOTH;
-  moving = 1;
-  return 0;
-}
-
-int doPauseBase(){
-  if(moving > 0){
-    moving = 0;
-    drive.set(0,0);
-    paused = 1;
-    return 0;
-  }
-  // instruction error, we aren't moving 
-  return INSTRUCTION_ERROR;
-}
-
-int doResumeBase(){
-  if(paused > 0){
-    moving = 1;
-    return 0;
-  }
-  // instruction error, we aren't paused 
-  return INSTRUCTION_ERROR;  
-}
-
 
