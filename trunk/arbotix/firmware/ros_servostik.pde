@@ -111,7 +111,7 @@ unsigned char handleWrite(){
       return INSTRUCTION_ERROR;
 #ifdef USE_GP_LIDAR
     }else if(addr == REG_GP_SCAN){
-      gp_enable = params[k];
+      gp_lidar_enable = params[k];
 #endif
     }else{
       return INSTRUCTION_ERROR;
@@ -184,7 +184,7 @@ void loop(){
   int i;
     
   // process messages
-  while(Serial.available() > 0){
+  if(Serial.available() > 0){
     // We need to 0xFF at start of packet
     if(mode == 0){         // start of new packet
       if(Serial.read() == 0xff){
@@ -291,8 +291,6 @@ void loop(){
      }
    } // end mode == 5
  } // end while(available)
- // update joints
- bioloid.interpolateStep();
 #ifdef USE_GP_LIDAR
  step_gp_lidar();
 #endif

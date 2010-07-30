@@ -161,7 +161,7 @@ unsigned char handleWrite(){
 
 #ifdef USE_GP_LIDAR
     }else if(addr == REG_GP_SCAN){
-      gp_enable = params[k];
+      gp_lidar_enable = params[k];
 #endif
     }else{
       return INSTRUCTION_ERROR;

@@ -25,57 +25,60 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */ 
 
-#ifdef USE_GP_LIDAR
-
 #include <WProgram.h>
 
 /* Takes 30 readings, 6 degrees apart for 180 degree coverage */
 #define MAX_READINGS    30
 #define MAX_STEPS       60
 unsigned char gp_readings[2*MAX_READINGS];
-int gp_step;
+int gp_lidar_step;
 #define GP_ANGLE_STEP   21
 #define GP_START        206
 
-#define GP_TIME_FRAME   30    // how long between movements
-unsigned long gp_time;        // last time we moved
+#define GP_TIME_FRAME   50    // how long between movements
+unsigned long gp_lidar_time;  // last time we moved
+int gp_lidar_enable;
 
 void init_gp_lidar(){
-    gp_step = 0;
-    gp_time = millis() + GP_TIME_FRAME;
-    SetPosition(LIDAR_SERVO, GP_START);
+    gp_lidar_step = 15;
+    gp_lidar_enable = 0;
+    gp_lidar_time = millis() + GP_TIME_FRAME;
+    SetPosition(LIDAR_SERVO, 512);
 }
 
 /* take our next reading */
 void step_gp_lidar(){
   unsigned long j = millis();
-  if(j > gp_time){
-    // reading from IR sensor  
-    int v = analogRead(0);
-    // save reading
-    if(gp_step >= MAX_READINGS){
-        gp_readings[MAX_STEPS - (gp_step*2 + 2)] = v % 256;
-        gp_readings[MAX_STEPS - (gp_step*2 + 1)] = v>>8;
+  if(j > gp_lidar_time){
+    if((gp_lidar_enable > 0) | ((gp_lidar_step != 15) && (gp_lidar_step != 45)) ){
+      // reading from IR sensor  
+      int v = analogRead(0);
+      // save reading
+      if(gp_lidar_step >= MAX_READINGS){
+          gp_readings[58 - ((gp_lidar_step*2)-60)] = v % 256;
+          gp_readings[59 - ((gp_lidar_step*2)-60)] = v >> 8;
+          //gp_readings[MAX_STEPS - ((gp_lidar_step*2) + 2)] = v % 256;
+          //gp_readings[MAX_STEPS - ((gp_lidar_step*2) + 1)] = v>>8;
+      }else{
+          gp_readings[gp_lidar_step*2] = v % 256;
+          gp_readings[(gp_lidar_step*2) + 1] = v>>8;
+      }
+      // advance    
+      gp_lidar_step = (gp_lidar_step+1)%MAX_STEPS;
+      if(gp_lidar_step >= MAX_READINGS){
+          SetPosition(LIDAR_SERVO, GP_START + (GP_ANGLE_STEP * (MAX_STEPS - gp_lidar_step - 1)));
+      }else{
+          SetPosition(LIDAR_SERVO, GP_START + (GP_ANGLE_STEP * gp_lidar_step));
+      }
     }else{
-        gp_readings[gp_step*2] = v % 256;
-        gp_readings[gp_step*2 + 1] = v>>8;
+      int v = analogRead(0);
+      gp_readings[30] = v %256;
+      gp_readings[31] = v>>8; 
     }
-    // advance    
-    gp_step = (gp_step++)%(MAX_STEPS);
-    if(gp_step >= MAX_READINGS){
-        SetPosition(LIDAR_SERVO, GP_START + GP_ANGLE_STEP * (MAX_STEPS - gp_step - 1));
-    }else{
-        SetPosition(LIDAR_SERVO, GP_START + GP_ANGLE_STEP * gp_step);
-    }
-    gp_time = j+GP_TIME_FRAME;
+    gp_lidar_time = j+GP_TIME_FRAME;
   }
 }
 
-// 0 - 0, 1
-// 1 - 2, 3
-// 29 - 58, 59   
-// 30 - 58, 59    120 - (30*2 + 2)    119 - 30*2
-// 31 - 56, 57    118 - 31*2
-// 32
+// 30 -> 58, 59    58 - (30*2-60)   59 - (30*2-60)
+// 31 -> 56, 57    58 - (31*2-60)   59 - (31*2-60)
 
-#endif
