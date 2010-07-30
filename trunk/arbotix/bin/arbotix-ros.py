@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# TODO:
+# JointState set
+# Base movement
+# Nuke movement
+
 """
   ArbotiX ROS Node: serial connection to an ArbotiX board w/ PyPose/NUKE/ROS
   Copyright (c) 2008-2010 Michael E. Ferguson.  All right reserved.
@@ -40,6 +45,7 @@ from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 
 from arbotix.arbotix import ArbotiX     # does this look ridiculous to anyone else?
+from arbotix.gp_lidar import *
 from arbotix.srv import *
 from arbotix.ax12 import *
 
@@ -53,7 +59,7 @@ device = None
 class DynamixelServo():
     """ Class to handle services and updates for a single Dynamixel Servo, on 
         an ArbotiX robocontroller's AX-bus. """
-    def __init__(self, index, params, device):
+    def __init__(self, index, params, device, single=False ):
         self.id = index
         self.device = device
         self.angle = 0.0
@@ -83,8 +89,9 @@ class DynamixelServo():
         self.name = self.params['name']
 
         # some callbacks
-        self.srvRead = rospy.Service(self.name+'_getangle',GetAngle, self.__getAngle)
-        self.srvMoving = rospy.Service(self.name+'_ismoving',IsMoving, self.__isMoving)
+        if single:
+            self.srvRead = rospy.Service(self.name+'_getangle',GetAngle, self.__getAngle)
+            self.srvMoving = rospy.Service(self.name+'_ismoving',IsMoving, self.__isMoving)
         self.srvWrite = rospy.Service(self.name+'_setangle',SetAngle, self.__setAngle)
         self.srvRelax = rospy.Service(self.name+'_relax',Relax, self.__relax)
 
@@ -263,15 +270,10 @@ class ArbotiXBase():
 
         self.odomPub.publish(odom)
 
-    #def turn(self,req):
-    #    if (req.clear):
-    #       self.create.clear()
-    #    self.create.turn(req.turn)
-    #    return TurnResponse(True)
-
     def twist(self,req):
         """ Handle movement requests. """
         x = req.linear.x        # m/s
+        y = req.linear.y        # m/s
         th = req.angular.z      # rad/s
 
         # if theta were 0
@@ -283,28 +285,21 @@ class ArbotiXBase():
 
         rospy.loginfo("Twist move: "+str(l)+","+str(r))
         if l == 0 and r == 0:
-            self.device.stopBase()
+            self.device.SetLeftSpeed(0)
+            self.device.SetRightSpeed(0)
         else:
-            self.device.moveBase(int(l),int(r),0,0)
+            self.device.SetLeftSpeed(int(l))
+            self.device.SetRightSpeed(int(r))
 
-        #if (x == 0):
-        #    th = th*180/pi
-        #    speed = (8*pi*th)/9
-        #    self.create.left(int(speed))
-        #elif (th == 0):
-        #    x = int(x)
-        #    self.create.tank(x,x)
-        #else:
-        #    self.create.forwardTurn(int(x),int(x/th))
-        
 def get_digital_callback( req ):
-    return DigitalResponse( device.getDigital(req.pin) )
+    return GetDigitalResponse( device.getDigital(req.pin) )
 
 def get_analog_callback( req ):    
-    return AnalogResponse( device.getAnalog(req.pin) )
+    return GetAnalogResponse( device.getAnalog(req.pin) )
 
-#def set_digital_callback( req ):
-#    pass
+def set_digital_callback( req ):
+    device.setDigital(req.pin, req.dir, req.value)
+    return SetDigitalRespone()
 
 if __name__ == "__main__":
     rospy.init_node('arbotix')
@@ -317,10 +312,13 @@ if __name__ == "__main__":
     rospy.loginfo("Starting ArbotiX-ROS on port "+port)
     dynamixels = rospy.get_param("~dynamixels", dict())
     servos = rospy.get_param("~servos", dict())
-    grounding = rospy.get_param("~grounding","world")
+    #grounding = rospy.get_param("~grounding","world")
     ticks_meter = float(rospy.get_param("~ticks_meter", "26154"))
     base_width = float(rospy.get_param("~base_width", "0.144"))
-    do_sync = bool(rospy.get_param("~sync","True"))
+    do_sync = rospy.get_param("~use_sync",True)                        # use sync read?
+    use_base = rospy.get_param("~use_base","False") == "True"          # use closed-loop base?
+    use_nuke = rospy.get_param("~use_nuke","False") == "True"          # use nuke base?
+    use_gp_lidar = rospy.get_param("~use_gp_lidar",False)              # use gp lidar?
 
     # start an arbotix driver
     device = ArbotiX(port, baud)
@@ -339,13 +337,21 @@ if __name__ == "__main__":
     jointStatePub = rospy.Publisher('joint_states', JointState)
     
     # digital/analog IO
-    #rospy.Service('GetDigital',Digital,get_digital_callback)   
-    #rospy.Service('GetAnalog',Analog,get_analog_callback)
-    #rospy.Service('SetDigital',Digital,set_digital_callback)
+    rospy.Service('GetDigital',GetDigital,get_digital_callback)   
+    rospy.Service('GetAnalog',GetAnalog,get_analog_callback)
+    rospy.Service('SetDigital',SetDigital,set_digital_callback)
 
     # listen for movement commands, send to robot
-    #base = ArbotiXBase(device, ticks_meter, base_width)
-    
+    if use_base == True:
+        base = ArbotiXBase(device, ticks_meter, base_width)
+    if use_nuke == True:
+        pass    
+
+    # Poor Man's LIDAR
+    if use_gp_lidar == True:
+        lidar = gp_lidar(device)    
+        lidar.start()
+
     # publish joint states (everything else is a service callback)
     r = rospy.Rate(int(rospy.get_param("~rate",10)))
     while not rospy.is_shutdown():
@@ -355,17 +361,14 @@ if __name__ == "__main__":
         msg.velocity = list()
         msg.effort = list()
 
-        #for servo in dynamixel_servos + hobby_servos:
-        #    msg.name.append(servo.name)
-        #    msg.position.append(servo.update())  
-    
         if do_sync: 
             val = device.syncRead(sync_servos, P_PRESENT_POSITION_L, 2)
-            i = 0        
-            for servo in sync_servos:
-                msg.name.append(dynamixel_servos[servo].name)
-                msg.position.append(dynamixel_servos[servo].update( val[i]+(val[i+1]<<8) ))
-                i = i + 2
+            if val != None:            
+                i = 0        
+                for servo in sync_servos:
+                    msg.name.append(dynamixel_servos[servo].name)
+                    msg.position.append(dynamixel_servos[servo].update( val[i]+(val[i+1]<<8) ))
+                    i = i + 2
         else:
             for servo in dynamixel_servos.values():
                 msg.name.append(servo.name)

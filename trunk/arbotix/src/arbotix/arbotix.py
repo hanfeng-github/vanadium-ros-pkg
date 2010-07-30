@@ -37,14 +37,12 @@ AX_LOAD_POSE = 8
 AX_ARB_LOAD_SEQ = 9
 AX_PLAY_SEQ = 10
 AX_LOOP_SEQ = 11
-# HUV Compatible sync read 
-AX_SYNC_READ = 0x84
 
 # ArbotiX Driver
 class ArbotiX:
     """ Class to open a serial port and control AX-12 servos 
     through an arbotiX board or USBDynamixel. """
-    def __init__(self, port="/dev/ttyUSB0",baud=38400, interpolation=False, direct=False):
+    def __init__(self, port="/dev/ttyUSB0",baud=38400, interpolation=False, direct=False, timeout = 0.1):
         """ This may throw errors up the line -- that's a good thing. """
         self.mutex = thread.allocate_lock()
         self.ser = serial.Serial()
@@ -52,7 +50,7 @@ class ArbotiX:
         self.mutex.acquire()
         self.ser.baudrate = baud
         self.ser.port = port
-        self.ser.timeout = 0.01 #0.005
+        self.ser.timeout = timeout
         self.ser.open()
         self.mutex.release()
 
@@ -64,6 +62,7 @@ class ArbotiX:
         """ Read a dynamixel return packet, iterative attempt. Returns error level. """ 
         # need a positive byte
         d = self.ser.read()
+        #print ord(d),
         if d == '': 
             print "Fail Read"
             return None
@@ -100,7 +99,7 @@ class ArbotiX:
                 return self.getPacket(5, id, leng, error, params)
         elif mode == 6:         # read checksum
             checksum = id + leng + error + sum(params) + ord(d)
-            print checksum            
+            #print checksum            
             if checksum % 256 != 255:
                 print "Checksum ERROR"
                 #return None
@@ -245,31 +244,33 @@ class ArbotiX:
                         # We do Model, Version, ID, Baud, just like the AX-12
     DIG_BLOCK_1 = 5     # Read digital pins 0-7
     DIG_BLOCK_2 = 6     # Read digital pins 8-15
-    DIG_BASE = 5        # 
-                        # Addresses 14-17 are unused!
+    DIG_BASE = 7        # Write digital
+                        # Addresses 15 unused
+                        # 16, 17 = RETURN, ALARM
     ANA_BASE = 18       # First analog port (Read only)
                         # Each additional port is BASE + index
     SERVO_BASE = 26     # Up to 10 servos, each uses 2 bytes (L, then H), pulse width (0, 1000-2000ms) (Write only)
                         # Address 46 is Moving, just like an AX-12
-    MOTOR_BASE = 47     # Motor pwm (-255 to 255), 1 byte sign + 1 byte speed per side
-    
-    LEFT_SPEED_L = 51   # Motor Speed (ticks per frame, 2 bytes, signed) 
-    RIGHT_SPEED_L = 53
-    LEFT_COUNT_L = 55   # Endpoints (ticks, 4 bytes, signed)
-    RIGHT_COUNT_L = 59
-    ENC_LEFT_L = 63        
-    ENC_RIGHT_L = 67
-    
-    KP = 71             # PID control parameters
-    KD = 72
-    KI = 73
-    KO = 74
+    LEFT_SIGN = 47      # Motor pwm (-255 to 255), 1 byte sign + 1 byte speed per side
+    LEFT_PWM = 48
+    RIGHT_SIGN = 49
+    RIGHT_PWM = 50
 
-    # ArbotiX-specific instructions
-    INS_MOVE_BASE = 30
-    INS_STOP_BASE = 31
-    INS_RESUME_BASE = 32
-    INS_RESET_BASE = 33
+    LEFT_SPEED_L = NUKE_X_SPEED_L = 51   # Motor Speed (ticks per frame, 2 bytes, signed) 
+    RIGHT_SPEED_L = NUKE_R_SPEED_L = 53
+    NUKE_Y_SPEED_L = 55
+
+    LEFT_ENC_L = NUKE_X_ENC_L = 57   # Endpoints (ticks, 4 bytes, signed)
+    RIGHT_ENC_L = NUKE_R_ENC_L = 61
+    NUKE_Y_ENC_L = 65
+
+    KP = 69             # PID control parameters
+    KD = 70
+    KI = 71
+    KO = 72
+    
+    GP_SCAN_ENABLE = 79
+    GP_BASE = 80
 
     def getAnalog(self, index):
         """ Read an analog port, returns 0-255 (-1 if error). """
@@ -280,12 +281,15 @@ class ArbotiX:
 
     def getDigital(self, index):
         """ Read a digital port, returns 0 (low) or 0xFF (high) (-1 if error).\
-            (index = 0 to 7) """
+            (index = 0 to 15) """
         try:
-            x = self.read(253, self.DIG_BASE, 1)[0]
+            if index > 7:
+                x = self.read(253, self.DIG_BLOCK_2, 1)[0]
+            else:
+                x = self.read(253, self.DIG_BLOCK_1, 1)[0]                
         except:
             return -1
-        if x & (2**index):
+        if x & (2**(index%8)):
             return 255
         else:
             return 0
@@ -313,26 +317,16 @@ class ArbotiX:
         if left < -255 or left > 255 or right < -255 or right > 255:
             print "ArbotiX Error: Motor values out of range"
         else:
-            self.write(253, self.MOTOR_BASE, [1*(left<0), abs(left), 1*(right<0), abs(right)])    
+            self.write(253, self.LEFT_SIGN, [1*(left<0), abs(left), 1*(right<0), abs(right)])    
     
-    def moveBase(self, left_speed, right_speed, left_endpoint, right_endpoint):
-        """ Send closed-loop movement command to robot """
-        # drop to 16-bits        
-        left_speed = left_speed&0xffff
-        right_speed = right_speed&0xffff
-        # set motor speeds
-        self.write(253, self.LEFT_SPEED_L, [left_speed%256, left_speed>>8, right_speed%256, right_speed>>8])
-        # set endpoints
-        self.write(253, self.LEFT_COUNT_L, [left_endpoint%256, (left_endpoint>>8)%256, (left_endpoint>>16)%256, (left_endpoint>>24)%256 ])
-        self.write(253, self.RIGHT_COUNT_L, [right_endpoint%256, (right_endpoint>>8)%256, (right_endpoint>>16)%256, (right_endpoint>>24)%256])
-        # start movement
-        self.execute(253, self.INS_MOVE_BASE, [])
-    def stopBase(self):
-        self.execute(253, self.INS_STOP_BASE, [])
-    def resumeBase(self):
-        self.execute(253, self.INS_RESUME_BASE, [])
-    def resetBase(self):
-        self.execute(253, self.INS_RESET_BASE, [])
+    def setSpeed(self, addr, speed):
+        """ Send a closed-loop speed. """
+        speed = speed&0xffff
+        self.write(253, addr, [speed%256, speed>>8])
+    def setLeftSpeed(self, speed):
+        self.setSpeed(self.LEFT_SPEED_L, speed)
+    def setRightSpeed(self, speed):
+        self.setSpeed(self.RIGHT_SPEED_L, speed)
 
     def baseMoving(self):
         try:
@@ -353,13 +347,18 @@ class ArbotiX:
     def getRenc(self):
         return self.getEnc(self.ENC_RIGHT_L)
 
+    def enableGp(self, value):
+        if value:
+            return self.write(253, self.GP_SCAN_ENABLE, [1])
+        else:
+            return self.write(253, self.GP_SCAN_ENABLE, [0])
+
 if __name__ == "__main__":
     # some simple testing
     print "Testing arbotix.py"
     d = ArbotiX(sys.argv[1])  # open a port
     d.setPosition(1,512)
     print d.getPosition(1)
-    
 
     # wheel D = 2 7/8, circum = 229.414804mm
     # 6000 cpr  26c/mm
