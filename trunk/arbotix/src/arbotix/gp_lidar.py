@@ -57,11 +57,11 @@ class gp_lidar(Thread):
                 ranges = list()
                 for i in range(30):
                     k = v[i*2] + (v[i*2+1]<<8)
-                    if k > 150:
+                    if k > 100:
                         # TODO: add other sensor abilities
                         ranges.append( (497.0/(k-56)) )
                     else:
-                        ranges.append(5.00)
+                        ranges.append(10.0)
                 # now post laser scan
                 scan = LaserScan()
                 scan.header.stamp = rospy.Time.now()
@@ -72,7 +72,7 @@ class gp_lidar(Thread):
                 scan.angle_increment = 0.108275862
                 scan.scan_time = self.rate
                 scan.range_min = 0.5
-                scan.range_max = 5.1
+                scan.range_max = 6.0
                 scan.ranges = ranges    
                 self.scanPub.publish(scan)
                 self.scan_seq = self.scan_seq + 1

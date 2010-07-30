@@ -4,6 +4,7 @@
 # JointState set
 # Base movement
 # Nuke movement
+# Move gp_lidar distance calcs down to the ServoStiK
 
 """
   ArbotiX ROS Node: serial connection to an ArbotiX board w/ PyPose/NUKE/ROS
