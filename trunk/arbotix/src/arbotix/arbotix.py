@@ -342,6 +342,3 @@ if __name__ == "__main__":
     d.setPosition(1,512)
     print d.getPosition(1)
 
-    # wheel D = 2 7/8, circum = 229.414804mm
-    # 6000 cpr  26c/mm
-
