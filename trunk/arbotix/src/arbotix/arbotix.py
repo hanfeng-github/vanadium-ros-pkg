@@ -41,7 +41,7 @@ AX_LOOP_SEQ = 11
 # ArbotiX Driver
 class ArbotiX:
     """ Class to open a serial port and control AX-12 servos 
-    through an arbotiX board or USBDynamixel. """
+    through an ArbotiX board or USBDynamixel. """
     def __init__(self, port="/dev/ttyUSB0",baud=38400, interpolation=False, direct=False, timeout = 0.1):
         """ This may throw errors up the line -- that's a good thing. """
         self.mutex = thread.allocate_lock()
@@ -107,8 +107,9 @@ class ArbotiX:
         # fail
         return None
 
-    def execute(self, index, ins, params):
+    def execute(self, index, ins, params, ret=True):
         """ Send an instruction to a device. """
+        values = None
         self.mutex.acquire()        
         self.ser.flushInput()
         length = 2 + len(params)
@@ -117,10 +118,10 @@ class ArbotiX:
         for val in params:
             self.ser.write(chr(val))
         self.ser.write(chr(checksum))
-        values = self.getPacket(0)
+        if ret:
+            values = self.getPacket(0)
         self.mutex.release()
         return values
-
     
     def read(self, index, start, length):
         """ Read values of _length_ registers, starting at addr _start_. """
@@ -140,40 +141,16 @@ class ArbotiX:
     def syncWrite(self, start, values):
         """ Set the value of registers. Should be called as such:
         ax12.syncWrite(reg, ((id1, val1, val2), (id2, val1, val2))) """ 
-        self.mutex.acquire()
-        self.ser.flushInput()
-        length = 4
-        valsum = 0
+        output = list()
         for i in values:
-            length = length + len(i)    
-            valsum = valsum + sum(i)
-        checksum = 255 - ((254 + length + AX_SYNC_WRITE + start + len(values[0]) - 1 + valsum)%256)
-        # packet: FF FF ID LENGTH INS(0x03) PARAM .. CHECKSUM
-        self.ser.write(chr(0xFF)+chr(0xFF)+chr(0xFE)+chr(length)+chr(AX_SYNC_WRITE)+chr(start)+chr(len(vals[0])-1))
-        for servo in values:
-            for value in servo:
-                self.ser.write(chr(value))
-        self.ser.write(chr(checksum))
-        # no return info...
-        self.mutex.release()
+            output = output + i          
+        checksum = 255 - ((254 + length + AX_SYNC_WRITE + start + len(values[0]) - 1 + valsum)%256)        
+        self.execute(0xFE, AX_SYNC_WRITE, [start, len(values[0])-1 ] + values, False)
 
     def syncRead(self, servos, start, length):
         """ syncRead( [1,2,3,4], P_PRESENT_POSITION_L, 2) """
-        self.mutex.acquire()
-        self.ser.flushInput()
-        p_len = len(servos) + 4
-        checksum = 0xFE + p_len + AX_SYNC_READ + start + length
-        self.ser.write(chr(0xFF)+chr(0xFF)+chr(0xFE)+chr(p_len)+chr(AX_SYNC_READ)+chr(start)+chr(length))
-        for servo in servos:
-            self.ser.write(chr(servo))
-            checksum = checksum + servo
-        checksum = 255 - (checksum%256)
-        self.ser.write(chr(checksum))
-        # read it back in
-        values = self.getPacket(0)
-        self.mutex.release()
-        return values
-
+        return self.execute(0xFE, AX_SYNC_READ, [start, length] + servos )
+    
     ##########################################################################
     # Common Helper Functions
     def getReturnLevel(self, index):
