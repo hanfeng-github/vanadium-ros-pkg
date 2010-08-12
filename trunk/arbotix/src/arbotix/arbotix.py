@@ -300,10 +300,13 @@ class ArbotiX:
         """ Send a closed-loop speed. """
         speed = speed&0xffff
         self.write(253, addr, [speed%256, speed>>8])
+    def setSpeeds(self, left, right):
+        self.write(253, self.LEFT_SPEED_L, [left%256, left>>8, right%256, right>>8] )
+
     def setLeftSpeed(self, speed):
         self.setSpeed(self.LEFT_SPEED_L, speed)
     def setRightSpeed(self, speed):
-        self.setSpeed(self.RIGHT_SPEED_L, speed)
+        self.setSpeed(self.RIGHT_SPEED_L, speed)         
 
     def baseMoving(self):
         try:
@@ -323,6 +326,16 @@ class ArbotiX:
         return self.getEnc(self.ENC_LEFT_L)        
     def getRenc(self):
         return self.getEnc(self.ENC_RIGHT_L)
+    def getEncoders(self):
+        values = self.read(253, self.ENC_LEFT_L, 8)
+        left_values = "".joint([chr(k) for k in values[0:4])        
+        right_values = "".joint([chr(k) for k in values[4:])
+        try:
+            left = unpack('l',left_values)[0]
+            right = unpack('l',right_values)[0]
+            return [left, right]
+        except:
+            return None        
 
     def enableGp(self, value):
         if value:
