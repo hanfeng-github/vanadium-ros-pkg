@@ -296,17 +296,9 @@ class ArbotiX:
         else:
             self.write(253, self.LEFT_SIGN, [1*(left<0), abs(left), 1*(right<0), abs(right)])    
     
-    def setSpeed(self, addr, speed):
-        """ Send a closed-loop speed. """
-        speed = speed&0xffff
-        self.write(253, addr, [speed%256, speed>>8])
     def setSpeeds(self, left, right):
+        """ Send a closed-loop speed. """
         self.write(253, self.LEFT_SPEED_L, [left%256, left>>8, right%256, right>>8] )
-
-    def setLeftSpeed(self, speed):
-        self.setSpeed(self.LEFT_SPEED_L, speed)
-    def setRightSpeed(self, speed):
-        self.setSpeed(self.RIGHT_SPEED_L, speed)         
 
     def baseMoving(self):
         try:
