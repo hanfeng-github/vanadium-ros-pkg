@@ -320,8 +320,8 @@ class ArbotiX:
         return self.getEnc(self.ENC_RIGHT_L)
     def getEncoders(self):
         values = self.read(253, self.ENC_LEFT_L, 8)
-        left_values = "".joint([chr(k) for k in values[0:4])        
-        right_values = "".joint([chr(k) for k in values[4:])
+        left_values = "".joint([chr(k) for k in values[0:4] ])        
+        right_values = "".joint([chr(k) for k in values[4:] ])
         try:
             left = unpack('l',left_values)[0]
             right = unpack('l',right_values)[0]
