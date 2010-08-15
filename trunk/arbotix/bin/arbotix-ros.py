@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-# TODO:
-# JointState set
-# Base movement
-# Nuke movement
+# TODO: Base movement, Nuke movement
 # Move gp_lidar distance calcs down to the ServoStiK
 
 """
@@ -33,8 +30,7 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import roslib
-roslib.load_manifest('arbotix')
+import roslib; roslib.load_manifest('arbotix')
 import rospy
 
 from sensor_msgs.msg import JointState
@@ -45,7 +41,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 
-from arbotix.arbotix import ArbotiX     # does this look ridiculous to anyone else?
+from arbotix.arbotix import ArbotiX # does this look ridiculous to anyone else?
 from arbotix.gp_lidar import *
 from arbotix.srv import *
 from arbotix.ax12 import *
@@ -53,175 +49,162 @@ from arbotix.ax12 import *
 from math import sin,cos,pi,radians
 from datetime import datetime
 
-device = None
-
 ###############################################################################
-# Servo handling classes
+# Servo handling classes    
 class DynamixelServo():
     """ Class to handle services and updates for a single Dynamixel Servo, on 
-        an ArbotiX robocontroller's AX-bus. """
-    def __init__(self, index, params, device, single=False ):
+        an ArbotiX robocontroller's AX/RX-bus. """
+    def __init__(self, index, params, device, single=False):
         self.id = index
-        self.device = device
-        self.angle = 0.0
+        self.device = device                        # ArbotiX instance
 
-        # process parameters
-        self.params = { 
-            'neutral':512, 
-            'rad_per_tick': radians(300.0)/1024, 
-            'max': radians(150),
-            'min': radians(-150),
-            'invert': False,
-            'max_speed': radians(50)
-        }
-        for key in params.keys():
-            if key=='invert':
-                if int(params[key]) > 0:
-                    self.params[key] = True
-            elif key=='max_speed' or key=='max' or key=='min':
-                self.params[key] = radians((params[key]))
-            elif key=='range':
-                self.params['rad_per_tick'] = radians(float(params[key]))/1024
-            else:
-                try:
-                    self.params[key] = float(params[key])
-                except:
-                    self.params[key] = params[key]        
-        self.name = self.params['name']
+        self.neutral = 512                          # adjust for EX-106, etc
+        self.ticks = 1024                           # adjust for EX-106, etc
+        self.rad_per_tick = radians(300.0)/1024     # adjust for EX-106, etc
+        self.max_angle = radians(150)               # limit angle, radians
+        self.min_angle = radians(-150)
+        self.max_speed = radians(1)                 # radians per second
+        self.invert = False
+        self.setParams(params)
+
+        self.angle = 0.0                            # current position
 
         # some callbacks
         if single:
-            self.srvRead = rospy.Service(self.name+'_getangle',GetAngle, self.__getAngle)
-            self.srvMoving = rospy.Service(self.name+'_ismoving',IsMoving, self.__isMoving)
-        self.srvWrite = rospy.Service(self.name+'_setangle',SetAngle, self.__setAngle)
-        self.srvRelax = rospy.Service(self.name+'_relax',Relax, self.__relax)
+            self.srvRead = rospy.Service(self.name+'_getangle',GetAngle, self.getAngleCb)
+            self.srvMoving = rospy.Service(self.name+'_ismoving',IsMoving, self.isMovingCb)
+            self.srvWrite = rospy.Service(self.name+'_setangle',SetAngle, self.setAngleCb)
+        # this will get indented once SetJoints stuff works
+        self.srvRelax = rospy.Service(self.name+'_relax',Relax, self.relaxCb)
 
-    def __setAngle(self, req):
-        ang = req.angle
-        vel = req.velocity
+    def setParams(self, params):
+        for key in params.keys():
+            if key=='invert':
+                if int(params[key]) > 0:
+                    self.invert = True
+            elif key=='max_speed':
+                self.max_speed = radians(params[key])
+            elif key=='max_angle':
+                self.max_angle = radians(params[key])
+            elif key=='min_angle':
+                self.max_angle = radians(params[key])
+            elif key=='ticks':
+                self.ticks = int(params[key])
+            elif key=='range':
+                self.rad_per_tick = radians(float(params[key]))/self.ticks
+            elif key=='neutral':
+                self.neutral = param[key]
+            elif key=='name':
+                self.name = params[key]
+            else:
+                rospy.logerr("Parameter '" + key + "' not recognized.")
 
-        if vel == None:
-            vel = self.params['max_speed']
+    def setAngleCb(self, req):
+        self.setAngle(req.angle)
+        return SetAngleResponse()
 
-        if vel > self.params['max_speed']:        
-            vel = self.params['max_speed']
-
-        if ang > self.params['max'] or ang < self.params['min']:
-            rospy.logerr("Servo "+self.params['name']+": angle out of range ("+str(ang)+")")            
-            return SetAngleResponse()
-        
-        rpm = vel / (2 * pi) * 60.0
-        self.device.setSpeed(self.id, int(round( rpm / 0.111 )))
-
-        if self.params['invert']:
-            ang = ang * -1.0
-        ticks = int(round( ang / self.params['rad_per_tick'] ))
-        ticks += int(self.params['neutral'])
-        self.device.setPosition(self.id, ticks)
-
-        #if blocking == True:
-        #    while(self.is_moving()):
-        #        continue
-        return SetAngleResponse()        
-
-    def __getAngle( self, request ):
+    def getAngleCb( self, req ):
         """ ROS service to get angle of servo (in radians) """
-        return GetAngleResponse( self.update() )
+        return GetAngleResponse( self.getAngle() )
 
-    def __isMoving( self, request ):
+    def isMovingCb(self, req):
         status = self.device.read(self.id, P_MOVING, 1)[0]
         return IsMovingResponse( int(status) )
 
-    def __relax( self, request ):
+    def relaxCb(self, req):
         """ Turn off servo torque, so that it is pose-able. """
         self.device.disableTorque(self.id)
         return RelaxResponse()
 
-    def update(self, pos=None):
-        """ Find angle in radians """
+    def setAngle(self, ang):
+        if ang > self.max_angle or ang < self.min_angle:
+            rospy.logerr("Servo "+self.name+": angle out of range ("+str(ang)+")")  
+            return 
+        self.angle = ang    # store it for joint state updates
+        if self.invert:
+            ang = ang * -1.0
+        ticks = int(round( ang / self.rad_per_tick ))
+        ticks += int(self.neutral)
+        self.device.setPosition(self.id, ticks)
+        
+    def getAngle(self, pos=None):
+        """ Find angle in radians by reading from servo, or
+            by using pos passed in from a sync read.  """
         if pos == None:
             pos = self.device.getPosition(self.id)
         if pos != -1:
-            ang = (pos - self.params['neutral']) * self.params['rad_per_tick']
-            if self.params['invert']:
-                ang = ang * -1.0
-            self.angle = ang
+            angle = (pos - self.neutral) * self.rad_per_tick
+            if self.invert:
+                angle = angle * -1.0
+            self.angle = angle
         return self.angle
 
-class HobbyServo():
+class HobbyServo(DynamixelServo):
     """ Class to handle services and updates for a single Hobby Servo, connected to 
-        an ArbotiX robocontroller. """
-    def __init__(self, index, params, device):
+        an ArbotiX robocontroller. A stripped down version of the DynamixelServo. """
+    def __init__(self, index, params, device, single=False):
         self.id = index
-        self.device = device
-        self.angle = 0.0
+        self.device = device                        # ArbotiX instance
 
-        # process parameters
-        self.params = { 
-            'neutral':1500, 
-            'rad_per_tick': radians(180.0)/2000,       # 180 degrees over 500-2500ms 
-            'max': radians(90),
-            'min': radians(-90),
-            'invert': False
-        }
-        for key in params.keys():
-            if key=='invert':
-                if int(params[key]) > 0:
-                    self.params[key] = True
-            elif key=='max' or key=='min':
-                self.params[key] = radians(int(params[key]))
-            else:
-                try:
-                    self.params[key] = float(params[key])
-                except:
-                    self.params[key] = params[key]
-        self.name = self.params['name']
+        self.neutral = 1500                         # might be adjusted for crappy servos
+        self.ticks = 2000
+        self.rad_per_tick = radians(180.0)/2000     # 180 degrees over 500-2500ms 
+        self.max_angle = radians(90)                # limit angle, radians
+        self.min_angle = radians(-90)
+        self.invert = False
+        self.setParams(params)
+
+        self.angle = 0.0                            # current position
 
         # a callback
-        self.srvWrite = rospy.Service(self.name+'_setangle',SetAngle, self.__setAngle)
+        if single: 
+            self.srvWrite = rospy.Service(self.name+'_setangle',SetAngle, self.setAngleCb)
 
-    def __setAngle(self, req):
-        """ Set position to angle, in radians. """
+    def setAngleCb(self, req):
+        """ Callback to set position to angle, in radians. """
         ang = req.angle
-
-        if ang > self.params['max'] or ang < self.params['min']:
-            rospy.logerr("Servo "+self.params['name']+": angle out of range ("+str(ang)+")")            
+        if ang > self.max_angle or ang < self.min_angle:
+            rospy.logerr("Servo "+self.name+": angle out of range ("+str(ang)+")")            
             return SetAngleResponse()
-        
         self.angle = ang    # store it for joint state updates
-        if self.params['invert']:
+        if self.invert:
             ang = ang * -1.0
-        ticks = int(round( ang / self.params['rad_per_tick'] ))
-        ticks += self.params['neutral']
-        rospy.loginfo("Servo "+self.params['name']+": set to "+str(ticks))
+        ticks = int(round( ang / self.rad_per_tick ))
+        ticks += self.neutral
+        rospy.loginfo("Servo "+self.name+": set to "+str(ticks))
         self.device.setServo(self.id, ticks)
         return SetAngleResponse()        
 
-    def update(self):
+    def getAngle(self):
         """ Find angle in radians """
         return self.angle
 
-class ArbotiXBase():
+class ArbotiXMobileBase():
     """ Class to handle services, odometry feedback, etc, for a mobile base, 
         powered by an ArbotiX RoboController. """
     def __init__(self, device, ticks_meter, base_width):
         self.device = device        # handle for robocontroller
         self.ticks_meter = ticks_meter
         self.base_width = base_width
-        self.ticks_rad = (base_width*ticks_meter) / (2.0*pi)
+
+        rospy.Subscriber("cmd_vel", Twist, self.twist)
+        self.odomPub = rospy.Publisher('odom',Odometry)
+        self.odomBroadcaster = TransformBroadcaster()
+
+#        self.ticks_rad = (base_width*ticks_meter) / (2.0*pi)
         self.enc_left = 0           # encoder readings
         self.enc_right = 0
         self.x = 0                  # position in xy plane
         self.y = 0
         self.th = 0
         self.then = datetime.now()  # time for determining dx/dy
-        rospy.Subscriber("cmd_vel", Twist, self.twist)
 
     def update(self):
         now = datetime.now()
         elapsed = now - self.then
         self.then = now
         elapsed = float(elapsed.seconds) + elapsed.microseconds/1000000.
+
         left = self.device.getLenc()
         right = self.device.getRenc()
         #
@@ -274,7 +257,6 @@ class ArbotiXBase():
     def twist(self,req):
         """ Handle movement requests. """
         x = req.linear.x        # m/s
-        y = req.linear.y        # m/s
         th = req.angular.z      # rad/s
 
         # if theta were 0
@@ -292,94 +274,122 @@ class ArbotiXBase():
             self.device.SetLeftSpeed(int(l))
             self.device.SetRightSpeed(int(r))
 
-def get_digital_callback( req ):
-    return GetDigitalResponse( device.getDigital(req.pin) )
+class ArbotiX_ROS(ArbotiX):
+    
+    def __init__(self):
+        rospy.init_node('arbotix')
+        # load configurations    
+        port = rospy.get_param("~port", "/dev/ttyUSB0")                     
+        baud = int(rospy.get_param("~baud", "38400"))
+        rospy.loginfo("Starting ArbotiX-ROS on port "+port)
+        dynamixels = rospy.get_param("~dynamixels", dict())
+        servos = rospy.get_param("~servos", dict())
+        ticks_meter = float(rospy.get_param("~ticks_meter", "26154"))       # ticks per meter of wheel rotation
+        base_width = float(rospy.get_param("~base_width", "0.144"))         # width of base (in meters), for angular movement
+        use_sync = rospy.get_param("~use_sync",True)                        # use sync read?
+        use_base = rospy.get_param("~use_base",False)                       # use closed-loop base?
+        use_nuke = rospy.get_param("~use_nuke",False)                       # use nuke base?
+        use_gp_lidar = rospy.get_param("~use_gp_lidar",False)               # use gp lidar?
+        
+        # start an arbotix driver
+        ArbotiX.__init__(self, port, baud)
 
-def get_analog_callback( req ):    
-    return GetAnalogResponse( device.getAnalog(req.pin) )
+        # initialize servos and state publishing
+        self.dynamixel_servos = dict()
+        self.sync_servos = list()
+        self.sync_names = list()
+        for index in dynamixels.keys():
+            servo = DynamixelServo(int(index), dynamixels[index], self) 
+            self.dynamixel_servos[servo.name] = servo 
+            self.sync_servos.append(servo.id)    
+            self.sync_names.append(servo.name)    
 
-def set_digital_callback( req ):
-    device.setDigital(req.pin, req.dir, req.value)
-    return SetDigitalRespone()
+        self.hobby_servos = list()
+        for index in servos.keys():
+            self.hobby_servos.append( HobbyServo(int(index), servos[index], self) )
+
+        self.servo_queue = dict()
+
+        self.jointStatePub = rospy.Publisher('joint_states', JointState)
+    
+        # digital/analog IO
+        rospy.Service('GetDigital',GetDigital,self.getDigitalCb)   
+        rospy.Service('GetAnalog',GetAnalog,self.getAnalogCb)
+        rospy.Service('SetDigital',SetDigital,self.setDigitalCb)
+
+        # listen for movement commands, send to robot
+        if use_base == True:
+            self.base = ArbotiXMobileBase(self.device, ticks_meter, base_width)
+        if use_nuke == True:
+            # TODO
+            pass    
+
+        # Poor Man's LIDAR
+        if use_gp_lidar == True:
+            self.lidar = gp_lidar(self)    
+            self.lidar.start()
+
+        # publish joint states (everything else is a service callback)
+        r = rospy.Rate(int(rospy.get_param("~rate",10)))
+        while not rospy.is_shutdown():
+            # update our output values
+            queue = self.servo_queue    
+            self.servo_queue = dict()
+            for servo, position in queue:   
+                # TODO: convert to sync write
+                dynamixel_servo[servo].setAngle(position)         
+                
+            # now publish joint states
+            msg = JointState()
+            msg.name = list()
+            msg.position = list()
+            msg.velocity = list()
+            msg.effort = list()
+
+            if use_sync: 
+                # arbotix/servostik/wifi board sync_read
+                val = self.syncRead(self.sync_servos, P_PRESENT_POSITION_L, 2)
+                if val != None:            
+                    i = 0        
+                    for servo in self.sync_names:
+                        msg.name.append(self.dynamixel_servos[servo].name)
+                        msg.position.append(self.dynamixel_servos[servo].getAngle( val[i]+(val[i+1]<<8) ))
+                        i = i + 2
+            else:
+                # direct connection, or other hardware with no sync_read capability
+                for servo in self.dynamixel_servos.values():
+                    msg.name.append(servo.name)
+                    msg.position.append(servo.getAngle())  
+                
+            for servo in self.hobby_servos:
+                msg.name.append(servo.name)
+                msg.position.append(servo.getAngle())  
+
+            msg.header.stamp = rospy.Time.now()
+            self.jointStatePub.publish(msg)                  
+            r.sleep()
+
+    def getDigitalCb(self, req):
+        return GetDigitalResponse( self.getDigital(req.pin) )
+
+    def getAnalogCb(self, req):    
+        return GetAnalogResponse( self.getAnalog(req.pin) )
+
+    def setDigitalCb(self, req):
+        self.setDigital(req.pin, req.dir, req.value)
+        return SetDigitalResponse()
+
+    def set_joints_callback(self, req):
+        # update joint positions and torque
+        for i in len(req.joints.name):
+            self.servo_queue[req.joints.name[i]] = req.joints.position[servo]
+            #try: TODO: relax if effort is 0
+            #    if req.joints.effort[] = 0:
+            #        self.servo_queue[req.joints.name[i]] = -1
+            #except:
+            #    pass
+            self.sync_servos.append(servo.id)    
 
 if __name__ == "__main__":
-    rospy.init_node('arbotix')
-    # short wait so that we are fully initialized
-    rospy.sleep(0.5)
-
-    # load configurations    
-    port = rospy.get_param("~port", "/dev/ttyUSB0")
-    baud = int(rospy.get_param("~baud", "38400"))
-    rospy.loginfo("Starting ArbotiX-ROS on port "+port)
-    dynamixels = rospy.get_param("~dynamixels", dict())
-    servos = rospy.get_param("~servos", dict())
-    #grounding = rospy.get_param("~grounding","world")
-    ticks_meter = float(rospy.get_param("~ticks_meter", "26154"))
-    base_width = float(rospy.get_param("~base_width", "0.144"))
-    do_sync = rospy.get_param("~use_sync",True)                        # use sync read?
-    use_base = rospy.get_param("~use_base","False") == "True"          # use closed-loop base?
-    use_nuke = rospy.get_param("~use_nuke","False") == "True"          # use nuke base?
-    use_gp_lidar = rospy.get_param("~use_gp_lidar",False)              # use gp lidar?
-
-    # start an arbotix driver
-    device = ArbotiX(port, baud)
-    
-    # initialize servos and state publishing
-    dynamixel_servos = dict()
-    sync_servos = list()
-    for index in dynamixels.keys():
-        dynamixel_servos[int(index)] = DynamixelServo(int(index), dynamixels[index], device) 
-        sync_servos.append(int(index))    
-
-    hobby_servos = list()
-    for index in servos.keys():
-        hobby_servos.append( HobbyServo(int(index), servos[index], device) )
-    
-    jointStatePub = rospy.Publisher('joint_states', JointState)
-    
-    # digital/analog IO
-    rospy.Service('GetDigital',GetDigital,get_digital_callback)   
-    rospy.Service('GetAnalog',GetAnalog,get_analog_callback)
-    rospy.Service('SetDigital',SetDigital,set_digital_callback)
-
-    # listen for movement commands, send to robot
-    if use_base == True:
-        base = ArbotiXBase(device, ticks_meter, base_width)
-    if use_nuke == True:
-        pass    
-
-    # Poor Man's LIDAR
-    if use_gp_lidar == True:
-        lidar = gp_lidar(device)    
-        lidar.start()
-
-    # publish joint states (everything else is a service callback)
-    r = rospy.Rate(int(rospy.get_param("~rate",10)))
-    while not rospy.is_shutdown():
-        msg = JointState()
-        msg.name = list()
-        msg.position = list()
-        msg.velocity = list()
-        msg.effort = list()
-
-        if do_sync: 
-            val = device.syncRead(sync_servos, P_PRESENT_POSITION_L, 2)
-            if val != None:            
-                i = 0        
-                for servo in sync_servos:
-                    msg.name.append(dynamixel_servos[servo].name)
-                    msg.position.append(dynamixel_servos[servo].update( val[i]+(val[i+1]<<8) ))
-                    i = i + 2
-        else:
-            for servo in dynamixel_servos.values():
-                msg.name.append(servo.name)
-                msg.position.append(servo.update())  
-            
-        for servo in hobby_servos:
-            msg.name.append(servo.name)
-            msg.position.append(servo.update())  
-
-        msg.header.stamp = rospy.Time.now()
-        jointStatePub.publish(msg)                  
-        r.sleep()
+    a = ArbotiX_ROS()
 
