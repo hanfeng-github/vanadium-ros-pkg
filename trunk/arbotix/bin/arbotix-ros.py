@@ -290,7 +290,7 @@ class ArbotiX_ROS(ArbotiX):
         use_sync = rospy.get_param("~use_sync",True)                        # use sync read?
         use_base = rospy.get_param("~use_base",False)                       # use closed-loop base?
         use_nuke = rospy.get_param("~use_nuke",False)                       # use nuke base?
-        use_gp_lidar = rospy.get_param("~use_gp_lidar",False)               # use gp lidar?
+        use_lidar = rospy.get_param("~use_lidar",False)               # use lidar?
         
         # start an arbotix driver
         ArbotiX.__init__(self, port, baud)
