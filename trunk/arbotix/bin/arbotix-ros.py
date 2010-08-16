@@ -84,17 +84,17 @@ class DynamixelServo():
                 if int(params[key]) > 0:
                     self.invert = True
             elif key=='max_speed':
-                self.max_speed = radians(params[key])
+                self.max_speed = radians(float(params[key]))
             elif key=='max_angle':
-                self.max_angle = radians(params[key])
+                self.max_angle = radians(float(params[key]))
             elif key=='min_angle':
-                self.max_angle = radians(params[key])
+                self.min_angle = radians(float(params[key]))
             elif key=='ticks':
                 self.ticks = int(params[key])
             elif key=='range':
                 self.rad_per_tick = radians(float(params[key]))/self.ticks
             elif key=='neutral':
-                self.neutral = param[key]
+                self.neutral = params[key]
             elif key=='name':
                 self.name = params[key]
             else:
@@ -119,7 +119,7 @@ class DynamixelServo():
 
     def setAngle(self, ang):
         if ang > self.max_angle or ang < self.min_angle:
-            rospy.logerr("Servo "+self.name+": angle out of range ("+str(ang)+")")  
+            rospy.logerr("Servo "+self.name+": angle out of range ("+str(ang)+"). Limits are: " + str(self.min_angle) + "," + str(self.max_angle))  
             return 
         self.angle = ang    # store it for joint state updates
         if self.invert:
@@ -288,6 +288,7 @@ class ArbotiX_ROS(ArbotiX):
         ticks_meter = float(rospy.get_param("~ticks_meter", "26154"))       # ticks per meter of wheel rotation
         base_width = float(rospy.get_param("~base_width", "0.144"))         # width of base (in meters), for angular movement
         use_sync = rospy.get_param("~use_sync",True)                        # use sync read?
+        use_single = rospy.get_param("~use_single_services",False)          # use single read/write services?
         use_base = rospy.get_param("~use_base",False)                       # use closed-loop base?
         use_nuke = rospy.get_param("~use_nuke",False)                       # use nuke base?
         use_lidar = rospy.get_param("~use_lidar",False)               # use lidar?
@@ -300,7 +301,7 @@ class ArbotiX_ROS(ArbotiX):
         self.sync_servos = list()
         self.sync_names = list()
         for index in dynamixels.keys():
-            servo = DynamixelServo(int(index), dynamixels[index], self) 
+            servo = DynamixelServo(int(index), dynamixels[index], self, use_single) 
             self.dynamixel_servos[servo.name] = servo 
             self.sync_servos.append(servo.id)    
             self.sync_names.append(servo.name)    
@@ -339,11 +340,11 @@ class ArbotiX_ROS(ArbotiX):
             # update our output values
             #for servo in self.servo_trajectories.keys():
             
-            queue = self.servo_queue    
-            self.servo_queue = dict()
-            for servo, position in queue:   
-                # TODO: convert to sync write
-                dynamixel_servo[servo].setAngle(position)         
+            #queue = self.servo_queue    
+            #self.servo_queue = dict()
+            #for servo, position in queue:   
+            #    # TODO: convert to sync write
+            #    dynamixel_servo[servo].setAngle(position)         
                 
             # now publish joint states
             msg = JointState()
