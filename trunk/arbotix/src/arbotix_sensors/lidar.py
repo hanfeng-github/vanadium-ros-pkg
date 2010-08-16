@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  gp_lidar.py - a Poor Man's Lidar system
+  lidar.py - a Poor Man's Lidar system
   Copyright (c) 2008-2010 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,21 +32,25 @@ from threading import Thread
 from sensor_msgs.msg import LaserScan
 from std_srvs.srv import *
 
-class gp_lidar(Thread):
+class lidar(Thread):
     """ This is a thread, that embodies a lidar, reads data, publishes output. """
 
-    def __init__(self, device, rate=1.0):
-        Thread.__init__ (self) 
-        self.device = device    # arbotix to call for data
-        self.rate = rate
+    def __init__(self, device):
+        Thread.__init__ (self)
+        # arbotix device from which to get data
+        self.device = device
+
+        # parameters
+        self.rate = rospy.get_param("~lidar_rate",1.0)
+        self.frame_id = rospy.get_param("~lidar_frame","base_laser") 
+
+        # annoyingly loud, allow servo panning to be turned on/off
         self.enable = False
-        # services to turn us on or off
         rospy.Service('EnablePML',Empty,self.enable_callback)   
         rospy.Service('DisablePML',Empty,self.disable_callback)
+
         # publisher
-        self.frame_id = rospy.get_param("~lidar_frame","base_laser") 
         self.scanPub = rospy.Publisher('base_scan', LaserScan)
-        self.scan_seq = 0
 
     def run(self):
         r = rospy.Rate(self.rate)
@@ -64,8 +68,7 @@ class gp_lidar(Thread):
                         ranges.append(10.0)
                 # now post laser scan
                 scan = LaserScan()
-                scan.header.stamp = rospy.Time.now()
-                scan.header.seq = self.scan_seq                
+                scan.header.stamp = rospy.Time.now()        
                 scan.header.frame_id = self.frame_id
                 scan.angle_min = -1.57
                 scan.angle_max = 1.57
@@ -75,7 +78,6 @@ class gp_lidar(Thread):
                 scan.range_max = 6.0
                 scan.ranges = ranges    
                 self.scanPub.publish(scan)
-                self.scan_seq = self.scan_seq + 1
 
             r.sleep()
 

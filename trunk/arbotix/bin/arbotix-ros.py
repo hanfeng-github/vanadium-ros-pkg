@@ -34,6 +34,7 @@ import roslib; roslib.load_manifest('arbotix')
 import rospy
 
 from sensor_msgs.msg import JointState
+#from trajectory_msgs.msg import JointTrajectory
 
 from std_msgs.msg import Float64
 from geometry_msgs.msg import Quaternion
@@ -42,7 +43,7 @@ from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 
 from arbotix.arbotix import ArbotiX # does this look ridiculous to anyone else?
-from arbotix.gp_lidar import *
+from arbotix_sensors.lidar import *
 from arbotix.srv import *
 from arbotix.ax12 import *
 
@@ -308,8 +309,11 @@ class ArbotiX_ROS(ArbotiX):
         for index in servos.keys():
             self.hobby_servos.append( HobbyServo(int(index), servos[index], self) )
 
-        self.servo_queue = dict()
+        # for command callbacks
+        #rospy.Subscriber("command", JointTrajectory, self.commandCb)
+        self.servo_trajectories = dict()    
 
+        # and output of current positions
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
     
         # digital/analog IO
@@ -325,14 +329,16 @@ class ArbotiX_ROS(ArbotiX):
             pass    
 
         # Poor Man's LIDAR
-        if use_gp_lidar == True:
-            self.lidar = gp_lidar(self)    
+        if use_lidar == True:
+            self.lidar = lidar(self)    
             self.lidar.start()
 
         # publish joint states (everything else is a service callback)
         r = rospy.Rate(int(rospy.get_param("~rate",10)))
         while not rospy.is_shutdown():
             # update our output values
+            #for servo in self.servo_trajectories.keys():
+            
             queue = self.servo_queue    
             self.servo_queue = dict()
             for servo, position in queue:   
@@ -379,16 +385,19 @@ class ArbotiX_ROS(ArbotiX):
         self.setDigital(req.pin, req.dir, req.value)
         return SetDigitalResponse()
 
-    def set_joints_callback(self, req):
-        # update joint positions and torque
-        for i in len(req.joints.name):
-            self.servo_queue[req.joints.name[i]] = req.joints.position[servo]
-            #try: TODO: relax if effort is 0
-            #    if req.joints.effort[] = 0:
-            #        self.servo_queue[req.joints.name[i]] = -1
-            #except:
-            #    pass
-            self.sync_servos.append(servo.id)    
+    def commandCb(self, req):
+        # trajectories["name"] --> [ [time,position,velocity], [time,position,velocity], ....]
+        for i in len(req.joint_names):
+            servo = req.joint_names[i]
+            t = self.servo_trajectories[servo]
+            # remove trajectories we're tossing 
+            while len(t) > 0 and t[len(t)-1][0] > req.header.stamp:
+                t.pop()
+            # add new trajectories
+            for point in req.points[i]:
+                t.append( [req.header.stamp + point.time_from_start, point.positions[i], point.velocities[i]] )
+            # post the update
+            self.servo_trajectories[servo] = t                            
 
 if __name__ == "__main__":
     a = ArbotiX_ROS()
