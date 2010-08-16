@@ -1,7 +1,11 @@
 #summary Package Documentation: arbotix
 
+This is the temporary docs...
+
 = Introduction =
-The ArbotiX-ROS driver consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection. The ArbotiX firmware provides:
+The ArbotiX-ROS driver consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection.
+
+The ArbotiX firmware provides:
  * Control of up to 252 Dynamixel servos
  * Control of up to 10 hobby (PWM) servos
  * Access to 8 analog channels
@@ -9,27 +13,44 @@ The ArbotiX-ROS driver consists of custom firmware for the ArbotiX RoboControlle
  * Full, tunable PID control of 2 motors.
  * IK-based control of walking robots (this requires a special NUKE-based firmware).
 
-On top of the firmware capabilities, the _arbotix-ros_ node provides high level control of a differential drive or IK-based walking robot, including components necessary for using the ROS navigation stack, such as publishing odometry and tf information.
+All of these features are accessible within ROS using the _arbotix-ros_ ndoe. On top of the firmware capabilities, the _arbotix-ros_ node provides:
+ * High level control of a differential drive, including components necessary for using the ROS navigation stack, such as publishing odometry and tf information. (arbotix_controllers/base_controller).
+ * High level control of IK-based walking robots using NUKE, including odometry and tf (arbotix_controllers/nuke_controller).
+ * Configurable joint controllers for arms or heads (arbotix_controllers/joint_controller).
+ * The poor man's laser scanner, which broadcasts laser_scan topics using a long range IR sensor and AX-12. (arbotix_sensors/lidar).
+ * Action based head controller (arbotix_controllers/head_controller).
 
-= Messages =
-Coming Soon.
-
-= Services and Topics = 
-The _arbotix-ros_ node subscribes to the following topics: 
- * cmd_vel
-
-_arbotix-ros_ publishes to the following topics: 
- * joint_states
- * odom
+= Core Controller = 
+The core controller is the base of the arbotix node. It publishes the _joint_states_ topic.
 
 _arbotix-ros_ offers the following services:
- * setJoints
  * getAnalog
  * getDigital 
  * setDigital
 
+Parameters: 
+ * port (default: /dev/ttyUSB0)
+ * baud (default: 38400)
+ * rate (default: 10.0) - rate at which to publish the _joint_states_ topic. 
+ * dynamixels ... 
+ * servos ...
+ * use_sync 
+
+= Base Controller = 
+The base controller is in command of a mobile base. It subscribes to the _cmd_vel_ topic, and publishes to the _odom_ topic. The nuke_controller is a derivative of the base_controller. 
+
+Parameters:
+ * ticks_meter - encoder ticks per meter of travel
+ * base_width - width between differential drive wheels, in meters
+
+= Lidar =
+
+Parameters: 
+ * lidar_rate (default: 1.0) 
+ * lidar_frame (default: base_laser)
+
 = YAML Specification =
-The _arbotix-ros_ node uses a YAML file specify many parameters. 
+The _arbotix-ros_ node uses a YAML file to specify it's many parameters and possible configurations. 
 
 = Launch File = 
 In order to load the YAML specification, it is recommended to use a launch file like the following: 
