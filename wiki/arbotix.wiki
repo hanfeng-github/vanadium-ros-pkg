@@ -16,9 +16,11 @@ The ArbotiX firmware provides:
 All of these features are accessible within ROS using the _arbotix-ros_ ndoe. On top of the firmware capabilities, the _arbotix-ros_ node provides:
  * High level control of a differential drive, including components necessary for using the ROS navigation stack, such as publishing odometry and tf information. (arbotix_controllers/base_controller).
  * High level control of IK-based walking robots using NUKE, including odometry and tf (arbotix_controllers/nuke_controller).
- * Configurable joint controllers for arms or heads (arbotix_controllers/joint_controller).
+ * Action based joint controllers, for arms (arbotix_controllers/joint_trajectory_action).
+ * Action based single joint controller (arbotix_controllers/single_trajectory_action).
+ * Action based head controller (arbotix_controllers/head_action).
+ * Low level joint controllers (arbotix_controllers/joint_controller).
  * The poor man's laser scanner, which broadcasts laser_scan topics using a long range IR sensor and AX-12. (arbotix_sensors/lidar).
- * Action based head controller (arbotix_controllers/head_controller).
 
 = Core Controller = 
 The core controller is the base of the arbotix node. It publishes the _joint_states_ topic.
@@ -42,6 +44,7 @@ The base controller is in command of a mobile base. It subscribes to the _cmd_ve
 Parameters:
  * ticks_meter - encoder ticks per meter of travel
  * base_width - width between differential drive wheels, in meters
+ * base_rate (default: 10.0) how often to read encoders and publish odometry. 
 
 = Lidar =
 
