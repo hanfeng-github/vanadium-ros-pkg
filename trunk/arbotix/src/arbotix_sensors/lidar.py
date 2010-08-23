@@ -37,7 +37,8 @@ class lidar(Thread):
 
     def __init__(self, device):
         Thread.__init__ (self)
-        # arbotix device from which to get data
+
+        # handle for robocontroller
         self.device = device
 
         # parameters
