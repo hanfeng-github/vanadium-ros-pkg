@@ -57,20 +57,28 @@ class controllerGUI(wx.Frame):
         headBox = wx.StaticBoxSizer(head,orient=wx.VERTICAL) 
         headSizer = wx.GridBagSizer(5,5)
         headSizer.Add(wx.StaticText(self, -1, "Pan:"),(0,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        self.pan = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL | wx.SL_LABELS)
-        headSizer.Add(self.pan,(0,1))
+        headSizer.Add(wx.StaticText(self, -1, "L"),(0,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+        self.pan = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL )
+        headSizer.Add(self.pan,(0,2))
+        headSizer.Add(wx.StaticText(self, -1, "R"),(0,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+
         headSizer.Add(wx.StaticText(self, -1, "Tilt:"),(1,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        self.tilt = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL | wx.SL_LABELS)
-        headSizer.Add(self.tilt,(1,1))
+        headSizer.Add(wx.StaticText(self, -1, "D"),(1,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+        self.tilt = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL)
+        headSizer.Add(self.tilt,(1,2))
+        headSizer.Add(wx.StaticText(self, -1, "U"),(1,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+
         headSizer.Add(wx.StaticText(self, -1, "Tilt/Roll:"),(2,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        self.tilt2 = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL | wx.SL_LABELS)
-        headSizer.Add(self.tilt2,(2,1))
+        headSizer.Add(wx.StaticText(self, -1, "D"),(2,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+        self.tilt2 = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL)
+        headSizer.Add(self.tilt2,(2,2))
+        headSizer.Add(wx.StaticText(self, -1, "U"),(2,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
         headBox.Add(headSizer) 
         sizer.Add(headBox, (1,0), wx.GBSpan(1,1), wx.EXPAND|wx.BOTTOM|wx.RIGHT|wx.LEFT,5)
 
         # timer for output
         self.timer = wx.Timer(self, self.TIMER_ID)
-        self.timer.Start(100)
+        self.timer.Start(50)
         wx.EVT_CLOSE(self, self.onClose)
         wx.EVT_TIMER(self, self.TIMER_ID, self.onTimer)
 
@@ -121,12 +129,15 @@ class controllerGUI(wx.Frame):
         # send joint updates
         j = JointState()
         j.name = ["head_pan", "head_tilt", "head_tilt2"]
-        j.position = [self.pan.GetValue()/100.0, self.tilt.GetValue()/100.0, self.tilt2.GetValue()/100.0]
+        j.position = [-self.pan.GetValue()/100.0, -self.tilt.GetValue()/100.0, -self.tilt2.GetValue()/100.0]
         self.cmd_joints.publish(j)
         # send base updates
         t = Twist()
-        t.linear.x = self.forward/200; t.linear.y = 0; t.linear.z = 0
-        t.angular.x = 0; t.angular.y = 0; t.angular.z = self.turn/200
+        t.linear.x = self.forward/200.0; t.linear.y = 0; t.linear.z = 0
+        if self.forward > 0:
+            t.angular.x = 0; t.angular.y = 0; t.angular.z = -self.turn/50.0
+        else:
+            t.angular.x = 0; t.angular.y = 0; t.angular.z = self.turn/50.0
         self.cmd_vel.publish(t)
 
 if __name__ == '__main__':
