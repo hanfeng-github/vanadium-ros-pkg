@@ -41,7 +41,8 @@ from arbotix.ax12 import *
 
 # TODO: generalize these, add init.py in packages
 from arbotix_sensors.lidar import *
-from arbotix_controllers.base_controller import *
+#from arbotix_controllers.base_controller import *
+from arbotix_controllers.joint_controller import *
 
 from math import sin,cos,pi,radians
 from datetime import datetime
@@ -62,6 +63,7 @@ class DynamixelServo():
         self.min_angle = radians(-150)
         self.max_speed = radians(1)                 # radians per second
         self.invert = False
+        self.sync = True
         self.setParams(params)
 
         self.angle = 0.0                            # current position
@@ -79,6 +81,8 @@ class DynamixelServo():
             if key=='invert':
                 if int(params[key]) > 0:
                     self.invert = True
+            elif key=='sync':
+                self.sync = params[key]
             elif key=='max_speed':
                 self.max_speed = radians(float(params[key]))
             elif key=='max_angle':
@@ -192,19 +196,25 @@ class ArbotiX_ROS(ArbotiX):
         use_sync = rospy.get_param("~use_sync",True)                        # use sync read?
         use_single = rospy.get_param("~use_single_services",False)          # use single read/write services?
         dynamixels = rospy.get_param("~dynamixels", dict())
-        self.dynamixel_servos = dict()
-        self.sync_servos = list()
-        self.sync_names = list()
+        # complete list of servos being controlled, index = servo name, value = servo object
+        self.servos = dict()                                                
+        self.sync_servos = list()   # ids of servos we will sync_read
+        self.sync_names = list()    # names of servos we will sync_read (in same order)
+        self.no_sync_names = list() # names of servos we can't sync read
         for index in dynamixels.keys():
             servo = DynamixelServo(int(index), dynamixels[index], self, use_single) 
-            self.dynamixel_servos[servo.name] = servo 
-            self.sync_servos.append(servo.id)    
-            self.sync_names.append(servo.name)    
+            self.servos[servo.name] = servo 
+            if servo.sync: 
+                self.sync_servos.append(servo.id)    
+                self.sync_names.append(servo.name)    
+            else:
+                self.no_sync_names.append(servo.name)
 
         servos = rospy.get_param("~servos", dict())
-        self.hobby_servos = list()
         for index in servos.keys():
-            self.hobby_servos.append( HobbyServo(int(index), servos[index], self) )
+            servo = HobbyServo(int(index), servos[index], self)
+            self.servos[servo.name] = servo
+            self.no_sync_names.append(servo.name)
 
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
 
@@ -214,28 +224,25 @@ class ArbotiX_ROS(ArbotiX):
         rospy.Service('SetDigital',SetDigital,self.setDigitalCb)
 
         # initialize controllers
-# TODO: START COMPLETE REWRITE
-        use_base = rospy.get_param("~use_base",False)                       # use closed-loop base?
-        use_nuke = rospy.get_param("~use_nuke",False)                       # use nuke base?
-        use_lidar = rospy.get_param("~use_lidar",False)                     # use lidar?
+        controller_list = rospy.get_param("~controllers",list())
+        if len(controller_list) == 0:
+            # launch a default controller
+            joints = joint_controller(self, "joint_controller", self.servos.keys())
+        #else:
+        #    for controller, params in controller_list.items():
+        #        if params.type == "
 
-#        # for command callbacks
-#        #rospy.Subscriber("command", JointTrajectory, self.commandCb)
-#        #self.servo_trajectories = dict()    
+        ##use_base = rospy.get_param("~use_base",False)                       # use closed-loop base?
+        #use_nuke = rospy.get_param("~use_nuke",False)                       # use nuke base?
+        #use_lidar = rospy.get_param("~use_lidar",False)                     # use lidar?
 
-        # listen for movement commands, send to robot
-        if use_base == True:
-            #self.base = ArbotiXMobileBase(self.device, ticks_meter, base_width)
-            pass
-        if use_nuke == True:
-            # TODO
-            pass    
-
-        # Poor Man's LIDAR
-        if use_lidar == True:
-            self.lidar = lidar(self)    
-            self.lidar.start()
-# TODO: END COMPLETE REWRITE
+        # initialize sensors
+        sensor_list = rospy.get_param("~sensors",list())
+        for sensor, params in sensor_list.items():
+            if params["type"] == "lidar":
+                mylidar = lidar(self, sensor)
+                mylidar.start()
+            # TODO: other types
 
         # publish joint states (everything else is a service/topic callback)
         r = rospy.Rate(int(rospy.get_param("~rate",10)))
@@ -253,19 +260,18 @@ class ArbotiX_ROS(ArbotiX):
                 val = self.syncRead(self.sync_servos, P_PRESENT_POSITION_L, 2)
                 if val != None:            
                     i = 0        
-                    for servo in self.sync_names:
-                        msg.name.append(self.dynamixel_servos[servo].name)
-                        msg.position.append(self.dynamixel_servos[servo].getAngle( val[i]+(val[i+1]<<8) ))
+                    for name in self.sync_names:
+                        msg.name.append(name)
+                        msg.position.append(self.servos[name].getAngle( val[i]+(val[i+1]<<8) ))
                         i = i + 2
+                    for name in self.no_sync_names: 
+                        msg.name.append(name)
+                        msg.position.append(self.servos[name].getAngle())
             else:
                 # direct connection, or other hardware with no sync_read capability
-                for servo in self.dynamixel_servos.values():
+                for servo in self.servos.values():
                     msg.name.append(servo.name)
                     msg.position.append(servo.getAngle())  
-                
-            for servo in self.hobby_servos:
-                msg.name.append(servo.name)
-                msg.position.append(servo.getAngle())  
 
             msg.header.stamp = rospy.Time.now()
             self.jointStatePub.publish(msg)                  
