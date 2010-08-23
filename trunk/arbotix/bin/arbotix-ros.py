@@ -34,18 +34,14 @@ import roslib; roslib.load_manifest('arbotix')
 import rospy
 
 from sensor_msgs.msg import JointState
-#from trajectory_msgs.msg import JointTrajectory
-
-from std_msgs.msg import Float64
-from geometry_msgs.msg import Quaternion
-from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
-from tf.broadcaster import TransformBroadcaster
 
 from arbotix.arbotix import ArbotiX # does this look ridiculous to anyone else?
-from arbotix_sensors.lidar import *
 from arbotix.srv import *
 from arbotix.ax12 import *
+
+# TODO: generalize these, add init.py in packages
+from arbotix_sensors.lidar import *
+from arbotix_controllers.base_controller import *
 
 from math import sin,cos,pi,radians
 from datetime import datetime
@@ -180,101 +176,6 @@ class HobbyServo(DynamixelServo):
         """ Find angle in radians """
         return self.angle
 
-class ArbotiXMobileBase():
-    """ Class to handle services, odometry feedback, etc, for a mobile base, 
-        powered by an ArbotiX RoboController. """
-    def __init__(self, device, ticks_meter, base_width):
-        self.device = device        # handle for robocontroller
-        self.ticks_meter = ticks_meter
-        self.base_width = base_width
-
-        rospy.Subscriber("cmd_vel", Twist, self.twist)
-        self.odomPub = rospy.Publisher('odom',Odometry)
-        self.odomBroadcaster = TransformBroadcaster()
-
-#        self.ticks_rad = (base_width*ticks_meter) / (2.0*pi)
-        self.enc_left = 0           # encoder readings
-        self.enc_right = 0
-        self.x = 0                  # position in xy plane
-        self.y = 0
-        self.th = 0
-        self.then = datetime.now()  # time for determining dx/dy
-
-    def update(self):
-        now = datetime.now()
-        elapsed = now - self.then
-        self.then = now
-        elapsed = float(elapsed.seconds) + elapsed.microseconds/1000000.
-
-        left = self.device.getLenc()
-        right = self.device.getRenc()
-        #
-        dl = left - self.enc_left
-        dr = right - self.enc_right
-
-        # convert 
-        d = 0   #d = self.create.d_distance / 1000.
-        th = 0  #th = self.create.d_angle*pi/180
-        dx = d / elapsed
-        dth = th / elapsed
-
-        if (d != 0):
-            x = cos(th)*d
-            y = -sin(th)*d
-            self.x = self.x + (cos(self.th)*x - sin(self.th)*y)
-            self.y = self.y + (sin(self.th)*x + cos(self.th)*y)
-
-        if (th != 0):
-            self.th = self.th + th
-
-        quaternion = Quaternion()
-        quaternion.x = 0.0 
-        quaternion.y = 0.0
-        quaternion.z = sin(self.th/2)
-        quaternion.w = cos(self.th/2)
-
-        self.odomBroadcaster.sendTransform(
-            (self.x, self.y, 0), 
-            (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
-            rospy.Time.now(),
-            "base_link",
-            "odom"
-            )
-
-        odom = Odometry()
-        odom.header.frame_id = "odom"
-        odom.pose.pose.position.x = self.x
-        odom.pose.pose.position.y = self.y
-        odom.pose.pose.position.z = 0
-        odom.pose.pose.orientation = quaternion
-
-        odom.child_frame_id = "base_link"
-        odom.twist.twist.linear.x = dx
-        odom.twist.twist.linear.y = 0
-        odom.twist.twist.angular.z = dth
-
-        self.odomPub.publish(odom)
-
-    def twist(self,req):
-        """ Handle movement requests. """
-        x = req.linear.x        # m/s
-        th = req.angular.z      # rad/s
-
-        # if theta were 0
-        l = (x/30.0 * self.ticks_meter) - (th/30.0 * self.ticks_rad)
-        r = (x/30.0 * self.ticks_meter) + (th/30.0 * self.ticks_rad)
-
-        l = int(l)
-        r = int(r)
-
-        rospy.loginfo("Twist move: "+str(l)+","+str(r))
-        if l == 0 and r == 0:
-            self.device.SetLeftSpeed(0)
-            self.device.SetRightSpeed(0)
-        else:
-            self.device.SetLeftSpeed(int(l))
-            self.device.SetRightSpeed(int(r))
-
 class ArbotiX_ROS(ArbotiX):
     
     def __init__(self):
@@ -283,20 +184,14 @@ class ArbotiX_ROS(ArbotiX):
         port = rospy.get_param("~port", "/dev/ttyUSB0")                     
         baud = int(rospy.get_param("~baud", "38400"))
         rospy.loginfo("Starting ArbotiX-ROS on port "+port)
-        dynamixels = rospy.get_param("~dynamixels", dict())
-        servos = rospy.get_param("~servos", dict())
-        ticks_meter = float(rospy.get_param("~ticks_meter", "26154"))       # ticks per meter of wheel rotation
-        base_width = float(rospy.get_param("~base_width", "0.144"))         # width of base (in meters), for angular movement
-        use_sync = rospy.get_param("~use_sync",True)                        # use sync read?
-        use_single = rospy.get_param("~use_single_services",False)          # use single read/write services?
-        use_base = rospy.get_param("~use_base",False)                       # use closed-loop base?
-        use_nuke = rospy.get_param("~use_nuke",False)                       # use nuke base?
-        use_lidar = rospy.get_param("~use_lidar",False)               # use lidar?
-        
+
         # start an arbotix driver
-        ArbotiX.__init__(self, port, baud)
+        ArbotiX.__init__(self, port, baud)        
 
         # initialize servos and state publishing
+        use_sync = rospy.get_param("~use_sync",True)                        # use sync read?
+        use_single = rospy.get_param("~use_single_services",False)          # use single read/write services?
+        dynamixels = rospy.get_param("~dynamixels", dict())
         self.dynamixel_servos = dict()
         self.sync_servos = list()
         self.sync_names = list()
@@ -306,25 +201,32 @@ class ArbotiX_ROS(ArbotiX):
             self.sync_servos.append(servo.id)    
             self.sync_names.append(servo.name)    
 
+        servos = rospy.get_param("~servos", dict())
         self.hobby_servos = list()
         for index in servos.keys():
             self.hobby_servos.append( HobbyServo(int(index), servos[index], self) )
 
-        # for command callbacks
-        #rospy.Subscriber("command", JointTrajectory, self.commandCb)
-        self.servo_trajectories = dict()    
-
-        # and output of current positions
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
-    
-        # digital/analog IO
+
+        # initialize digital/analog IO
         rospy.Service('GetDigital',GetDigital,self.getDigitalCb)   
         rospy.Service('GetAnalog',GetAnalog,self.getAnalogCb)
         rospy.Service('SetDigital',SetDigital,self.setDigitalCb)
 
+        # initialize controllers
+# TODO: START COMPLETE REWRITE
+        use_base = rospy.get_param("~use_base",False)                       # use closed-loop base?
+        use_nuke = rospy.get_param("~use_nuke",False)                       # use nuke base?
+        use_lidar = rospy.get_param("~use_lidar",False)                     # use lidar?
+
+#        # for command callbacks
+#        #rospy.Subscriber("command", JointTrajectory, self.commandCb)
+#        #self.servo_trajectories = dict()    
+
         # listen for movement commands, send to robot
         if use_base == True:
-            self.base = ArbotiXMobileBase(self.device, ticks_meter, base_width)
+            #self.base = ArbotiXMobileBase(self.device, ticks_meter, base_width)
+            pass
         if use_nuke == True:
             # TODO
             pass    
@@ -333,20 +235,13 @@ class ArbotiX_ROS(ArbotiX):
         if use_lidar == True:
             self.lidar = lidar(self)    
             self.lidar.start()
+# TODO: END COMPLETE REWRITE
 
-        # publish joint states (everything else is a service callback)
+        # publish joint states (everything else is a service/topic callback)
         r = rospy.Rate(int(rospy.get_param("~rate",10)))
         while not rospy.is_shutdown():
-            # update our output values
-            #for servo in self.servo_trajectories.keys():
-            
-            #queue = self.servo_queue    
-            #self.servo_queue = dict()
-            #for servo, position in queue:   
-            #    # TODO: convert to sync write
-            #    dynamixel_servo[servo].setAngle(position)         
                 
-            # now publish joint states
+            # publish joint states
             msg = JointState()
             msg.name = list()
             msg.position = list()
@@ -384,21 +279,7 @@ class ArbotiX_ROS(ArbotiX):
 
     def setDigitalCb(self, req):
         self.setDigital(req.pin, req.dir, req.value)
-        return SetDigitalResponse()
-
-    def commandCb(self, req):
-        # trajectories["name"] --> [ [time,position,velocity], [time,position,velocity], ....]
-        for i in len(req.joint_names):
-            servo = req.joint_names[i]
-            t = self.servo_trajectories[servo]
-            # remove trajectories we're tossing 
-            while len(t) > 0 and t[len(t)-1][0] > req.header.stamp:
-                t.pop()
-            # add new trajectories
-            for point in req.points[i]:
-                t.append( [req.header.stamp + point.time_from_start, point.positions[i], point.velocities[i]] )
-            # post the update
-            self.servo_trajectories[servo] = t                            
+        return SetDigitalResponse()                        
 
 if __name__ == "__main__":
     a = ArbotiX_ROS()
