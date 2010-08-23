@@ -35,15 +35,16 @@ from std_srvs.srv import *
 class lidar(Thread):
     """ This is a thread, that embodies a lidar, reads data, publishes output. """
 
-    def __init__(self, device):
+    def __init__(self, device, name):
         Thread.__init__ (self)
 
         # handle for robocontroller
         self.device = device
+        self.name = name
 
         # parameters
-        self.rate = rospy.get_param("~lidar_rate",1.0)
-        self.frame_id = rospy.get_param("~lidar_frame","base_laser") 
+        self.rate = rospy.get_param("~/"+name+"/rate",1.0)
+        self.frame_id = rospy.get_param("~/"+name+"/frame","base_laser") 
 
         # annoyingly loud, allow servo panning to be turned on/off
         self.enable = False
