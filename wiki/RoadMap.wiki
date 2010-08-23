@@ -1,0 +1,21 @@
+#summary One-sentence summary of this page.
+
+= 0.4.0 - September = 
+  * Stable Controllers: head_action
+  * Experimental Controllers: joint_traj_controller, joint_traj_action, single_traj_action
+
+= 0.3.0 - Early September =
+  * Stable Sensors: lidar
+  * Experimental Controllers: head_action
+  * Documentation overhaul
+
+= 0.2.0 - August = 
+  * Clean up and finalize Dynamixel/Hobby Servo classes.
+  * Analog/Digital services stable. 
+  * Move higher-level control into new controller architecture.
+  * Stable Controllers: joint_controller, base_controller, nuke_controller
+  * Experimental Sensors: lidar
+
+= 0.1.0 - r9 - 7/30/10 =
+  * basic functionality, ROS API unstable
+  * only in SVN
