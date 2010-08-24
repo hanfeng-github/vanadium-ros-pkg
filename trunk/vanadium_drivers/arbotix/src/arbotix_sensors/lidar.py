@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  lidar.py - a Poor Man's Lidar system
+  lidar.py - a Poor Man's Scanning Laser
   Copyright (c) 2008-2010 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@ from sensor_msgs.msg import LaserScan
 from std_srvs.srv import *
 
 class lidar(Thread):
-    """ This is a thread, that embodies a lidar, reads data, publishes output. """
+    """ Laser scan sensor interface. """
 
     def __init__(self, device, name):
         Thread.__init__ (self)
@@ -67,7 +67,7 @@ class lidar(Thread):
                         # TODO: add other sensor abilities
                         ranges.append( (497.0/(k-56)) )
                     else:
-                        ranges.append(10.0)
+                        ranges.append(0.0)
                 # now post laser scan
                 scan = LaserScan()
                 scan.header.stamp = rospy.Time.now()        
