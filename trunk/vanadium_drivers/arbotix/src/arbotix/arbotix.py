@@ -271,13 +271,13 @@ class ArbotiX:
         else:
             return 0
 
-    def setDigital(self, index, val, direction=OUTPUT):
+    def setDigital(self, index, val, direction=0xff):
         """ Set value (and direction) of a digital IO (index = 0 to 7) """
-        if val == LOW and direction == OUTPUT:
+        if val == 0 and direction > 0:
             self.write(253, self.DIG_BASE + 1 + int(index), [1])
-        elif val == HIGH and direction == OUTPUT:
+        elif val > 0 and direction > 0:
             self.write(253, self.DIG_BASE + 1 + int(index), [3])
-        elif val == HIGH and direction == INPUT:
+        elif val > 0 and direction == 0:
             self.write(253, self.DIG_BASE + 1 + int(index), [2])
         else:
             self.write(253, self.DIG_BASE + 1 + int(index), [0])
