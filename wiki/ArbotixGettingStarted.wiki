@@ -1,0 +1,75 @@
+#summary Quick Introduction to the ArbotiX Package
+
+= Introduction =
+This is a quick start guide to the ArbotiX ROS drivers. (It is a work in progress)
+
+= Installing The ArbotiX Package =
+...
+
+= Firmware Installation = 
+The firwmare folder of the files you just installed, contains various files for creating a firmware. You'll need to put some of them in a folder within your Arduino sketchbook. 
+
+For a non-nuke robot, you'll need arbotix-ros.pde, pid.h, and pml.h. For a NUKE robot, you need to copy arbotix-ros-nuke.pde and pml.h into your NUKE-created sketch. The .pde file should replace the one you exported with NUKE.
+
+= Creating a YAML Specification =
+The ArbotiX package is highly configurable. We suggest creating a YAML specification for your robot. 
+
+The YAML specification should detail which servos are connected to the ArbotiX, and which controllers to load:
+{{{
+port: /dev/ttyUSB1
+rate: 15
+dynamixels: {
+    "1": {name: head_pan},
+    "2": {name: head_tilt, max_angle: 100, min_angle: -100}
+}
+}}}
+In this file we have specified which port the ArbotiX should use (your port may be different, the default is /dev/ttyUSB0), the rate (in hz) that the joint_states topic should be published, and the names and IDs of our servos. The "dynamixels" parameter is a list of "id": {parameters} entries for Dynamixel servos connected to our bus. A _name_ is required, and must be a string. Other parameters include: max_angle, min_angle both in degrees), invert (0 or 1), etc. A full list can be found on the [arbotix] documentation page.
+
+We also want to create a launch file:
+{{{
+<launch>
+  <node name="arbotix" pkg="arbotix" type="arbotix-ros.py" output="screen">
+    <rosparam file="$(find your_package)/default.yaml" command="load" />
+  </node>
+</launch>
+}}} 
+
+These files should be placed in an package you have created. We typically use the name robot_common, where robot would be the name of your robot, for instance, nelson_common.
+
+= Testing it Out: Blink the LED =
+We can test that things are working by starting a _roscore_, our _arbotix_ node (using the launch file created earlier), and then calling the SetDigital service to turn the LED (digital pin 0) on.
+{{{
+rosservice call /setDigital 0 1 1
+}}}
+The first parameter (0) is the pin number, the second is >0 for output, and the last is that we want the pin set to high for on. We can turn the LED off with:
+{{{
+rosservice call /setDigital 0 1 0
+}}}
+Which leaves the pin configured as an output, but pulls it back low. 
+
+= Testing it Out: Controller GUI =
+In our example YAML and launch files, we gave our robot a pan and tilt head, with servos called head_pan and head_tilt. We can now control them using the Controller GUI:
+{{{
+rosrun arbotix controllerGUI.py
+}}}
+You should be able to move around the head pan/tilt sliders and see the head move. 
+
+= Controllers =
+We mentioned before that the core just publishes the "joint_state" updates and handles the digital/analog services -- how then is our head moving? The core also starts controllers that we define. In our YAML file, we did not define any controllers -- so the ArbotiX node created a default controller for us. This default controller is simply a joint_controller, which is controlling all servos. It is sent information over the cmd_joints topic (msg type sensor_msgs/JointState). The code of the controllerGUI is an example example of how to control servos easily in your own program.
+
+You can launch other controllers using your YAML file, here's a more sophisticated one that starts a base_controller, joint_controller, and a PML sensor:
+{{{
+port: /dev/ttyUSB1
+rate: 15
+sensors: {
+    "pml": {type: pml}
+}
+controllers: {
+    "j_con": {type:joint_controller,joints:["head_pan","head_tilt"]},
+    "b_con": {type:base_controller,base_width:0.145,ticks_per_meter:26145}
+}
+dynamixels: {
+    "1": {name: head_pan, invert: 1},
+    "2": {name: head_tilt, max_angle: 100, min_angle: -100}
+}
+}}}
