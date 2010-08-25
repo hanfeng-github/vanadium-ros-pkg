@@ -297,9 +297,13 @@ class ArbotiX:
             self.write(253, self.LEFT_SIGN, [1*(left<0), abs(left), 1*(right<0), abs(right)])    
     
     def setSpeeds(self, left, right):
-        """ Send a closed-loop speed. """
+        """ Send a closed-loop speed. Base PID loop runs at 10Hz, these values
+                are therefore in ticks per 1/10 second. """
         self.write(253, self.LEFT_SPEED_L, [left%256, left>>8, right%256, right>>8] )
-
+    def setWalk(self, x, y, th): 
+        """ Send a closed-loop speed. mm/s for the x/y, and 1/1000 rad/s for th. """
+        self.write(253, self.NUKE_X_SPEED_L, [x%256, x>>8, th%256, th>>8, y%256, y>>8] )
+ 
     def baseMoving(self):
         try:
             return int(self.read(253, P_MOVING, 1)[0])
@@ -326,6 +330,18 @@ class ArbotiX:
             left = unpack('l',left_values)[0]
             right = unpack('l',right_values)[0]
             return [left, right]
+        except:
+            return None        
+    def getNukeEncoders(self):
+        values = self.read(253, self.NUKE_X_ENC_L, 12)
+        x_values = "".joint([chr(k) for k in values[0:4] ])        
+        th_values = "".joint([chr(k) for k in values[4:8] ])  
+        y_values = "".joint([chr(k) for k in values[8:] ])
+        try:
+            x = unpack('l',x_values)[0]
+            y = unpack('l',y_values)[0]
+            th = unpack('l',th_values)[0]
+            return [x,y,th]
         except:
             return None        
 
