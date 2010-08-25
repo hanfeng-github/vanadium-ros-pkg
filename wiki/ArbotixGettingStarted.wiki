@@ -19,16 +19,16 @@ The YAML specification should detail which servos are connected to the ArbotiX, 
 port: /dev/ttyUSB1
 rate: 15
 dynamixels: {
-    "1": {name: head_pan},
-    "2": {name: head_tilt, max_angle: 100, min_angle: -100}
+    head_pan: {id: 1},
+    head_tilt: {id: 2, max_angle: 100, min_angle: -100}
 }
 }}}
-In this file we have specified which port the ArbotiX should use (your port may be different, the default is /dev/ttyUSB0), the rate (in hz) that the joint_states topic should be published, and the names and IDs of our servos. The "dynamixels" parameter is a list of "id": {parameters} entries for Dynamixel servos connected to our bus. A _name_ is required, and must be a string. Other parameters include: max_angle, min_angle both in degrees), invert (0 or 1), etc. A full list can be found on the [arbotix] documentation page.
+In this file we have specified which port the ArbotiX should use (your port may be different, the default is /dev/ttyUSB0), the rate (in hz) that the joint_states topic should be published, and the names and IDs of our servos. The "dynamixels" parameter is a list of name: {parameters} entries for Dynamixel servos connected to our bus. An _id_ is required. Other, optional, parameters include: max_angle, min_angle both in degrees), invert (0 or 1), etc. A full list can be found on the [arbotix] documentation page.
 
 We also want to create a launch file:
 {{{
 <launch>
-  <node name="arbotix" pkg="arbotix" type="arbotix-ros.py" output="screen">
+  <node name="arbotix" pkg="arbotix" type="arbotix-node.py" output="screen">
     <rosparam file="$(find your_package)/default.yaml" command="load" />
   </node>
 </launch>
@@ -37,13 +37,13 @@ We also want to create a launch file:
 These files should be placed in an package you have created. We typically use the name robot_common, where robot would be the name of your robot, for instance, nelson_common.
 
 = Testing it Out: Blink the LED =
-We can test that things are working by starting a _roscore_, our _arbotix_ node (using the launch file created earlier), and then calling the SetDigital service to turn the LED (digital pin 0) on.
+We can test that things are working by starting a _roscore_, our _arbotix_ node (using the launch file created earlier), and then calling the SetDigital service to turn on an  LED (we'll use digital pin 1).
 {{{
-rosservice call /setDigital 0 1 1
+rosservice call /setDigital 1 1 1
 }}}
-The first parameter (0) is the pin number, the second is >0 for output, and the last is that we want the pin set to high for on. We can turn the LED off with:
+The first parameter (1) is the pin number, the second is >0 for output, and the last is that we want the pin set to high for on. We can turn the LED off with:
 {{{
-rosservice call /setDigital 0 1 0
+rosservice call /setDigital 1 1 0
 }}}
 Which leaves the pin configured as an output, but pulls it back low. 
 
@@ -69,7 +69,7 @@ controllers: {
     "b_con": {type:base_controller,base_width:0.145,ticks_per_meter:26145}
 }
 dynamixels: {
-    "1": {name: head_pan, invert: 1},
-    "2": {name: head_tilt, max_angle: 100, min_angle: -100}
+    head_pan: {id: 1, invert: 1},
+    head_tilt: {id: 2, max_angle: 100, min_angle: -100}
 }
 }}}
