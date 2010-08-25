@@ -18,11 +18,12 @@
   * Move higher-level control into new controller architecture.
   * Stable Controllers: joint_controller, base_controller, nuke_controller
   * Experimental Sensors: lidar
+  * Stable Tools: Controller GUI
 
 === 0.1.0 - r9 - 7/30/10 ===
   * basic functionality, ROS API unstable
   * only in SVN
 
 == stereo_usb_cam package ==
-=== 0.2.0 - September ===
+=== 0.3.0 - Early September ===
   * stereo capture, fake synchronization
