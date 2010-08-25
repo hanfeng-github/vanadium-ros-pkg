@@ -129,7 +129,7 @@ class controllerGUI(wx.Frame):
         # send joint updates
         j = JointState()
         j.name = ["head_pan", "head_tilt", "head_tilt2"]
-        j.position = [-self.pan.GetValue()/100.0, -self.tilt.GetValue()/100.0, -self.tilt2.GetValue()/100.0]
+        j.position = [-self.pan.GetValue()/100.0, self.tilt.GetValue()/100.0, self.tilt2.GetValue()/100.0]
         self.cmd_joints.publish(j)
         # send base updates
         t = Twist()
