@@ -1,27 +1,27 @@
 #summary Package Documentation: arbotix
 
-This is the temporary docs...
-
 = Introduction =
-The ArbotiX-ROS driver consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection. The node is designed to be highly modular: a core module interacts with, and holds onto state information about servos, encoders, motors and IO. Individual "controllers" are then loaded to provide ROS topic- or action-based interfaces to these hardware devices.
+The ArbotiX-ROS driver consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection. The node is designed to be highly modular: the core module interacts with, and holds onto state information about servos, encoders, motors and IO. Individual "controllers" are then loaded to provide ROS topic- or action-based interfaces to these hardware devices.
 
-The ArbotiX firmware provides:
- * Control of up to 252 Dynamixel servos
- * Control of up to 10 hobby (PWM) servos
- * Access to 8 analog channels
- * Control and access of up to 16 digital channels (multiplexed with the hobby servo channels)
+The ArbotiX firmware provides access to:
+ * Up to 252 Dynamixel servos
+ * Up to 10 hobby (PWM) servos
+ * 8 analog channels
+ * Up to 16 digital channels (multiplexed with the hobby servo channels)
  * Full, tunable PID control of 2 motors.
  * IK-based control of walking robots (this requires a special NUKE-based firmware).
 
 Current controllers include:
  * High level control of a differential drive, including components necessary for using the ROS navigation stack, such as publishing odometry and tf information. (arbotix_controllers/base_controller).
  * High level control of IK-based walking robots using NUKE, including odometry and tf (arbotix_controllers/nuke_controller).
+ * Low level joint controllers (arbotix_controllers/joint_controller).
+
+Planned controllers include:
  * Action based joint controllers, for arms (arbotix_controllers/joint_traj_action).
  * Action based single joint controller (arbotix_controllers/single_traj_action).
  * Action based head controller (arbotix_controllers/head_action).
- * Low level joint controllers (arbotix_controllers/joint_controller).
  * Low level joint trajectory controllers (arbotix_controllers/joint_traj_controller).
- * The poor man's laser scanner, which broadcasts laser_scan topics using a long range IR sensor and AX-12. (arbotix_sensors/lidar).
+ * The Poor Man's Lidar (PML), which broadcasts laser_scan topics using a long range IR sensor and AX-12. (arbotix_sensors/pml).
 
 = Firmware = 
 There are currently several options for firmware. 
