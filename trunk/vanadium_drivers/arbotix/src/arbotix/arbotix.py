@@ -110,8 +110,11 @@ class ArbotiX:
     def execute(self, index, ins, params, ret=True):
         """ Send an instruction to a device. """
         values = None
-        self.mutex.acquire()        
-        self.ser.flushInput()
+        self.mutex.acquire()  
+        try:      
+            self.ser.flushInput()
+        except:
+            pass
         length = 2 + len(params)
         checksum = 255 - ((index + length + ins + sum(params))%256)
         self.ser.write(chr(0xFF)+chr(0xFF)+chr(index)+chr(length)+chr(ins))

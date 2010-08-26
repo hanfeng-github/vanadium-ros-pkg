@@ -49,8 +49,13 @@ class base_controller(Thread):
 
         # parameters
         self.rate = float(rospy.get_param("~controllers/"+name+"/rate",15.0))
-        self.ticks_meter = float(rospy.get_param("~controllers/"+name+"/ticks_meter", "26154"))
-        self.base_width = float(rospy.get_param("~controllers/"+name+"/base_width", "0.144"))
+        self.ticks_meter = float(rospy.get_param("~controllers/"+name+"/ticks_meter", 26154))
+        self.base_width = float(rospy.get_param("~controllers/"+name+"/base_width", 0.144))
+
+        self.Kp = float(rospy.get_param("~controllers/"+name+"/Kp", 25))
+        self.Kd = float(rospy.get_param("~controllers/"+name+"/Kd", 30))
+        self.Ki = float(rospy.get_param("~controllers/"+name+"/Ki", 0))
+        self.Ko = float(rospy.get_param("~controllers/"+name+"/Ko", 100))
         
         # internal data        
         self.enc_left = 0           # encoder readings

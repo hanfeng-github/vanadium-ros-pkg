@@ -28,7 +28,7 @@
 /* Build Configuration */
 #define USE_PML
 #define USE_BASE
-#define USE_HW_SERVOS
+//#define USE_HW_SERVOS
 
 /* Hardware Constructs */
 #include <ax12.h>
