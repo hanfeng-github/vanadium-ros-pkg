@@ -8,10 +8,10 @@ This release includes a number of stable, or mostly stable, components of the ar
  * arbotix-ros.py node is ROS API stable, including servo parameter specification, digital/analog services, and the controller loading interface.
  * joint_controller.py controller is stable. 
  * base_controller.py/nuke_controller.py are ROS API stable (cmd_vel, odometry publication), however, the parameter specifications are subject to change.
- * The Controller GUI tool is stable.
 
 === Experimental Components ===
  * The Poor Man's Lidar, or PML, (found in arbotix_sensors/pml.py) is experimental. It will be undergoing massive revisions to parameter specifications and data generation in 0.3.0
+ * The Controller GUI tool is approaching stability.
 
 === Installation ===
 Recommended installation method is to use SVN: 
