@@ -15,7 +15,7 @@
   * Stable Sensors: pml
   * Stable Controllers:  base_controller (now with dynamic reconfigure of PID, refinements to PID loop). 
 
-=== 0.2.1 - First Wk September
+=== 0.2.1 - First Wk September ===
   * Documentation Overhaul
   * Support for BigMotors library (robocontrollerlib 0007)
   * Stable Tools: Controller GUI
