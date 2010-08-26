@@ -1,17 +1,18 @@
 #summary Package Documentation: arbotix
 
- * [arbotix#Overview]
- * [arbotix#Firmware]
- * [arbotix#Topics-and-Services]
- * [arbotix#Parameters]
- * [arbotix#Controllers]
-   * [arbotix#base_controller]
-   * [arbotix#joint_controller]
- * [arbotix#Sensors]
-   * [arbotix#pml]
+ * [arbotix#Overview Overview]
+ * [arbotix#Firmware Firmware]
+ * [arbotix#arbotix-node.py ArbotiX Node]
+   * [arbotix#Topics-and-Services Topics and Services]
+   * [arbotix#Parameters Parameters]
+ * [arbotix#Controllers Controllers ]
+   * [arbotix#base_controller base_controller]
+   * [arbotix#joint_controller joint_controller]
+ * [arbotix#Sensors Sensors]
+   * [arbotix#pml pml]
 
 = Overview =
-The ArbotiX-ROS driver consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection. The node is designed to be highly modular: the core module interacts with, and holds onto state information about servos, encoders, motors and IO. Individual "controllers" are then loaded to provide ROS topic- or action-based interfaces to these hardware devices.
+The ArbotiX package consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection. The node is designed to be highly modular: the core module interacts with, and holds onto state information about servos, encoders, motors and IO. Individual "controllers" and "sensors" are then loaded to provide ROS topic- or action-based interfaces to these hardware devices.
 
 = Firmware = 
 The ArbotiX firmware provides access to:
@@ -22,22 +23,30 @@ The ArbotiX firmware provides access to:
  * Full, tunable PID control of 2 motors.
  * IK-based control of walking robots (this requires a special NUKE-based firmware).
 
-There are currently several options for firmware. 
- * arbotix-ros - default firmware. 
- * arbotix-ros-nuke - firmware sketch which can be exported from PyPose/NUKE.
+The firmware consists of several files, which must be placed in the _arduino-sketchbook/ros_ folder: 
+ * ros.pde - the main program. There are several build configurations possible, by commenting or uncommenting lines: 
+   * USE_PML - build the Poor Man's Lidar support.
+   * USE_BASE - build support for differential drive base.
+   * USE_HW_SERVOS - 
+ * ros.h - header file with register table definitions
+ * pml.h - the Poor Man's Lidar code. 
+ * pid.h - motor control code. 
 
-Additional options include: mobile base support and/or PML support.
+Support for NUKE walkers is provided by replacing the default exported sketch with the _ros-nuke.pde_ file (editing where noted), and copying _ros.h_ and _pml.h_ into the sketch folder. 
+----
+= arbotix-node.py = 
+The arbotix-node.py is the main node for this package. It is highly reconfigurable and can load a number of controllers and services. 
 
-= Topics-and-Services =
-The core module offers basic services and start-time configuration through a number of parameters. The services offered are: 
- * getAnalog 
+== Topics-and-Services ==
+arbotix-node.py offers basic services and start-time configuration through a number of parameters. The services offered are: 
+ * getAnalog
  * getDigital
  * setDigital
 
 The core also publishes servo positions to the _joint_states_ topic. 
 
-= Parameters = 
-The following parameters are used for the core module, parameters for individual sensors and controllers are documented later. 
+== Parameters ==
+The following parameters are used for arbotix-node.py, parameters for individual sensors and controllers are documented later. 
  * port (default: /dev/ttyUSB0)
  * baud (default: 38400) - baud rate, in bps. 
  * rate (default: 15.0) - rate at which to publish the _joint_states_ topic. 
@@ -56,9 +65,9 @@ Servos also have the following parameters:
  * sync (default: True for dynamixels, false for hobby) - whether servo should be queried for position when doing joint_state update. If false, last known position is used for joint_state publications. 
  * range - range of servo in degrees, must be set before ticks if used.
  * ticks (default: 1024 or 2000us) - number of ticks, for EX-106s, you would have to pass in 4096, other servos likely won't change this. 
-
+----
 = Controllers = 
-Controllers provide a higher-level interface to hardware devices, in a more ROS-fashion. 
+Controllers provide a higher-level interface to hardware devices, in a more ROS-like fashion. 
 
 == base_controller == 
 The base controller provides high level control of a differential drive robot. This includes taking velocity commands and publishing odometry and tf information for the navigation stack. The nuke_controller for controlling NUKE-based walkers is nearly identical, however the only parameter is _rate_. 
@@ -100,6 +109,7 @@ A joint_traj_controller allows more advanced control of a set of servos by passi
 
 A head_action allows positioning a head to point at a location in space. It uses our _cmd_joints_ topic.  
 
+----
 = Sensors =
 The ArbotiX is also capable of interfacing high-level sensors to ROS. 
 
