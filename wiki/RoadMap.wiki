@@ -3,28 +3,32 @@
 = vanadium_drivers stack = 
 
 == arbotix package ==
+=== 0.5.0 - October ===
+  * Stable Controllers: joint_traj_controller, joint_traj_action, single_traj_action
+
 === 0.4.0 - September ===
   * Stable Controllers: head_action
-  * Experimental Controllers: joint_traj_controller, joint_traj_action, single_traj_action
+  * New Experimental Controllers: joint_traj_controller, joint_traj_action, single_traj_action
+  * New Experimental Sensors: sonar_cloud
 
 === 0.3.0 - Early September ===
-  * Stable Sensors: pml
-  * Stable Controllers:  Add dynamic_reconfigure for PID params of base_controller
-  * New Experimental Controllers: head_action
   * Documentation overhaul
+  * Stable Sensors: pml
+  * Stable Controllers:  base_controller (now with dynamic reconfigure of PID, refinements to PID loop). 
+  * New Experimental Controllers: head_action
   * Stable Tools: Controller GUI
 
-=== 0.2.0 - August ===
+=== 0.2.0 - r66 - 8/26/10 ===
   * Clean up and finalize Dynamixel/Hobby Servo classes.
   * Analog/Digital services stable. 
-  * Move higher-level control into new controller architecture.
-  * Stable Controllers: joint_controller, base_controller, nuke_controller
-  * Experimental Sensors: pml
+  * Move higher-level control into new controller architecture:
+    * Stable Controllers: joint_controller, nuke_controller
+    * Experimental Controllers: base_controller
+    * Experimental Sensors: pml
   * Experimental Tools: Controller GUI
 
 === 0.1.0 - r9 - 7/30/10 ===
   * basic functionality, ROS API unstable
-  * only in SVN
 
 == stereo_usb_cam package ==
 === 0.3.0 - Early September ===
