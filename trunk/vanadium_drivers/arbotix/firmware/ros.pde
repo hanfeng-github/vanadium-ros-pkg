@@ -171,17 +171,13 @@ unsigned char handleWrite(){
     }else if(addr == REG_LM_SPEED_H){
       left_speed += (params[k]<<8);
       left.VelocitySetpoint = left_speed;
-      if((left.VelocitySetpoint == 0) && (right.VelocitySetpoint == 0)){
-        PIDmode = 0; moving = 0;
-      }else{
-        PIDmode = 1; moving = 1;
-      }
     }else if(addr == REG_RM_SPEED_L){
       right_speed = params[k];
     }else if(addr == REG_RM_SPEED_H){
       right_speed += (params[k]<<8); 
       right.VelocitySetpoint = right_speed;  
       if((left.VelocitySetpoint == 0) && (right.VelocitySetpoint == 0)){
+        drive.set(0,0);
         PIDmode = 0; moving = 0;
       }else{
         PIDmode = 1; moving = 1;
