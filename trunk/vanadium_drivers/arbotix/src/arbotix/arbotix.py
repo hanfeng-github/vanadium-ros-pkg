@@ -246,8 +246,9 @@ class ArbotiX:
     KI = 71
     KO = 72
     
-    GP_SCAN_ENABLE = 79
-    GP_BASE = 80
+    PML_SERVO = 78
+    PML_ENABLE = 79
+    PML_BASE = 80
 
     def getAnalog(self, index):
         """ Read an analog port, returns 0-255 (-1 if error). """
@@ -297,11 +298,16 @@ class ArbotiX:
             self.write(253, self.LEFT_SIGN, [1*(left<0), abs(left), 1*(right<0), abs(right)])    
     
     def setSpeeds(self, left, right):
-        """ Send a closed-loop speed. Base PID loop runs at 10Hz, these values
-                are therefore in ticks per 1/10 second. """
+        """ Send a closed-loop speed. Base PID loop runs at 30Hz, these values
+                are therefore in ticks per 1/30 second. """
+        left = left&0xffff
+        right = right&0xffff
         self.write(253, self.LEFT_SPEED_L, [left%256, left>>8, right%256, right>>8] )
     def setWalk(self, x, y, th): 
         """ Send a closed-loop speed. mm/s for the x/y, and 1/1000 rad/s for th. """
+        x = x&0xffff
+        y = y&0xffff
+        th = th&0xffff
         self.write(253, self.NUKE_X_SPEED_L, [x%256, x>>8, th%256, th>>8, y%256, y>>8] )
  
     def baseMoving(self):
@@ -319,13 +325,13 @@ class ArbotiX:
         except:
             return None        
     def getLenc(self):
-        return self.getEnc(self.ENC_LEFT_L)        
+        return self.getEnc(self.LEFT_ENC_L)        
     def getRenc(self):
-        return self.getEnc(self.ENC_RIGHT_L)
+        return self.getEnc(self.RIGHT_ENC_L)
     def getEncoders(self):
-        values = self.read(253, self.ENC_LEFT_L, 8)
-        left_values = "".joint([chr(k) for k in values[0:4] ])        
-        right_values = "".joint([chr(k) for k in values[4:] ])
+        values = self.read(253, self.LEFT_ENC_L, 8)
+        left_values = "".join([chr(k) for k in values[0:4] ])        
+        right_values = "".join([chr(k) for k in values[4:] ])
         try:
             left = unpack('l',left_values)[0]
             right = unpack('l',right_values)[0]
@@ -334,9 +340,9 @@ class ArbotiX:
             return None        
     def getNukeEncoders(self):
         values = self.read(253, self.NUKE_X_ENC_L, 12)
-        x_values = "".joint([chr(k) for k in values[0:4] ])        
-        th_values = "".joint([chr(k) for k in values[4:8] ])  
-        y_values = "".joint([chr(k) for k in values[8:] ])
+        x_values = "".join([chr(k) for k in values[0:4] ])        
+        th_values = "".join([chr(k) for k in values[4:8] ])  
+        y_values = "".join([chr(k) for k in values[8:] ])
         try:
             x = unpack('l',x_values)[0]
             y = unpack('l',y_values)[0]
@@ -345,11 +351,11 @@ class ArbotiX:
         except:
             return None        
 
-    def enableGp(self, value):
+    def enablePML(self, value):
         if value:
-            return self.write(253, self.GP_SCAN_ENABLE, [1])
+            return self.write(253, self.PML_ENABLE, [1])
         else:
-            return self.write(253, self.GP_SCAN_ENABLE, [0])
+            return self.write(253, self.PML_ENABLE, [0])
 
 if __name__ == "__main__":
     # some simple testing
