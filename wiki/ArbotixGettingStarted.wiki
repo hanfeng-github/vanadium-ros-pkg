@@ -4,12 +4,17 @@
 This is a quick start guide to the ArbotiX ROS drivers. (It is a work in progress)
 
 = Installing The ArbotiX Package =
-...
+You'll need to install ROS and subversion. You can then install the _vanadium_drivers_ stack, which includes the _arbotix_ package: 
+{{{
+mkdir vanadium-ros-pkg; cd vanadium-ros-pkg
+svn checkout http://vanadium-ros-pkg.googlecode.com/svn/tags/vanadium_drivers/0.2.0 vanadium_drivers
+cd vanadium_drivers; cd arbotix; make
+}}}
 
 = Firmware Installation = 
 The firwmare folder of the files you just installed, contains various files for creating a firmware. You'll need to put some of them in a folder within your Arduino sketchbook. 
 
-For a non-nuke robot, you'll need arbotix-ros.pde, pid.h, and pml.h. For a NUKE robot, you need to copy arbotix-ros-nuke.pde and pml.h into your NUKE-created sketch. The .pde file should replace the one you exported with NUKE.
+For a non-nuke robot, you'll need ros.pde, pid.h, and pml.h. For a NUKE robot, you need to copy ros-nuke.pde and pml.h into your NUKE-created sketch. The .pde file should replace the one you exported with NUKE.
 
 = Creating a YAML Specification =
 The ArbotiX package is highly configurable. We suggest creating a YAML specification for your robot. 
@@ -66,7 +71,7 @@ sensors: {
 }
 controllers: {
     "j_con": {type:joint_controller,joints:["head_pan","head_tilt"]},
-    "b_con": {type:base_controller,base_width:0.145,ticks_per_meter:26145}
+    "b_con": {type:base_controller,base_width:0.145,ticks_meter:26145}
 }
 dynamixels: {
     head_pan: {id: 1, invert: 1},
