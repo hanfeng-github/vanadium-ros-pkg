@@ -12,11 +12,14 @@
   * New Experimental Sensors: sonar_cloud
 
 === 0.3.0 - Early September ===
-  * Documentation overhaul
   * Stable Sensors: pml
   * Stable Controllers:  base_controller (now with dynamic reconfigure of PID, refinements to PID loop). 
-  * New Experimental Controllers: head_action
+
+=== 0.2.1 - First Wk September
+  * Documentation Overhaul
+  * Support for BigMotors library (robocontrollerlib 0007)
   * Stable Tools: Controller GUI
+  * New Experimental Controllers: head_action
 
 === 0.2.0 - r66 - 8/26/10 ===
   * Clean up and finalize Dynamixel/Hobby Servo classes.
