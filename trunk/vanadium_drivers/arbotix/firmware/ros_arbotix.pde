@@ -25,27 +25,29 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */ 
 
-/* Build Configuration */ 
-#define ROS_ARBOTIX
-#define USE_GP_LIDAR
+/* Build Configuration */
+#define USE_PML
+#define USE_BASE
 
 #include <ax12.h>
 #include <BioloidController.h>
-#include <Motors2.h>
 #include <Servo.h>
-#include <EncodersAB.h>
 
 /* Hardware Constructs */
 BioloidController bioloid = BioloidController(1000000);
-Motors2 drive = Motors2();
 Servo servos[10];
 
 #include "ros.h"
-#include "pid.h"
 
-#ifdef USE_GP_LIDAR 
-  #define LIDAR_SERVO     3
-  #include "gp_lidar.h"
+#ifdef USE_BASE
+#include <Motors2.h>
+#include <EncodersAB.h>
+Motors2 drive = Motors2();
+#include "pid.h"
+#endif
+
+#ifdef USE_PML 
+  #include "pml.h"
 #endif
 
 /* Register Storage */
@@ -67,12 +69,17 @@ int seqPos;                     // step in current sequence
  * Setup
  */
 void setup(){
-  Serial.begin(38400);    
+  Serial.begin(38400);  
+  
+#ifdef USE_BASE  
   Encoders.Begin();
   setupPID();
-#ifdef USE_GP_LIDAR
-  init_gp_lidar();
 #endif
+
+#ifdef USE_PML
+  init_pml();
+#endif
+
   pinMode(0,OUTPUT);     // status LED
 }
 
@@ -125,6 +132,7 @@ unsigned char handleWrite(){
     }else if(addr == REG_MOVING){
       return INSTRUCTION_ERROR;
       
+#ifdef USE_BASE
     }else if(addr == REG_LM_SIGN){          // motor pwms = 1 byte sign + 1 byte value
       left_pwm = 1 + -2*params[k];
     }else if(addr == REG_LM_PWM){
@@ -141,27 +149,38 @@ unsigned char handleWrite(){
         moving = 1;
         
     }else if(addr == REG_LM_SPEED_L){       // motor speed for move_base (ticks/frame, 2 bytes, signed)
+      PIDmode = 0;
       left_speed = params[k];
     }else if(addr == REG_LM_SPEED_H){
       left_speed += (params[k]<<8);
-    }else if(addr == REG_RM_SPEED_L){ 
+      PIDmode = 1;
+      moving = 1;
+    }else if(addr == REG_RM_SPEED_L){
+      PIDmode = 0;
       right_speed = params[k];
     }else if(addr == REG_RM_SPEED_H){
-      right_speed += (params[k]<<8);
-      
+      right_speed += (params[k]<<8);      
+      PIDmode = 1;
+      moving = 1;
+
     }else if(addr < REG_KP){
-      // can't write encoders?    
+      // can't write encoders?  
+      
     }else if(addr == REG_KP){
-
+      Kp = params[k];  
     }else if(addr == REG_KD){
-
+      Kd = params[k];  
     }else if(addr == REG_KI){
-
+      Ki = params[k];  
     }else if(addr == REG_KO){
+      Ko = params[k];  
+#endif
 
-#ifdef USE_GP_LIDAR
-    }else if(addr == REG_GP_SCAN){
-      gp_lidar_enable = params[k];
+#ifdef USE_PML
+    }else if(addr == REG_PML_SERVO){
+      set_pml_servo(params[k]);
+    }else if(addr == REG_PML_SCAN){
+      set_pml_enable(params[k]);
 #endif
     }else{
       return INSTRUCTION_ERROR;
@@ -200,6 +219,8 @@ int handleRead(){
     }else if(addr < REG_MOVING){
       // send servo position
       v = 0;
+      
+#ifdef USE_BASE
     }else if(addr == REG_MOVING){
       v = moving;
     }else if(addr < REG_ENC_LEFT_L){
@@ -220,9 +241,11 @@ int handleRead(){
       v = Ki;
     }else if(addr == REG_KO){
       v = Ko;
-#ifdef USE_GP_LIDAR
-    }else if(addr < REG_GP_BASE + 60){
-      v = gp_readings[addr-REG_GP_BASE];
+#endif
+      
+#ifdef USE_PML
+    }else if(addr < REG_PML_BASE + 60){
+      v = pml_readings[addr-REG_PML_BASE];
 #endif
     }else{
       v = 0;        
@@ -234,6 +257,7 @@ int handleRead(){
   return checksum;
 }
 
+#ifdef USE_BASE
 void doTest(){
   int i;
   // Test I/O
@@ -263,6 +287,7 @@ void doTest(){
   drive.set(0,0);
   delay(1500);
 }
+#endif
 
 int doPlaySeq(){
   seqPos = 0; int i;
@@ -384,11 +409,13 @@ void loop(){
              statusPacket(id,0);
              while(doPlaySeq() > 0);
              break;
-             
+
+#ifdef USE_BASE   
            case ARB_TEST:
              statusPacket(id,0);
              doTest();
              break;
+#endif
          }
        }else if(id == 0xFE){
          // sync read or write
@@ -446,9 +473,13 @@ void loop(){
  } // end while(available)
  // update joints
  bioloid.interpolateStep();
+ 
+#ifdef USE_BASE
  // update pid
  updatePID();
-#ifdef USE_GP_LIDAR
- step_gp_lidar();
+#endif
+ 
+#ifdef USE_PML
+ step_pml();
 #endif
 }

@@ -1,5 +1,5 @@
 /* 
-  Poor Man's LIDAR for ROS driver ArbotiX Firmware
+  Poor Man's LIDAR (PML) for ROS driver ArbotiX Firmware
   Copyright (c) 2008-2010 Vanadium Labs LLC.  All right reserved.
  
   Redistribution and use in source and binary forms, with or without
@@ -25,57 +25,75 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */ 
 
+#ifdef USE_PML
+
 #include <WProgram.h>
 
 /* Takes 30 readings, 6 degrees apart for 180 degree coverage */
 #define MAX_READINGS    30
 #define MAX_STEPS       60
-unsigned char gp_readings[2*MAX_READINGS];
-int gp_lidar_step;
-#define GP_ANGLE_STEP   21
-#define GP_START        206
+unsigned char pml_readings[2*MAX_READINGS];
+#define PML_ANGLE_STEP   21
+#define PML_START        206
 
-#define GP_TIME_FRAME   50    // how long between movements
-unsigned long gp_lidar_time;  // last time we moved
-int gp_lidar_enable;
+#define PML_TIME_FRAME   30   // how long between movements
+unsigned long pml_time;       // last time we moved
+int pml_enable;
+int pml_servo;
+int pml_step;
 
-void init_gp_lidar(){
-    gp_lidar_step = 15;
-    gp_lidar_enable = 0;
-    gp_lidar_time = millis() + GP_TIME_FRAME;
-    SetPosition(LIDAR_SERVO, 512);
+/* setup default parameters */
+void init_pml(){
+  pml_step = 15;
+  pml_enable = 0;
+  pml_servo = -1;
+  pml_time = millis() + PML_TIME_FRAME;
 }
 
-/* take our next reading */
-void step_gp_lidar(){
-  unsigned long j = millis();
-  if(j > gp_lidar_time){
-    if((gp_lidar_enable > 0) | ((gp_lidar_step != 15) && (gp_lidar_step != 45)) ){
-      // reading from IR sensor  
-      int v = analogRead(0);
-      // save reading
-      if(gp_lidar_step >= MAX_READINGS){
-          gp_readings[58 - ((gp_lidar_step*2)-60)] = v % 256;
-          gp_readings[59 - ((gp_lidar_step*2)-60)] = v >> 8;
-          //gp_readings[MAX_STEPS - ((gp_lidar_step*2) + 2)] = v % 256;
-          //gp_readings[MAX_STEPS - ((gp_lidar_step*2) + 1)] = v>>8;
-      }else{
-          gp_readings[gp_lidar_step*2] = v % 256;
-          gp_readings[(gp_lidar_step*2) + 1] = v>>8;
-      }
-      // advance    
-      gp_lidar_step = (gp_lidar_step+1)%MAX_STEPS;
-      if(gp_lidar_step >= MAX_READINGS){
-          SetPosition(LIDAR_SERVO, GP_START + (GP_ANGLE_STEP * (MAX_STEPS - gp_lidar_step - 1)));
-      }else{
-          SetPosition(LIDAR_SERVO, GP_START + (GP_ANGLE_STEP * gp_lidar_step));
-      }
-    }else{
-      int v = analogRead(0);
-      gp_readings[30] = v %256;
-      gp_readings[31] = v>>8; 
-    }
-    gp_lidar_time = j+GP_TIME_FRAME;
+/* select servo, center it */
+void set_pml_servo(int id){
+  pml_servo = id;
+  SetPosition(pml_servo, 512);
+}
+
+/* enable our PML */
+void set_pml_enable(int k){
+  if((k > 0) && (pml_servo > 0)){
+    pml_enable = 1;
+  }else{
+    pml_enable = 0;
   }
 }
 
+/* take our next reading */
+void step_pml(){
+  unsigned long j = millis();
+  if((j > pml_time) && (pml_servo > 0)){
+    if((pml_enable > 0) | ((pml_step != 15) && (pml_step != 45)) ){
+      // reading from IR sensor  
+      int v = analogRead(0);
+      // save reading
+      if(pml_step >= MAX_READINGS){
+          pml_readings[58 - ((pml_step*2)-60)] = v % 256;
+          pml_readings[59 - ((pml_step*2)-60)] = v >> 8;
+      }else{
+          pml_readings[pml_step*2] = v % 256;
+          pml_readings[(pml_step*2) + 1] = v>>8;
+      }
+      // advance    
+      pml_step = (pml_step+1)%(MAX_STEPS);
+      if(pml_step >= MAX_READINGS){
+          SetPosition(pml_servo, PML_START + (PML_ANGLE_STEP * (MAX_STEPS -pml_step - 1)));
+      }else{
+          SetPosition(pml_servo, PML_START + (PML_ANGLE_STEP * pml_step));
+      }
+    }else{
+      int v = analogRead(0);
+      pml_readings[30] = v%256;
+      pml_readings[31] = v>>8; 
+    }
+    pml_time = j+PML_TIME_FRAME;
+  }
+}
+
+#endif

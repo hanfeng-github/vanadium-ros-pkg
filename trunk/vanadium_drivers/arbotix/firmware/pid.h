@@ -135,10 +135,10 @@ void updatePID(){
       // set updated motor outputs
       if(PIDmode > 0){
         drive.set(left.output, right.output);
-      }else{
+      } /*else{
         drive.set(0,0);
         moving = 0;
-      }
+      }*/
       // update timing
       f_time = j + FRAME_RATE;
     }

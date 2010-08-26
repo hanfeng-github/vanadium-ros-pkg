@@ -78,8 +78,9 @@
 #define REG_KI              71
 #define REG_KO              72
 
-#define REG_GP_SCAN         79  // scan or no?
-#define REG_GP_BASE         80
+#define REG_PML_SERVO       78  // servo ID for PML
+#define REG_PML_SCAN        79  // scan or no?
+#define REG_PML_BASE        80
 
 /* Packet Decoding */
 int mode = 0;                   // where we are in the frame
