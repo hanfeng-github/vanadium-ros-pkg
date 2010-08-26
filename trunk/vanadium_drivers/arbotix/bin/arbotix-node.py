@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# TODO: Base movement, Nuke movement
-# Move gp_lidar distance calcs down to the ServoStiK
-
 """
   ArbotiX ROS Node: serial connection to an ArbotiX board w/ PyPose/NUKE/ROS
   Copyright (c) 2008-2010 Michael E. Ferguson.  All right reserved.
@@ -40,8 +37,9 @@ from arbotix.srv import *
 from arbotix.ax12 import *
 
 # TODO: generalize these, add init.py in packages
-from arbotix_sensors.lidar import *
-#from arbotix_controllers.base_controller import *
+from arbotix_sensors.pml import *
+from arbotix_controllers.base_controller import *
+from arbotix_controllers.nuke_controller import *
 from arbotix_controllers.joint_controller import *
 
 from math import sin,cos,pi,radians
@@ -52,10 +50,11 @@ from datetime import datetime
 class DynamixelServo():
     """ Class to handle services and updates for a single Dynamixel Servo, on 
         an ArbotiX robocontroller's AX/RX-bus. """
-    def __init__(self, index, params, device, single=False):
-        self.id = index
+    def __init__(self, name, params, device, single=False):
+        self.name = name
         self.device = device                        # ArbotiX instance
 
+        self.id = -1
         self.neutral = 512                          # adjust for EX-106, etc
         self.ticks = 1024                           # adjust for EX-106, etc
         self.rad_per_tick = radians(300.0)/1024     # adjust for EX-106, etc
@@ -95,8 +94,8 @@ class DynamixelServo():
                 self.rad_per_tick = radians(float(params[key]))/self.ticks
             elif key=='neutral':
                 self.neutral = params[key]
-            elif key=='name':
-                self.name = params[key]
+            elif key=='id':
+                self.id = int(params[key])
             else:
                 rospy.logerr("Parameter '" + key + "' not recognized.")
 
@@ -143,10 +142,11 @@ class DynamixelServo():
 class HobbyServo(DynamixelServo):
     """ Class to handle services and updates for a single Hobby Servo, connected to 
         an ArbotiX robocontroller. A stripped down version of the DynamixelServo. """
-    def __init__(self, index, params, device, single=False):
-        self.id = index
+    def __init__(self, name, params, device, single=False):
+        self.name = name
         self.device = device                        # ArbotiX instance
 
+        self.id = -1
         self.neutral = 1500                         # might be adjusted for crappy servos
         self.ticks = 2000
         self.rad_per_tick = radians(180.0)/2000     # 180 degrees over 500-2500ms 
@@ -201,8 +201,8 @@ class ArbotiX_ROS(ArbotiX):
         self.sync_servos = list()   # ids of servos we will sync_read
         self.sync_names = list()    # names of servos we will sync_read (in same order)
         self.no_sync_names = list() # names of servos we can't sync read
-        for index in dynamixels.keys():
-            servo = DynamixelServo(int(index), dynamixels[index], self, use_single) 
+        for name in dynamixels.keys():
+            servo = DynamixelServo(name, dynamixels[name], self, use_single) 
             self.servos[servo.name] = servo 
             if servo.sync: 
                 self.sync_servos.append(servo.id)    
@@ -211,8 +211,8 @@ class ArbotiX_ROS(ArbotiX):
                 self.no_sync_names.append(servo.name)
 
         servos = rospy.get_param("~servos", dict())
-        for index in servos.keys():
-            servo = HobbyServo(int(index), servos[index], self)
+        for name in servos.keys():
+            servo = HobbyServo(name, servos[name], self)
             self.servos[servo.name] = servo
             self.no_sync_names.append(servo.name)
 
@@ -228,21 +228,21 @@ class ArbotiX_ROS(ArbotiX):
         if len(controller_list) == 0:
             # launch a default controller
             joints = joint_controller(self, "joint_controller", self.servos.keys())
-        #else:
-        #    for controller, params in controller_list.items():
-        #        if params.type == "
-
-        ##use_base = rospy.get_param("~use_base",False)                       # use closed-loop base?
-        #use_nuke = rospy.get_param("~use_nuke",False)                       # use nuke base?
-        #use_lidar = rospy.get_param("~use_lidar",False)                     # use lidar?
-
+        else:
+            for controller, params in controller_list.items():
+                if params["type"] == "joint_controller":
+                    jc = joint_controller(self, controller)
+                    jc.start()
+                elif params["type"] == "base_controller":
+                    bc = base_controller(self, controller)
+                    bc.start()
         # initialize sensors
         sensor_list = rospy.get_param("~sensors",list())
-        for sensor, params in sensor_list.items():
-            if params["type"] == "lidar":
-                mylidar = lidar(self, sensor)
-                mylidar.start()
-            # TODO: other types
+        if len(sensor_list) > 0:
+            for sensor, params in sensor_list.items():
+                if params["type"] == "pml":
+                    mylidar = pml(self, sensor)
+                    mylidar.start()
 
         # publish joint states (everything else is a service/topic callback)
         r = rospy.Rate(int(rospy.get_param("~rate",10)))
