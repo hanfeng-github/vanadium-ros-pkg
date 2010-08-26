@@ -1,8 +1,19 @@
 #summary Package Documentation: arbotix
 
-= Introduction =
+ * [arbotix#Overview]
+ * [arbotix#Firmware]
+ * [arbotix#Topics-and-Services]
+ * [arbotix#Parameters]
+ * [arbotix#Controllers]
+   * [arbotix#base_controller]
+   * [arbotix#joint_controller]
+ * [arbotix#Sensors]
+   * [arbotix#pml]
+
+= Overview =
 The ArbotiX-ROS driver consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection. The node is designed to be highly modular: the core module interacts with, and holds onto state information about servos, encoders, motors and IO. Individual "controllers" are then loaded to provide ROS topic- or action-based interfaces to these hardware devices.
 
+= Firmware = 
 The ArbotiX firmware provides access to:
  * Up to 252 Dynamixel servos
  * Up to 10 hobby (PWM) servos
@@ -11,11 +22,73 @@ The ArbotiX firmware provides access to:
  * Full, tunable PID control of 2 motors.
  * IK-based control of walking robots (this requires a special NUKE-based firmware).
 
-Current controllers include:
- * High level control of a differential drive, including components necessary for using the ROS navigation stack, such as publishing odometry and tf information. (arbotix_controllers/base_controller).
- * High level control of IK-based walking robots using NUKE, including odometry and tf (arbotix_controllers/nuke_controller).
- * Low level joint controllers (arbotix_controllers/joint_controller).
+There are currently several options for firmware. 
+ * arbotix-ros - default firmware. 
+ * arbotix-ros-nuke - firmware sketch which can be exported from PyPose/NUKE.
 
+Additional options include: mobile base support and/or PML support.
+
+= Topics-and-Services =
+The core module offers basic services and start-time configuration through a number of parameters. The services offered are: 
+ * getAnalog 
+ * getDigital
+ * setDigital
+
+The core also publishes servo positions to the _joint_states_ topic. 
+
+= Parameters = 
+The following parameters are used for the core module, parameters for individual sensors and controllers are documented later. 
+ * port (default: /dev/ttyUSB0)
+ * baud (default: 38400) - baud rate, in bps. 
+ * rate (default: 15.0) - rate at which to publish the _joint_states_ topic. 
+ * dynamixels - a dictionary configuration of dynamixel servo names and parameters. 
+ * servos - a dictionary configuration of hobby servo names and parameters. 
+ * use_sync (default: True) - whether to use sync_read or not. Must be disabled when using hardware such as a USB2Dynamixel. 
+ * controllers - a dictionary of controller names and parameters.
+ * sensors - a dictionary of sensor names and parameters. 
+
+Servos also have the following parameters: 
+ * id - must be specified for each servo. For dynamixel servos, this is the ID on the bus, for hobby servos it is the pin number to use. 
+ * neutral (default: 512 or 1500us) - in ticks (dynamixel) or microseconds (hobby servos). 
+ * min_angle - minimum angle in degrees.
+ * max_angle - maximum angle in degrees.
+ * invert (default: 0) - to invert servo rotation or not.
+ * sync (default: True for dynamixels, false for hobby) - whether servo should be queried for position when doing joint_state update. If false, last known position is used for joint_state publications. 
+ * range - range of servo in degrees, must be set before ticks if used.
+ * ticks (default: 1024 or 2000us) - number of ticks, for EX-106s, you would have to pass in 4096, other servos likely won't change this. 
+
+= Controllers = 
+Controllers provide a higher-level interface to hardware devices, in a more ROS-fashion. 
+
+== base_controller == 
+The base controller provides high level control of a differential drive robot. This includes taking velocity commands and publishing odometry and tf information for the navigation stack. The nuke_controller for controlling NUKE-based walkers is nearly identical, however the only parameter is _rate_. 
+
+Parameters to the base_controller are: 
+ * rate (default: 15.0) - rate to publish odometry
+ * base_width - track width, in meters.  
+ * ticks_meter - encoder ticks per meter of travel. 
+ * Kp - 
+ * Kd -
+ * Ki - 
+ * Ko -
+
+Publishes: 
+ * odom (nav_msgs/Odometry)
+ * tf transform from base_link to odom. 
+
+Subscribes To: 
+ * cmd_vel (geometry_msgs/Twist)
+
+== joint_controller ==
+The joint_controller is the simplest of servo controllers. It subscribes to a _cmd_joints_ topic, of type JointState, and manages a set of joints -- often an arm or head unit. Simple positional requests can be sent over this topic, and servos are moved to the desired position (instantly, no smoothing or trajectory management is employed). 
+
+Parameters: 
+ * joints - a list of joint names to control. 
+
+Subscribes To: 
+ * cmd_joints (sensor_msgs/JointState)
+
+== Other Controllers==
 Planned controllers include:
  * Action based joint controllers, for arms (arbotix_controllers/joint_traj_action).
  * Action based single joint controller (arbotix_controllers/single_traj_action).
@@ -23,57 +96,22 @@ Planned controllers include:
  * Low level joint trajectory controllers (arbotix_controllers/joint_traj_controller).
  * The Poor Man's Lidar (PML), which broadcasts laser_scan topics using a long range IR sensor and AX-12. (arbotix_sensors/pml).
 
-= Firmware = 
-There are currently several options for firmware. 
- * arbotix-ros - default firmware. 
- * arbotix-ros-nuke - firmware sketch which can be exported from PyPose/NUKE.
-
-Additional options include: mobile base support and/or PML support.
-
-= Core Module = 
-The core module is the base of the arbotix node. It publishes the _joint_states_ topic. _arbotix-ros_ offers the following services:
- * getAnalog
- * getDigital 
- * setDigital
-
-Parameters: 
- * port (default: /dev/ttyUSB0)
- * baud (default: 38400)
- * rate (default: 10.0) - rate at which to publish the _joint_states_ topic. 
- * dynamixels ... 
- * servos ...
- * use_sync 
-
-= Base Controllers = 
-The base_controller is in command of a mobile base. It subscribes to the _cmd_vel_ topic, and publishes to the _odom_ topic. The nuke_controller is a derivative of the base_controller, which allows strafing for walking platforms. 
-
-Parameters:
- * ticks_meter - encoder ticks per meter of travel
- * base_width - width between differential drive wheels, in meters
- * base_rate (default: 10.0) how often to read encoders and publish odometry. 
-
-= Joint Controllers =
-The joint_controller is the simplest of servo controllers. It subscribes to a _cmd_joints_ topic, of type JointState, and manages a set of joints -- often an arm or head unit. Simple positional requests can be sent over this topic, and servos are moved to the desired position (instantly, no smoothing or trajectory management is employed). 
-
 A joint_traj_controller allows more advanced control of a set of servos by passing a series of trajectories, rather than a single position. It subscribes to the _command_ topic within it's namespace. The single_traj_controller is a similar controller, but for single servo control. A joint_traj_action can be used to pass trajectories to a joint_traj_controller via an action interface. 
 
 A head_action allows positioning a head to point at a location in space. It uses our _cmd_joints_ topic.  
 
-= Lidar =
-The Poor Man's Lidar (PML) module allows using an AX-12 servo and a long range IR sensor to  create laser scans within ROS. While the resolution and update rate are significantly lower than that of a true lidar, the results are impressive for the overall cost. Use of a PML requires that a proper firmware be installed.  
+= Sensors =
+The ArbotiX is also capable of interfacing high-level sensors to ROS. 
+
+== pml ==
+The Poor Man's Lidar (PML) module creates laser scans with ROS using an AX-12 servo and a long range IR sensor. While the resolution and update rate are significantly lower than that of a true lidar, the results are impressive for the overall cost. Use of a PML requires that the USE_PML option be uncommented when compiling firmware.   
 
 Parameters: 
- * lidar_rate (default: 1.0) 
- * lidar_frame (default: base_laser)
+ * id (default: 200) - ID of AX-12 servo used in the PML
+ * rate (default: 1.0) - rate to publish the laser scan
+ * frame (default: base_laser) - tf frame to publish laser scan in.
 
-= YAML Specification =
-The _arbotix-ros_ node uses a YAML file to specify it's many parameters and possible configurations. 
+Publishes: 
+ * base_scan (sensor_msgs/LaserScan)
 
-= Launch File = 
-In order to load the YAML specification, it is recommended to use a launch file like the following: 
-
-= Example: Nelson =
-Coming Soon.
-
-= Controller GUI = 
-The controller GUI is a quick way to test that everything is working, or even to teleoperate your bot. ...
+THIS MODULE IS EXPERIMENTAL -- API WILL CHANGE
