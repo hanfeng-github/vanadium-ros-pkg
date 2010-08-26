@@ -56,16 +56,13 @@ unsigned char paused = 0;    // base was in motion, can resume
 
 /* Setpoint Info For a Motor */
 typedef struct{
-  // setup by user
-  int  VelocitySetpoint;     // desired average speed to travel (in counts/frame)
-  // 
+  int VelocitySetpoint;      // desired actual speed (count/frame)
   long Encoder;              // actual reading
   long PrevEnc;              // last reading
   int  Velocity;             // current desired average speed (counts/frame), taking ramping into accound
   int PrevErr;
   int Ierror;   
   int output;                // last motor setting
-  long rampdown;             // how long it will take to slow down
 } SetPointInfo;
 
 SetPointInfo left, right;
@@ -132,13 +129,10 @@ void updatePID(){
       // do PID update on PWM
       DoPid(&left);
       DoPid(&right);
-      // set updated motor outputs
+      // set updated motor outputs      
       if(PIDmode > 0){
         drive.set(left.output, right.output);
-      } /*else{
-        drive.set(0,0);
-        moving = 0;
-      }*/
+      }
       // update timing
       f_time = j + FRAME_RATE;
     }

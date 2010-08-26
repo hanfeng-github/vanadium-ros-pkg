@@ -28,22 +28,28 @@
 /* Build Configuration */
 #define USE_PML
 #define USE_BASE
-
-#include <ax12.h>
-#include <BioloidController.h>
-#include <Servo.h>
+#define USE_HW_SERVOS
 
 /* Hardware Constructs */
+#include <ax12.h>
+#include <BioloidController.h>
 BioloidController bioloid = BioloidController(1000000);
-Servo servos[10];
+
+#ifdef USE_HW_SERVOS
+  #include <HServo.h>
+  HServo servos[2];
+#else 
+  #include <Servo.h>
+  Servo servos[10];
+#endif
 
 #include "ros.h"
 
 #ifdef USE_BASE
-#include <Motors2.h>
-#include <EncodersAB.h>
-Motors2 drive = Motors2();
-#include "pid.h"
+  #include <Motors2.h>
+  #include <EncodersAB.h>
+  Motors2 drive = Motors2();
+  #include "pid.h"
 #endif
 
 #ifdef USE_PML 
@@ -115,28 +121,38 @@ unsigned char handleWrite(){
     }else if(addr < REG_MOVING){
       // write servo
       int s = addr - REG_SERVO_BASE;
-      if( s%2 == 0 ){ // low byte
-        s = s/2;
-        servo_vals[s] = params[k];
-      }else{          // high byte
-        s = s/2;
-        servo_vals[s] += (params[k]<<8);
-        if(servo_vals[s] > 500 && servo_vals[s] < 2500){
-          servos[s].writeMicroseconds(servo_vals[s]);
-          if(!servos[s].attached())            
-            servos[s].attach(s);
-        }else if(servo_vals[s] == 0){
-          servos[s].detach();
+ #ifdef USE_HW_SERVO
+      if( s >= 4 ){
+ #else
+      if( s >= 20){
+ #endif 
+        return INSTRUCTION_ERROR;
+      }else{
+        if( s%2 == 0 ){ // low byte
+          s = s/2;
+          servo_vals[s] = params[k];
+        }else{          // high byte
+          s = s/2;
+          servo_vals[s] += (params[k]<<8);
+          if(servo_vals[s] > 500 && servo_vals[s] < 2500){
+            servos[s].writeMicroseconds(servo_vals[s]);
+            if(!servos[s].attached())            
+              servos[s].attach(s);
+          }else if(servo_vals[s] == 0){
+            servos[s].detach();
+          }
         }
       }
     }else if(addr == REG_MOVING){
       return INSTRUCTION_ERROR;
       
 #ifdef USE_BASE
-    }else if(addr == REG_LM_SIGN){          // motor pwms = 1 byte sign + 1 byte value
+    // motor pwms = 1 byte sign + 1 byte value
+    }else if(addr == REG_LM_SIGN){          
       left_pwm = 1 + -2*params[k];
     }else if(addr == REG_LM_PWM){
       left_pwm = left_pwm * params[k];
+      PIDmode = 0;
       drive.left(left_pwm);
       if(left_pwm != 0)
         moving = 1;
@@ -144,25 +160,33 @@ unsigned char handleWrite(){
       right_pwm = 1 + -2*params[k];
     }else if(addr == REG_RM_PWM){
       right_pwm = right_pwm * params[k];
+      PIDmode = 0;
       drive.right(right_pwm);
       if(right_pwm != 0)
         moving = 1;
         
-    }else if(addr == REG_LM_SPEED_L){       // motor speed for move_base (ticks/frame, 2 bytes, signed)
-      PIDmode = 0;
+    // motor speed for move_base (ticks/frame, 2 bytes, signed)
+    }else if(addr == REG_LM_SPEED_L){       
       left_speed = params[k];
     }else if(addr == REG_LM_SPEED_H){
       left_speed += (params[k]<<8);
-      PIDmode = 1;
-      moving = 1;
+      left.VelocitySetpoint = left_speed;
+      if((left.VelocitySetpoint == 0) && (right.VelocitySetpoint == 0)){
+        PIDmode = 0; moving = 0;
+      }else{
+        PIDmode = 1; moving = 1;
+      }
     }else if(addr == REG_RM_SPEED_L){
-      PIDmode = 0;
       right_speed = params[k];
     }else if(addr == REG_RM_SPEED_H){
-      right_speed += (params[k]<<8);      
-      PIDmode = 1;
-      moving = 1;
-
+      right_speed += (params[k]<<8); 
+      right.VelocitySetpoint = right_speed;  
+      if((left.VelocitySetpoint == 0) && (right.VelocitySetpoint == 0)){
+        PIDmode = 0; moving = 0;
+      }else{
+        PIDmode = 1; moving = 1;
+      }   
+      
     }else if(addr < REG_KP){
       // can't write encoders?  
       
