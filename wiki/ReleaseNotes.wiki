@@ -1,13 +1,12 @@
 #summary Release Notes for vanadium_drivers stack
 
 = Vanadium Drivers - 0.2.0 =
-_NOTE: 0.2.0 IS NOT YET OUT, THIS PAGE IS IN PREPARATION_
 
 === Stable Components ===
 This release includes a number of stable, or mostly stable, components of the arbotix package: 
  * arbotix-ros.py node is ROS API stable, including servo parameter specification, digital/analog services, and the controller loading interface.
- * joint_controller.py controller is stable. 
- * base_controller.py/nuke_controller.py are ROS API stable (cmd_vel, odometry publication), however, the parameter specifications are subject to change.
+ * joint_controller.py controller is stable.
+ * base_controller.py/nuke_controller.py are ROS API stable (cmd_vel, odometry publication), however, the parameter specifications and underlying code are subject to change. base_controller PID parameters are currently configurable only via firmware recompile -- this will be fixed in the next release. 
 
 === Experimental Components ===
  * The Poor Man's Lidar, or PML, (found in arbotix_sensors/pml.py) is experimental. It will be undergoing massive revisions to parameter specifications and data generation in 0.3.0
