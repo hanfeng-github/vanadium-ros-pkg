@@ -11,6 +11,7 @@
   * Stable Sensors: lidar
   * Experimental Controllers: head_action
   * Documentation overhaul
+  * Stable Tools: Controller GUI
 
 === 0.2.0 - August ===
   * Clean up and finalize Dynamixel/Hobby Servo classes.
@@ -18,7 +19,7 @@
   * Move higher-level control into new controller architecture.
   * Stable Controllers: joint_controller, base_controller, nuke_controller
   * Experimental Sensors: lidar
-  * Stable Tools: Controller GUI
+  * Experimental Tools: Controller GUI
 
 === 0.1.0 - r9 - 7/30/10 ===
   * basic functionality, ROS API unstable
