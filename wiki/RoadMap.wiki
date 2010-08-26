@@ -8,8 +8,9 @@
   * Experimental Controllers: joint_traj_controller, joint_traj_action, single_traj_action
 
 === 0.3.0 - Early September ===
-  * Stable Sensors: lidar
-  * Experimental Controllers: head_action
+  * Stable Sensors: pml
+  * Stable Controllers:  Add dynamic_reconfigure for PID params of base_controller
+  * New Experimental Controllers: head_action
   * Documentation overhaul
   * Stable Tools: Controller GUI
 
@@ -18,7 +19,7 @@
   * Analog/Digital services stable. 
   * Move higher-level control into new controller architecture.
   * Stable Controllers: joint_controller, base_controller, nuke_controller
-  * Experimental Sensors: lidar
+  * Experimental Sensors: pml
   * Experimental Tools: Controller GUI
 
 === 0.1.0 - r9 - 7/30/10 ===
