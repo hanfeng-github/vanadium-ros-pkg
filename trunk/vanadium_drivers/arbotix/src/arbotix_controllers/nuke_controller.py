@@ -30,28 +30,40 @@
 import rospy
 from threading import Thread
 
+from math import sin,cos,pi
+from datetime import datetime
+
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 
-class base_controller(Thread):
+class nuke_controller(Thread):
     """ Controller to handle movement & odometry feedback for NUKE walker. """
-    def __init__(self, device):
+    def __init__(self, device, name):
         Thread.__init__ (self)
 
         # handle for robocontroller
         self.device = device
 
         # parameters
-        self.rate = float(rospy.get_param("~nuke_rate",15.0))
+        self.rate = float(rospy.get_param("~controllers/"+name+"/rate",15.0))
         
         # internal data        
+        self.enc_x = 0              # encoder readings
+        self.enc_y = 0
+        self.enc_th = 0
         self.x = 0                  # position in xy plane
         self.y = 0
         self.th = 0
-        self.then = datetime.now()  # time for determining dx/dy
+        self.then = datetime.now()  # time for determining dx/dy        
+        
+        # subscriptions
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
+        self.odomPub = rospy.Publisher('odom',Odometry)
+        self.odomBroadcaster = TransformBroadcaster()
+
+        rospy.loginfo("Started nuke_controller '"+name+"'")
 
     def run(self):
         r = rospy.Rate(self.rate)

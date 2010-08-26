@@ -44,14 +44,15 @@ class joint_controller(Thread):
 
         # parameters
         if joints==None:
-            self.joints = rospy.get_param("~/"+name+"/joints")
+            self.joints = rospy.get_param("~controllers/"+name+"/joints")
         else: 
             # being used as default controller
             self.joints = joints        
-        rospy.loginfo("Started joint_controller '"+name+"' controlling: " + str(self.joints))
 
         # subscriptions
         rospy.Subscriber('cmd_joints', JointState, self.cmdJointsCb)
+
+        rospy.loginfo("Started joint_controller '"+name+"' controlling: " + str(self.joints))
 
     def run(self):
         """ Simply for compliance with our controller model. """

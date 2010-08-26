@@ -30,6 +30,9 @@
 import rospy
 from threading import Thread
 
+from math import sin,cos,pi
+from datetime import datetime
+
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
@@ -38,16 +41,16 @@ from tf.broadcaster import TransformBroadcaster
 class base_controller(Thread):
     """ Controller to handle movement & odometry feedback for a differential 
             drive mobile base. """
-    def __init__(self, device):
+    def __init__(self, device, name):
         Thread.__init__ (self)
 
         # handle for robocontroller
         self.device = device
 
         # parameters
-        self.rate = float(rospy.get_param("~base_rate",15.0))
-        self.ticks_meter = float(rospy.get_param("~ticks_meter", "26154"))
-        self.base_width = float(rospy.get_param("~base_width", "0.144"))
+        self.rate = float(rospy.get_param("~controllers/"+name+"/rate",15.0))
+        self.ticks_meter = float(rospy.get_param("~controllers/"+name+"/ticks_meter", "26154"))
+        self.base_width = float(rospy.get_param("~controllers/"+name+"/base_width", "0.144"))
         
         # internal data        
         self.enc_left = 0           # encoder readings
@@ -56,11 +59,18 @@ class base_controller(Thread):
         self.y = 0
         self.th = 0
         self.then = datetime.now()  # time for determining dx/dy
+
+        # subscriptions
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
+        self.odomPub = rospy.Publisher('odom',Odometry)
+        self.odomBroadcaster = TransformBroadcaster()
+		
+        rospy.loginfo("Started base_controller '"+name+"' for a base of " + str(self.base_width) + "m wide with " + str(self.ticks_meter) + " ticks per meter")
 
     def run(self):
         r = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
+            r.sleep()
             now = datetime.now()
             elapsed = now - self.then
             self.then = now
@@ -71,15 +81,17 @@ class base_controller(Thread):
                 left, right = self.device.getEncoders()
             except:
                 rospy.logerr("Could not update encoders")
+                continue
+            #rospy.loginfo("Encoders: " + str(left) +","+ str(right))
 
             # calculate odometry
-            d_left = left - self.enc_left
-            d_right = right - self.enc_right
+            d_left = (left - self.enc_left)/self.ticks_meter
+            d_right = (right - self.enc_right)/self.ticks_meter
             self.enc_left = left
             self.enc_right = right
 
-            d = (d_left+d_right)/2000.0
-            th = (d_left-d_right)/(self.base_width/2.0)
+            d = (d_left+d_right)/2
+            th = (d_right-d_left)/self.base_width
             dx = d / elapsed
             dth = th / elapsed
 
@@ -121,8 +133,6 @@ class base_controller(Thread):
 
             self.odomPub.publish(odom)
 
-            r.sleep()
-
     def cmdVelCb(self,req):
         """ Handle movement requests. """
         x = req.linear.x        # m/s
@@ -130,11 +140,11 @@ class base_controller(Thread):
 
         if x == 0:
             # turn in place
-            r = th * self.base_width/2.0 * self.ticks_per_meter
+            r = th * self.base_width/2.0 * self.ticks_meter
             l = -r
         elif th == 0:   
             # pure forward/backward motion
-            l = r = x * self.ticks_per_meter
+            l = r = x * self.ticks_meter
         else:
             # rotation about a point in space
             l = x - th * self.base_width/2.0
@@ -145,8 +155,8 @@ class base_controller(Thread):
 
         # clean up and log values                  
         rospy.loginfo("Twist move: "+str(l)+","+str(r))
-        l = int(l/10.0)
-        r = int(r/10.0)      
-        # set motor speeds in ticks per 1/10s
+        l = int(l/30.0)
+        r = int(r/30.0)      
+        # set motor speeds in ticks per 1/30s
         self.device.setSpeeds(l,r)  
 
