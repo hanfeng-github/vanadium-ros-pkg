@@ -36,7 +36,7 @@ unsigned char pml_readings[2*MAX_READINGS];
 #define PML_ANGLE_STEP   21
 #define PML_START        206
 
-#define PML_TIME_FRAME   30   // how long between movements
+#define PML_TIME_FRAME   50   // how long between movements
 unsigned long pml_time;       // last time we moved
 int pml_enable;
 int pml_servo;
