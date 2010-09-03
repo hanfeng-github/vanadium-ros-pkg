@@ -1,6 +1,11 @@
 #summary Release Notes for vanadium_drivers stack
 
-= Vanadium Drivers - 0.2.0 =
+= Vanadium Drivers - 0.2.1 (9/3/10) = 
+Bug fixes: 
+ * Update PML firmware update rate to 20hz (30hz is too fast)
+ * Fix bugs in servo-level sync. Now works. 
+
+= Vanadium Drivers - 0.2.0 (8/26/10)=
 
 === Stable Components ===
 This release includes a number of stable, or mostly stable, components of the arbotix package: 
