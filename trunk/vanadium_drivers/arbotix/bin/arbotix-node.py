@@ -139,6 +139,9 @@ class DynamixelServo():
             self.angle = angle
         return self.angle
 
+    def getAngleStored(self):
+        return self.angle
+
 class HobbyServo(DynamixelServo):
     """ Class to handle services and updates for a single Hobby Servo, connected to 
         an ArbotiX robocontroller. A stripped down version of the DynamixelServo. """
@@ -216,6 +219,9 @@ class ArbotiX_ROS(ArbotiX):
             self.servos[servo.name] = servo
             self.no_sync_names.append(servo.name)
 
+        print self.sync_names
+        print self.no_sync_names
+
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
 
         # initialize digital/analog IO
@@ -266,12 +272,18 @@ class ArbotiX_ROS(ArbotiX):
                         i = i + 2
                     for name in self.no_sync_names: 
                         msg.name.append(name)
-                        msg.position.append(self.servos[name].getAngle())
+                        msg.position.append(self.servos[name].getAngleStored())
             else:
                 # direct connection, or other hardware with no sync_read capability
-                for servo in self.servos.values():
-                    msg.name.append(servo.name)
-                    msg.position.append(servo.getAngle())  
+                for name in self.sync_names:
+                    msg.name.append(name)
+                    msg.position.append(self.servos[name].getAngle())
+                for name in self.no_sync_names: 
+                    msg.name.append(name)
+                    msg.position.append(self.servos[name].getAngleStored())
+                #for servo in self.servos.values():
+                #    msg.name.append(servo.name)
+                #    msg.position.append(servo.getAngle())                  
 
             msg.header.stamp = rospy.Time.now()
             self.jointStatePub.publish(msg)                  
