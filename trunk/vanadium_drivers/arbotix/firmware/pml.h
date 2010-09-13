@@ -1,5 +1,5 @@
 /* 
-  Poor Man's LIDAR (PML) for ROS driver ArbotiX Firmware
+  Planar Meta-Laser (PML) for ROS driver ArbotiX Firmware
   Copyright (c) 2008-2010 Vanadium Labs LLC.  All right reserved.
  
   Redistribution and use in source and binary forms, with or without

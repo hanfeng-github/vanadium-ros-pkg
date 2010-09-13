@@ -26,9 +26,10 @@
 */ 
 
 /* Build Configuration */
-#define USE_PML
-#define USE_BASE
-//#define USE_HW_SERVOS
+#define USE_PML             // Enable support for a PML (All)
+#define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
+//#define USE_BIG_MOTORS      // Enable Pololu 30A support (ArbotiX+)
+#define USE_HW_SERVOS       // Enable only 2/8 servos, but using hardware control (All)
 
 /* Hardware Constructs */
 #include <ax12.h>
@@ -46,9 +47,14 @@ BioloidController bioloid = BioloidController(1000000);
 #include "ros.h"
 
 #ifdef USE_BASE
-  #include <Motors2.h>
+  #ifdef USE_BIG_MOTORS
+    #include <BigMotors.h>
+    BigMotors drive = BigMotors();
+  #else
+    #include <Motors2.h>
+    Motors2 drive = Motors2();
+  #endif
   #include <EncodersAB.h>
-  Motors2 drive = Motors2();
   #include "pid.h"
 #endif
 
@@ -76,7 +82,7 @@ int seqPos;                     // step in current sequence
  */
 void setup(){
   Serial.begin(38400);  
-  
+
 #ifdef USE_BASE  
   Encoders.Begin();
   setupPID();
@@ -84,6 +90,19 @@ void setup(){
 
 #ifdef USE_PML
   init_pml();
+#endif
+
+// note: ARBOTIX_PLUS and SERVO_STIK are defined in our Bioloid library.
+#if defined(ARBOTIX_PLUS) || defined(SERVO_STIK)
+  delay(1000);
+  // do a search for devices on the RX bus, default to AX if not found
+  int i;
+  for(i=0;i<AX12_MAX_SERVOS;i++){
+    dynamixel_bus_config[i] = 1;
+    if(ax12GetRegister(i+1, AX_ID, 1) != (i+1)){
+      dynamixel_bus_config[i] = 0;
+    }
+  }
 #endif
 
   pinMode(0,OUTPUT);     // status LED
