@@ -25,7 +25,7 @@ The ArbotiX firmware provides access to:
 
 The firmware consists of several files, which must be placed in the _arduino-sketchbook/ros_ folder: 
  * ros.pde - the main program. There are several build configurations possible, by commenting or uncommenting lines: 
-   * USE_PML - build the Poor Man's Lidar support.
+   * USE_PML - build the Planar Meta-Laser support.
    * USE_BASE - build support for differential drive base.
    * USE_HW_SERVOS - 
  * ros.h - header file with register table definitions
@@ -103,7 +103,7 @@ Planned controllers include:
  * Action based single joint controller (arbotix_controllers/single_traj_action).
  * Action based head controller (arbotix_controllers/head_action).
  * Low level joint trajectory controllers (arbotix_controllers/joint_traj_controller).
- * The Poor Man's Lidar (PML), which broadcasts laser_scan topics using a long range IR sensor and AX-12. (arbotix_sensors/pml).
+ * The Planar Meta-Laser (PML), which broadcasts laser_scan topics using a long range IR sensor and AX-12. (arbotix_sensors/pml).
 
 A joint_traj_controller allows more advanced control of a set of servos by passing a series of trajectories, rather than a single position. It subscribes to the _command_ topic within it's namespace. The single_traj_controller is a similar controller, but for single servo control. A joint_traj_action can be used to pass trajectories to a joint_traj_controller via an action interface. 
 
@@ -114,7 +114,7 @@ A head_action allows positioning a head to point at a location in space. It uses
 The ArbotiX is also capable of interfacing high-level sensors to ROS. 
 
 == pml ==
-The Poor Man's Lidar (PML) module creates laser scans with ROS using an AX-12 servo and a long range IR sensor. While the resolution and update rate are significantly lower than that of a true lidar, the results are impressive for the overall cost. Use of a PML requires that the USE_PML option be uncommented when compiling firmware.   
+The Planar Meta-Laser (PML) module creates laser scans with ROS using an AX-12 servo and a long range IR sensor. While the resolution and update rate are significantly lower than that of a true lidar, the results are impressive for the overall cost. Use of a PML requires that the USE_PML option be uncommented when compiling firmware.   
 
 Parameters: 
  * id (default: 200) - ID of AX-12 servo used in the PML
