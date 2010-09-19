@@ -128,7 +128,7 @@ class controllerGUI(wx.Frame):
     def onTimer(self, event=None):
         # send joint updates
         j = JointState()
-        j.name = ["head_pan", "head_tilt", "head_tilt2"]
+        j.name = ["head_pan_joint", "head_tilt_joint", "head_tilt2_joint"]
         j.position = [-self.pan.GetValue()/100.0, self.tilt.GetValue()/100.0, self.tilt2.GetValue()/100.0]
         self.cmd_joints.publish(j)
         # send base updates
