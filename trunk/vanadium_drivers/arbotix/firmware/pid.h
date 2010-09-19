@@ -80,7 +80,8 @@ void setupPID(){
 
 /* Linearly Ramp Velocity TO VelocitySetpoint */
 void Ramp(SetPointInfo * x){
-  if(x->Velocity < x->VelocitySetpoint){
+  x->Velocity = x->VelocitySetpoint;
+  /*if(x->Velocity < x->VelocitySetpoint){
     x->Velocity += maxAccel;
     if( x->Velocity > x->VelocitySetpoint)
       x->Velocity = x->VelocitySetpoint;
@@ -88,12 +89,13 @@ void Ramp(SetPointInfo * x){
     x->Velocity -= maxAccel;
     if( x->Velocity < x->VelocitySetpoint)
       x->Velocity = x->VelocitySetpoint;
-  }  
+  }*/ 
 }
 
 /* PID control of motor speed */
 void DoPid(SetPointInfo * p){
-  int Perror, output;
+  long Perror;
+  long output;
   
   Perror = p->Velocity - (p->Encoder-p->PrevEnc);
           
