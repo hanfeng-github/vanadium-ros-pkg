@@ -19,6 +19,9 @@
   <depend package="nav_msgs"/>
   <depend package="std_srvs"/>
 
+  <depend package="actionlib"/>
+  <depend package="actionlib_msgs"/>
+
 </package>
 
 
