@@ -52,11 +52,12 @@ class base_controller(Thread):
         self.ticks_meter = float(rospy.get_param("~controllers/"+name+"/ticks_meter", 26154))
         self.base_width = float(rospy.get_param("~controllers/"+name+"/base_width", 0.144))
 
-        self.Kp = float(rospy.get_param("~controllers/"+name+"/Kp", 25))
-        self.Kd = float(rospy.get_param("~controllers/"+name+"/Kd", 30))
-        self.Ki = float(rospy.get_param("~controllers/"+name+"/Ki", 0))
-        self.Ko = float(rospy.get_param("~controllers/"+name+"/Ko", 100))
-        
+        self.Kp = rospy.get_param("~controllers/"+name+"/Kp", 25)
+        self.Kd = rospy.get_param("~controllers/"+name+"/Kd", 30)
+        self.Ki = rospy.get_param("~controllers/"+name+"/Ki", 0)
+        self.Ko = rospy.get_param("~controllers/"+name+"/Ko", 100)
+        self.device.write(253,device.KP,[self.Kp,self.Kd,self.Ki,self.Ko])        
+
         # internal data        
         self.enc_left = 0           # encoder readings
         self.enc_right = 0
