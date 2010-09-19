@@ -146,8 +146,8 @@ class ArbotiX:
         ax12.syncWrite(reg, ((id1, val1, val2), (id2, val1, val2))) """ 
         output = list()
         for i in values:
-            output = output + i          
-        checksum = 255 - ((254 + length + AX_SYNC_WRITE + start + len(values[0]) - 1 + valsum)%256)        
+            output = output + i   
+        checksum = 255 - ((254 + 4 +len(output) + AX_SYNC_WRITE + start + len(values[0]) - 1 + sum(output))%256)        
         self.execute(0xFE, AX_SYNC_WRITE, [start, len(values[0])-1 ] + values, False)
 
     def syncRead(self, servos, start, length):
