@@ -277,14 +277,15 @@ class ArbotiX:
 
     def setDigital(self, index, val, direction=0xff):
         """ Set value (and direction) of a digital IO (index = 0 to 7) """
+        if index > 7: return -1
         if val == 0 and direction > 0:
-            self.write(253, self.DIG_BASE + 1 + int(index), [1])
+            self.write(253, self.DIG_BASE + int(index), [1])
         elif val > 0 and direction > 0:
-            self.write(253, self.DIG_BASE + 1 + int(index), [3])
+            self.write(253, self.DIG_BASE + int(index), [3])
         elif val > 0 and direction == 0:
-            self.write(253, self.DIG_BASE + 1 + int(index), [2])
+            self.write(253, self.DIG_BASE + int(index), [2])
         else:
-            self.write(253, self.DIG_BASE + 1 + int(index), [0])
+            self.write(253, self.DIG_BASE + int(index), [0])
             
     def setServo(self, index, val):
         """ Set a servo value (in milliseconds) """
