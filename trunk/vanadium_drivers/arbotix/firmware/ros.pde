@@ -123,14 +123,17 @@ unsigned char handleWrite(){
     }else if(addr < REG_RETURN_LEVEL){
       // write digital 
       int pin = addr - REG_DIG_BASE;
-        if(params[k] & 0x02)    // high
-          digitalWrite(pin, HIGH);
-        else
-          digitalWrite(pin, LOW);
-        if(params[k] & 0x01)    // output
-          pinMode(pin, OUTPUT);
-        else
-          pinMode(pin, INPUT);
+    #ifdef SERVO_STIK
+      pin = 31-pin;
+    #endif
+      if(params[k] & 0x02)    // high
+        digitalWrite(pin, HIGH);
+      else
+        digitalWrite(pin, LOW);
+      if(params[k] & 0x01)    // output
+        pinMode(pin, OUTPUT);
+      else
+        pinMode(pin, INPUT);
     }else if(addr == REG_RETURN_LEVEL){
       ret_level = params[k];
     }else if(addr == REG_ALARM_LED){
