@@ -16,6 +16,7 @@
   * Stable Controllers:  base_controller (upload PID). -- _done_
   * Support for BigMotors library (robocontrollerlib 0007) -- _done_
   * New Experimental Controllers: head_action -- _in progress_
+  * New Experimental Sensors: v_monitor. -- _done_
   * Actually include the NUKE sketch. -- _done_
   * Other changes: GUI now uses head_pan_joint, etc (more PR2-like).
 
@@ -36,5 +37,8 @@
   * basic functionality, ROS API unstable
 
 == stereo_usb_cam package ==
-=== 0.3.0 - Early September ===
-  * stereo capture, fake synchronization
+=== 0.4.0 - October ===
+  * add camera calibration _set_ functions 
+
+=== 0.3.0 - September === 
+  * stereo capture, fake synchronization -- _done_
