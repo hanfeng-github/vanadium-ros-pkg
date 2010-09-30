@@ -41,7 +41,7 @@
  */
 #include <ros/ros.h>
 #include <sensor_msgs/fill_image.h>
-#include <usb_cam/usb_cam.h>
+#include <new_usb_cam/new_usb_cam.h>
 #include <self_test/self_test.h>
 #include <image_transport/image_transport.h>
 
@@ -60,6 +60,7 @@ public:
   sensor_msgs::CameraInfo left_info_;
   usb_cam_camera_image_t* left_camera_image_;
   image_transport::CameraPublisher left_image_pub_;
+  UsbCamera * left;
   
   /* right side */
   sensor_msgs::Image right_img_;
@@ -67,6 +68,7 @@ public:
   sensor_msgs::CameraInfo right_info_;
   usb_cam_camera_image_t* right_camera_image_;
   image_transport::CameraPublisher right_image_pub_;
+  UsbCamera * right;
 
   ros::Time next_time_;
   int count_;
@@ -216,7 +218,41 @@ public:
     }
 
     // initialize cameras!
-    left_camera_image_ = usb_cam_camera_start(left_video_device_name_.c_str(),
+    left = new UsbCamera(left_video_device_name_.c_str(),
+        io_method,
+        pixel_format,
+        image_width_,
+        image_height_,
+        left_camera_image_);
+        left_camera_image_ = (usb_cam_camera_image_t *) calloc(1, sizeof(usb_cam_camera_image_t));
+
+        left_camera_image_->width = image_width_;
+        left_camera_image_->height = image_height_;
+        left_camera_image_->bytes_per_pixel = 24;
+
+        left_camera_image_->image_size = left_camera_image_->width*left_camera_image_->height*left_camera_image_->bytes_per_pixel;
+        left_camera_image_->is_new = 0;
+        left_camera_image_->image = (char *) calloc(left_camera_image_->image_size, sizeof(char));
+        memset(left_camera_image_->image, 0, left_camera_image_->image_size*sizeof(char));
+
+    right = new UsbCamera(right_video_device_name_.c_str(),
+        io_method,
+        pixel_format,
+        image_width_,
+        image_height_,
+        right_camera_image_);
+        right_camera_image_ = (usb_cam_camera_image_t *) calloc(1, sizeof(usb_cam_camera_image_t));
+
+        right_camera_image_->width = image_width_;
+        right_camera_image_->height = image_height_;
+        right_camera_image_->bytes_per_pixel = 24;
+
+        right_camera_image_->image_size = right_camera_image_->width*right_camera_image_->height*right_camera_image_->bytes_per_pixel;
+        right_camera_image_->is_new = 0;
+        right_camera_image_->image = (char *) calloc(right_camera_image_->image_size, sizeof(char));
+        memset(right_camera_image_->image, 0, right_camera_image_->image_size*sizeof(char));
+
+    /*left_camera_image_ = usb_cam_camera_start(left_video_device_name_.c_str(),
         io_method,
         pixel_format,
         image_width_,
@@ -225,7 +261,7 @@ public:
         io_method,
         pixel_format,
         image_width_,
-        image_height_);
+        image_height_);*/
 
     next_time_ = ros::Time::now();
     count_ = 0;
@@ -233,15 +269,16 @@ public:
 
   virtual ~UsbCamNode()
   {
-
-    usb_cam_camera_shutdown();
+    left->shutdown();
+    right->shutdown();
   }
 
   bool take_and_send_image()
   {
-    usb_cam_camera_grab_image(left_camera_image_);
-    usb_cam_camera_grab_image(right_camera_image_);
+    std::cout << "SNAPSHOT" << std::endl;
+    left->grab(left_camera_image_);
     fillImage(left_img_, "rgb8", left_camera_image_->height, left_camera_image_->width, 3 * left_camera_image_->width, left_camera_image_->image);
+    right->grab(right_camera_image_);
     fillImage(right_img_, "rgb8", right_camera_image_->height, right_camera_image_->width, 3 * right_camera_image_->width, right_camera_image_->image);
 
     left_img_.header.stamp = ros::Time::now();
@@ -284,3 +321,4 @@ int main(int argc, char **argv)
   a.spin();
   return 0;
 }
+
