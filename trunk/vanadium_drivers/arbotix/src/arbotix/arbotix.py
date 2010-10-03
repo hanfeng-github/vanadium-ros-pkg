@@ -225,7 +225,7 @@ class ArbotiX:
     DIG_BLOCK_1 = 5     # Read digital pins 0-7
     DIG_BLOCK_2 = 6     # Read digital pins 8-15
     DIG_BASE = 7        # Write digital
-                        # Addresses 15 unused
+    REG_RESCAN = 15     
                         # 16, 17 = RETURN, ALARM
     ANA_BASE = 18       # First analog port (Read only)
                         # Each additional port is BASE + index
@@ -252,6 +252,9 @@ class ArbotiX:
     PML_SERVO = 78
     PML_ENABLE = 79
     PML_BASE = 80
+
+    def rescan(self):
+        self.write(253, self.REG_RESCAN, [1,])
 
     def getAnalog(self, index):
         """ Read an analog port, returns 0-255 (-1 if error). """
