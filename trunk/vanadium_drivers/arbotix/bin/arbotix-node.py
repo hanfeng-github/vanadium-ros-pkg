@@ -38,6 +38,7 @@ from arbotix.ax12 import *
 
 # TODO: generalize these, add init.py in packages
 from arbotix_sensors.pml import *
+from arbotix_sensors.v_monitor import *
 from arbotix_controllers.base_controller import *
 from arbotix_controllers.nuke_controller import *
 from arbotix_controllers.joint_controller import *
@@ -249,6 +250,9 @@ class ArbotiX_ROS(ArbotiX):
                 if params["type"] == "pml":
                     mylidar = pml(self, sensor)
                     mylidar.start()
+                if params["type"] == "v_monitor":
+                    vmon = v_monitor(self, sensor)
+                    vmon.start()
 
         # publish joint states (everything else is a service/topic callback)
         r = rospy.Rate(int(rospy.get_param("~rate",10)))
@@ -261,30 +265,33 @@ class ArbotiX_ROS(ArbotiX):
             msg.velocity = list()
             msg.effort = list()
 
-            if use_sync: 
-                # arbotix/servostik/wifi board sync_read
-                val = self.syncRead(self.sync_servos, P_PRESENT_POSITION_L, 2)
-                if val != None:            
-                    i = 0        
+            try:
+                if use_sync: 
+                    # arbotix/servostik/wifi board sync_read
+                    val = self.syncRead(self.sync_servos, P_PRESENT_POSITION_L, 2)
+                    if val != None:            
+                        i = 0        
+                        for name in self.sync_names:
+                            msg.name.append(name)
+                            msg.position.append(self.servos[name].getAngle( val[i]+(val[i+1]<<8) ))
+                            i = i + 2
+                        for name in self.no_sync_names: 
+                            msg.name.append(name)
+                            msg.position.append(self.servos[name].getAngleStored())
+                else:
+                    # direct connection, or other hardware with no sync_read capability
                     for name in self.sync_names:
                         msg.name.append(name)
-                        msg.position.append(self.servos[name].getAngle( val[i]+(val[i+1]<<8) ))
-                        i = i + 2
+                        msg.position.append(self.servos[name].getAngle())
                     for name in self.no_sync_names: 
                         msg.name.append(name)
                         msg.position.append(self.servos[name].getAngleStored())
-            else:
-                # direct connection, or other hardware with no sync_read capability
-                for name in self.sync_names:
-                    msg.name.append(name)
-                    msg.position.append(self.servos[name].getAngle())
-                for name in self.no_sync_names: 
-                    msg.name.append(name)
-                    msg.position.append(self.servos[name].getAngleStored())
-                #for servo in self.servos.values():
-                #    msg.name.append(servo.name)
-                #    msg.position.append(servo.getAngle())                  
-
+                    #for servo in self.servos.values():
+                    #    msg.name.append(servo.name)
+                    #    msg.position.append(servo.getAngle())                  
+            except:
+                print "Error in filling joint_states message"
+    
             msg.header.stamp = rospy.Time.now()
             self.jointStatePub.publish(msg)                  
             r.sleep()
