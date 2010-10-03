@@ -43,7 +43,7 @@
 #define REG_DIGITAL_L       5   // Read values of lower 8 digital pins
 #define REG_DIGITAL_H       6   // Read values of upper 8 digital pins
 #define REG_DIG_BASE        7   // base + index, bit 1 = value (0,1), bit 0 = direction (0,1)
-    // Note: 15 not used
+#define REG_RESCAN          15
 #define REG_RETURN_LEVEL    16
 #define REG_ALARM_LED       17
 #define REG_ANA_BASE        18  // First Analog Port

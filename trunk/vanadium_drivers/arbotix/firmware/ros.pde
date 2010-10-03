@@ -27,7 +27,7 @@
 
 /* Build Configuration */
 #define USE_PML             // Enable support for a PML (All)
-#define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
+//#define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
 //#define USE_BIG_MOTORS      // Enable Pololu 30A support (ArbotiX+)
 #define USE_HW_SERVOS       // Enable only 2/8 servos, but using hardware control (All)
 
@@ -78,8 +78,18 @@ sp_trans_t sequence[50];        // sequence
 int seqPos;                     // step in current sequence
 
 /* 
- * Setup
+ * Setup Functions
  */
+void scan(){
+  // do a search for devices on the RX bus, default to AX if not found
+  int i;
+  for(i=0;i<AX12_MAX_SERVOS;i++){
+    dynamixel_bus_config[i] = 1;
+    if(ax12GetRegister(i+1, AX_ID, 1) != (i+1)){
+      dynamixel_bus_config[i] = 0;
+    }
+  }  
+}
 void setup(){
   Serial.begin(38400);  
 
@@ -95,14 +105,7 @@ void setup(){
 // note: ARBOTIX_PLUS and SERVO_STIK are defined in our Bioloid library.
 #if defined(ARBOTIX_PLUS) || defined(SERVO_STIK)
   delay(1000);
-  // do a search for devices on the RX bus, default to AX if not found
-  int i;
-  for(i=0;i<AX12_MAX_SERVOS;i++){
-    dynamixel_bus_config[i] = 1;
-    if(ax12GetRegister(i+1, AX_ID, 1) != (i+1)){
-      dynamixel_bus_config[i] = 0;
-    }
-  }
+  scan();
 #endif
 
   pinMode(0,OUTPUT);     // status LED
@@ -119,8 +122,8 @@ unsigned char handleWrite(){
     if(addr < REG_BAUD_RATE){
       return INSTRUCTION_ERROR;
     }else if(addr == REG_BAUD_RATE){
-      // TODO: update baud
-    }else if(addr < REG_RETURN_LEVEL){
+      UBRR1L = params[k];      
+    }else if(addr < REG_RESCAN){
       // write digital 
       int pin = addr - REG_DIG_BASE;
     #ifdef SERVO_STIK
@@ -134,6 +137,10 @@ unsigned char handleWrite(){
         pinMode(pin, OUTPUT);
       else
         pinMode(pin, INPUT);
+    }else if(addr == REG_RESCAN){
+#if defined(ARBOTIX_PLUS) || defined(SERVO_STIK)
+      scan();
+#endif
     }else if(addr == REG_RETURN_LEVEL){
       ret_level = params[k];
     }else if(addr == REG_ALARM_LED){
