@@ -156,6 +156,10 @@ class ArbotiX:
     
     ##########################################################################
     # Common Helper Functions
+    def setBaud(self, index, baud):
+        """ Set baud rate. """
+        return self.write(index, P_BAUD_RATE, [baud, ])
+
     def getReturnLevel(self, index):
         """ Returns the return level (integer). """
         try:
