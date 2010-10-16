@@ -45,18 +45,18 @@ class v_monitor(Thread):
         # parameters
         self.rate = rospy.get_param("~sensors/"+name+"/rate",1.0)
         self.servo_id = rospy.get_param("~sensors/"+name+"/id",1)
-        
-        # annoyingly loud, allow servo panning to be turned on/off
-        self.enable = False
-        rospy.Service('get_voltage_level',GetVoltage,self.voltage_callback)   
-        
+
+        rospy.Service('get_voltage_level',GetVoltage,self.voltage_callback)           
         rospy.loginfo("Started v_monitor sensor '"+name+"' using servo: " + str(self.servo_id))
 
     def run(self):
         r = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
-            v = self.device.read(self.servo_id, P_PRESENT_VOLTAGE, 1)
-            self.v = v[0]/10.0
+            try:
+                v = self.device.read(self.servo_id, P_PRESENT_VOLTAGE, 1)
+                self.v = float(v[0])/10.0
+                #rospy.loginfo("Voltage Level: " + str(self.v))
+            except: pass
             r.sleep()
 
     def voltage_callback(self, req):
