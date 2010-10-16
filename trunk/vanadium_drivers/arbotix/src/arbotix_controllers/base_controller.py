@@ -52,13 +52,20 @@ class base_controller(Thread):
         self.ticks_meter = float(rospy.get_param("~controllers/"+name+"/ticks_meter", 26154))
         self.base_width = float(rospy.get_param("~controllers/"+name+"/base_width", 0.144))
 
-        self.Kp = rospy.get_param("~controllers/"+name+"/Kp", 25)
-        self.Kd = rospy.get_param("~controllers/"+name+"/Kd", 30)
+        self.Kp = rospy.get_param("~controllers/"+name+"/Kp", 5)
+        self.Kd = rospy.get_param("~controllers/"+name+"/Kd", 1)
         self.Ki = rospy.get_param("~controllers/"+name+"/Ki", 0)
-        self.Ko = rospy.get_param("~controllers/"+name+"/Ko", 100)
+        self.Ko = rospy.get_param("~controllers/"+name+"/Ko", 50)
+        self.accel_limit = rospy.get_param("~controllers/"+name+"/accel_limit", 0.1)
+        self.max_accel = int(self.accel_limit*self.ticks_meter/self.rate)
+        #self.max_accel = int(self.ticks_meter/(self.rate * 16))  # 0.0625m/s^2
         self.device.write(253,device.KP,[self.Kp,self.Kd,self.Ki,self.Ko])        
 
-        # internal data        
+        # internal data            
+        self.v_left = 0             # current setpoint velocity
+        self.v_right = 0
+        self.v_des_left = 0         # cmd_vel setpoint
+        self.v_des_right = 0
         self.enc_left = 0           # encoder readings
         self.enc_right = 0
         self.x = 0                  # position in xy plane
@@ -139,6 +146,26 @@ class base_controller(Thread):
 
             self.odomPub.publish(odom)
 
+            # update motors
+            if self.v_left < self.v_des_left:
+                self.v_left += self.max_accel
+                if self.v_left > self.v_des_left:
+                    self.v_left = self.v_des_left
+            else:
+                self.v_left -= self.max_accel
+                if self.v_left < self.v_des_left:
+                    self.v_left = self.v_des_left
+           
+            if self.v_right < self.v_des_right:
+                self.v_right += self.max_accel
+                if self.v_right > self.v_des_right:
+                    self.v_right = self.v_des_right
+            else:
+                self.v_right -= self.max_accel
+                if self.v_right < self.v_des_right:
+                    self.v_right = self.v_des_right
+            self.device.setSpeeds(self.v_left, self.v_right)
+ 
     def cmdVelCb(self,req):
         """ Handle movement requests. """
         x = req.linear.x        # m/s
@@ -153,16 +180,14 @@ class base_controller(Thread):
             l = r = x * self.ticks_meter
         else:
             # rotation about a point in space
-            l = x - th * self.base_width/2.0
-            r = x + th * self.base_width/2.0
-            #d = x/th
-            #l = x + th * (d - self.base_width/2.0)
-            #r = x + th * (d + self.base_width/2.0)
+            l = (x - th * self.base_width/2.0) * self.ticks_meter
+            r = (x + th * self.base_width/2.0) * self.ticks_meter
 
         # clean up and log values                  
         rospy.loginfo("Twist move: "+str(l)+","+str(r))
         l = int(l/30.0)
         r = int(r/30.0)      
         # set motor speeds in ticks per 1/30s
-        self.device.setSpeeds(l,r)  
+        self.v_des_left = l
+        self.v_des_right = r
 
