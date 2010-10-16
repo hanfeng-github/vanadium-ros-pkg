@@ -11,11 +11,10 @@
   * Stable Controllers: head_action
   * New Experimental Controllers: joint_traj_controller, joint_traj_action, single_traj_action, head_action
 
-=== 0.3.0 - October ===
-  * Stable Controllers:  base_controller (upload PID parameters, do ramping in driver, clear I/D accumulators on stop). -- _in progress_
-  * Support for BigMotors library (robocontrollerlib 0007) -- _in progress_
-  * New Experimental Sensors: v_monitor. -- _done_
-  * Actually include the NUKE sketch. -- _done_
+=== 0.3.0 - r106 - 10/16/10 ===
+  * Stable Controllers:  base_controller (upload PID parameters, do ramping in driver, clear I/D accumulators on stop (issue 4)). 
+  * Support for BigMotors library (robocontrollerlib 0008)
+  * New Experimental Sensors: v_monitor.
   * Other changes: GUI now uses head_pan_joint, etc (more PR2-like).
 
 === 0.2.1 - r74 - 9/3/10 ===
