@@ -28,7 +28,7 @@
 /* Build Configuration */
 #define USE_PML             // Enable support for a PML (All)
 #define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
-#define USE_BIG_MOTORS      // Enable Pololu 30A support (ArbotiX+)
+//#define USE_BIG_MOTORS      // Enable Pololu 30A support (ArbotiX+)
 #define USE_HW_SERVOS       // Enable only 2/8 servos, but using hardware control (All)
 
 /* Hardware Constructs */
