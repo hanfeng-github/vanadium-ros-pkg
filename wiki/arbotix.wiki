@@ -27,7 +27,8 @@ The firmware consists of several files, which must be placed in the _arduino-ske
  * ros.pde - the main program. There are several build configurations possible, by commenting or uncommenting lines: 
    * USE_PML - build the Planar Meta-Laser support.
    * USE_BASE - build support for differential drive base.
-   * USE_HW_SERVOS - 
+   * USE_BIG_MOTORS - build support for the !BigMotors library.
+   * USE_HW_SERVOS - use hardware servo library.
  * ros.h - header file with register table definitions
  * pml.h - the Poor Man's Lidar code. 
  * pid.h - motor control code. 
@@ -52,7 +53,7 @@ The following parameters are used for arbotix-node.py, parameters for individual
  * rate (default: 15.0) - rate at which to publish the _joint_states_ topic. 
  * dynamixels - a dictionary configuration of dynamixel servo names and parameters. 
  * servos - a dictionary configuration of hobby servo names and parameters. 
- * use_sync (default: True) - whether to use sync_read or not. Must be disabled when using hardware such as a USB2Dynamixel. 
+ * use_sync (default: True) - whether to use sync_read or not. Must be disabled when using hardware such as a USB2Dynamixel, or when there are no dynamixels attached. 
  * controllers - a dictionary of controller names and parameters.
  * sensors - a dictionary of sensor names and parameters. 
 
@@ -76,10 +77,11 @@ Parameters to the base_controller are:
  * rate (default: 15.0) - rate to publish odometry
  * base_width - track width, in meters.  
  * ticks_meter - encoder ticks per meter of travel. 
- * Kp - 
- * Kd -
- * Ki - 
- * Ko -
+ * Kp - proportional parameter for PID, loaded into ArbotiX at start of node.
+ * Kd - derivative parameter for PID, loaded into ArbotiX at start of node.
+ * Ki - integral parameter for PID, loaded into ArbotiX at start of node.
+ * Ko - scaling parameter for PID, loaded into ArbotiX at start of node.
+ * accel_limit - limit to acceleration in m/s^2.
 
 Publishes: 
  * odom (nav_msgs/Odometry)
@@ -87,6 +89,15 @@ Publishes:
 
 Subscribes To: 
  * cmd_vel (geometry_msgs/Twist)
+
+The PID loop runs on the ArbotiX and calculates how to change PWM output in light of encoder values. PWM can vary from -255 to 255. The PID loop runs at 30hz, and thus encoder counts are accumulated for 1/30 of a second. This works well for high-count encoders, and not so well on low-count ones -- future releases may allow the loop rate to be varied. The update to output values is calculated as: 
+
+{{{
+Error = DesiredCount - ActualCount;
+output_update = (Kp*Error + Kd*(Error - PreviousError) + Ki*p->Ierror)/Ko;
+}}}
+
+Where PreviousError is the error from the previous loop, and Ierror is the accumulated error over time. The default values of Kp,Kd,Ki,Ko of 5,1,0, and 50 provide good results on the Lynxmotion 12V gearmotors with 100cpr encoders. These values can be tuned to improve how the PID reacts.
 
 == joint_controller ==
 The joint_controller is the simplest of servo controllers. It subscribes to a _cmd_joints_ topic, of type JointState, and manages a set of joints -- often an arm or head unit. Simple positional requests can be sent over this topic, and servos are moved to the desired position (instantly, no smoothing or trajectory management is employed). 
