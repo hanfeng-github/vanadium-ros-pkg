@@ -275,7 +275,6 @@ public:
 
   bool take_and_send_image()
   {
-    std::cout << "SNAPSHOT" << std::endl;
     left->grab(left_camera_image_);
     fillImage(left_img_, "rgb8", left_camera_image_->height, left_camera_image_->width, 3 * left_camera_image_->width, left_camera_image_->image);
     right->grab(right_camera_image_);
