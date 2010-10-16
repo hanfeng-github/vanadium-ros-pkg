@@ -1,5 +1,21 @@
 #summary Release Notes for vanadium_drivers stack
 
+= Vanadium Drivers - 0.3.0 (10/16/10) = 
+=== Stable Components ===
+This release bumps base_controller to stable, including the following updates:
+ * Revised PID code, including the ability to load PID parameters at startup.
+ * Speed ramping has been moved into the PC-side code.
+ * Support for !BigMotors library has been added. 
+A new v_monitor node has been added.
+
+=== Installation ===
+Recommended installation method is to use SVN: 
+{{{
+mkdir vanadium-ros-pkg; cd vanadium-ros-pkg
+svn checkout http://vanadium-ros-pkg.googlecode.com/svn/tags/vanadium_drivers/0.3.0 vanadium_drivers
+cd vanadium_drivers; cd arbotix; make
+}}}
+
 = Vanadium Drivers - 0.2.1 (9/3/10) = 
 Bug fixes: 
  * Update PML firmware update rate to 20hz (30hz is too fast)
