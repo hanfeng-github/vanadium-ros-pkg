@@ -56,10 +56,9 @@ unsigned char paused = 0;    // base was in motion, can resume
 
 /* Setpoint Info For a Motor */
 typedef struct{
-  int VelocitySetpoint;      // desired actual speed (count/frame)
+  int Velocity;              // desired actual speed (count/frame)
   long Encoder;              // actual reading
   long PrevEnc;              // last reading
-  int  Velocity;             // current desired average speed (counts/frame), taking ramping into accound
   int PrevErr;
   int Ierror;   
   int output;                // last motor setting
@@ -76,20 +75,6 @@ void setupPID(){
   Ko = 100;
   maxAccel = 50;
   f_time = 0;
-}
-
-/* Linearly Ramp Velocity TO VelocitySetpoint */
-void Ramp(SetPointInfo * x){
-  x->Velocity = x->VelocitySetpoint;
-  /*if(x->Velocity < x->VelocitySetpoint){
-    x->Velocity += maxAccel;
-    if( x->Velocity > x->VelocitySetpoint)
-      x->Velocity = x->VelocitySetpoint;
-  }else{
-    x->Velocity -= maxAccel;
-    if( x->Velocity < x->VelocitySetpoint)
-      x->Velocity = x->VelocitySetpoint;
-  }*/ 
 }
 
 /* PID control of motor speed */
@@ -117,6 +102,17 @@ void DoPid(SetPointInfo * p){
   p->output = output;
 }
 
+/* Clear accumulators */
+void ClearPID(){
+  PIDmode = 0; moving = 0;
+  left.PrevErr = 0;
+  left.Ierror = 0;
+  left.output = 0;
+  right.PrevErr = 0;
+  right.Ierror = 0;
+  right.output = 0;
+}
+
 /* This is called by the main loop, does a X HZ PID loop. */
 void updatePID(){
   if((moving > 0) && (PIDmode > 0)){  // otherwise, just return
@@ -125,9 +121,6 @@ void updatePID(){
       // update encoders
       left.Encoder = Encoders.left;
       right.Encoder = Encoders.right;
-      // update velocity setpoints (ramping to velocity)
-      Ramp(&left);
-      Ramp(&right);      
       // do PID update on PWM
       DoPid(&left);
       DoPid(&right);

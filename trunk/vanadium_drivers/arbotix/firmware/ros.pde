@@ -27,8 +27,8 @@
 
 /* Build Configuration */
 #define USE_PML             // Enable support for a PML (All)
-//#define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
-//#define USE_BIG_MOTORS      // Enable Pololu 30A support (ArbotiX+)
+#define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
+#define USE_BIG_MOTORS      // Enable Pololu 30A support (ArbotiX+)
 #define USE_HW_SERVOS       // Enable only 2/8 servos, but using hardware control (All)
 
 /* Hardware Constructs */
@@ -80,6 +80,7 @@ int seqPos;                     // step in current sequence
 /* 
  * Setup Functions
  */
+#if defined(ARBOTIX_PLUS) || defined(SERVO_STIK)
 void scan(){
   // do a search for devices on the RX bus, default to AX if not found
   int i;
@@ -90,6 +91,7 @@ void scan(){
     }
   }  
 }
+#endif
 void setup(){
   Serial.begin(38400);  
 
@@ -199,18 +201,23 @@ unsigned char handleWrite(){
       left_speed = params[k];
     }else if(addr == REG_LM_SPEED_H){
       left_speed += (params[k]<<8);
-      left.VelocitySetpoint = left_speed;
     }else if(addr == REG_RM_SPEED_L){
       right_speed = params[k];
     }else if(addr == REG_RM_SPEED_H){
       right_speed += (params[k]<<8); 
-      right.VelocitySetpoint = right_speed;  
-      if((left.VelocitySetpoint == 0) && (right.VelocitySetpoint == 0)){
+      //assumed to be all written at once
+      if((left_speed == 0) && (right_speed == 0)){
         drive.set(0,0);
-        PIDmode = 0; moving = 0;
+        ClearPID();
       }else{
-        PIDmode = 1; moving = 1;
+        if((left.Velocity == 0) && (right.Velocity == 0)){
+          PIDmode = 1; moving = 1;
+          left.PrevEnc = Encoders.left;
+          right.PrevEnc = Encoders.right;
+        }
       }   
+      left.Velocity = left_speed;
+      right.Velocity = right_speed; 
       
     }else if(addr < REG_KP){
       // can't write encoders?  
@@ -383,152 +390,153 @@ void loop(){
         mode = 2;
         digitalWrite(0,HIGH-digitalRead(0));
       }
-   //}else if(mode == 1){   // another start byte
-   //    if(Serial.read() == 0xff)
-   //        mode = 2;
-   //    else
-   //        mode = 0;
-   }else if(mode == 2){   // next byte is index of servo
-     id = Serial.read();    
-     if(id != 0xff)
-       mode = 3;
-   }else if(mode == 3){   // next byte is length
-     length = Serial.read();
-     checksum = id + length;
-     mode = 4;
-   }else if(mode == 4){   // next byte is instruction
-     ins = Serial.read();
-     checksum += ins;
-     index = 0;
-     mode = 5;
-   }else if(mode == 5){   // read data in 
-     params[index] = Serial.read();
-     checksum += (int) params[index];
-     index++;
-     if(index + 1 == length){  // we've read params & checksum
-       mode = 0;
-       if((checksum%256) != 255){ 
-         // return an error packet: FF FF id Len Err=bad checksum, params=None check
-         statusPacket(id,CHECKSUM_ERROR);
-       }else if(id == 253){  // ID = 253, ArbotiX instruction
-         switch(ins){     
-           case AX_WRITE_DATA:
-             // send return packet
-             statusPacket(id,handleWrite());
-             break;
+    //}else if(mode == 1){   // another start byte
+    //    if(Serial.read() == 0xff)
+    //        mode = 2;
+    //    else
+    //        mode = 0;
+    }else if(mode == 2){   // next byte is index of servo
+      id = Serial.read();    
+      if(id != 0xff)
+        mode = 3;
+    }else if(mode == 3){   // next byte is length
+      length = Serial.read();
+      checksum = id + length;
+      mode = 4;
+    }else if(mode == 4){   // next byte is instruction
+      ins = Serial.read();
+      checksum += ins;
+      index = 0;
+      mode = 5;
+    }else if(mode == 5){   // read data in 
+      params[index] = Serial.read();
+      checksum += (int) params[index];
+      index++;
+      if(index + 1 == length){  // we've read params & checksum
+        mode = 0;
+        if((checksum%256) != 255){ 
+          // return an error packet: FF FF id Len Err=bad checksum, params=None check
+          statusPacket(id,CHECKSUM_ERROR);
+        }else if(id == 253){  // ID = 253, ArbotiX instruction
+          switch(ins){     
+            case AX_WRITE_DATA:
+              // send return packet
+              statusPacket(id,handleWrite());
+              break;
              
-           case AX_READ_DATA:
-             checksum = id + params[1] + 2;                            
-             Serial.print(0xff,BYTE);
-             Serial.print(0xff,BYTE);
-             Serial.print(id,BYTE);
-             Serial.print(2+params[1],BYTE);
-             Serial.print(0,BYTE);
-             // send actual data
-             checksum += handleRead();
-             Serial.print(255-((checksum)%256),BYTE);
-             break;
+            case AX_READ_DATA:
+              checksum = id + params[1] + 2;                            
+              Serial.print(0xff,BYTE);
+              Serial.print(0xff,BYTE);
+              Serial.print(id,BYTE);
+              Serial.print(2+params[1],BYTE);
+              Serial.print(0,BYTE);
+              // send actual data
+              checksum += handleRead();
+              Serial.print(255-((checksum)%256),BYTE);
+              break;
              
-           case ARB_SIZE_POSE:                   // Pose Size = 7, followed by single param: size of pose
-             statusPacket(id,0);
-             bioloid.poseSize = params[0];
-             bioloid.readPose();    
-             break;
+            case ARB_SIZE_POSE:                   // Pose Size = 7, followed by single param: size of pose
+              statusPacket(id,0);
+              bioloid.poseSize = params[0];
+              bioloid.readPose();    
+              break;
              
-           case ARB_LOAD_POSE:                   // Load Pose = 8, followed by index, then pose positions (# of param = 2*pose_size)
-             statusPacket(id,0);
-             for(i=0; i<bioloid.poseSize; i++)
-               poses[params[0]][i] = params[(2*i)+1]+(params[(2*i)+2]<<8); 
-             break;
+            case ARB_LOAD_POSE:                   // Load Pose = 8, followed by index, then pose positions (# of param = 2*pose_size)
+              statusPacket(id,0);
+              for(i=0; i<bioloid.poseSize; i++)
+                poses[params[0]][i] = params[(2*i)+1]+(params[(2*i)+2]<<8); 
+              break;
              
-           case ARB_LOAD_SEQ:                    // Load Seq = 9, followed by index/times (# of parameters = 3*seq_size) 
-             statusPacket(id,0);
-             for(i=0;i<(length-2)/3;i++){
-               sequence[i].pose = params[(i*3)];
-               sequence[i].time = params[(i*3)+1] + (params[(i*3)+2]<<8);
-             }
-             break;
+            case ARB_LOAD_SEQ:                    // Load Seq = 9, followed by index/times (# of parameters = 3*seq_size) 
+              statusPacket(id,0);
+              for(i=0;i<(length-2)/3;i++){
+                sequence[i].pose = params[(i*3)];
+                sequence[i].time = params[(i*3)+1] + (params[(i*3)+2]<<8);
+              }
+              break;
              
-           case ARB_PLAY_SEQ:                   // Play Seq = A, no params   
-             statusPacket(id,0);
-             doPlaySeq();
-             break;
+            case ARB_PLAY_SEQ:                   // Play Seq = A, no params   
+              statusPacket(id,0);
+              doPlaySeq();
+              break;
              
-           case ARB_LOOP_SEQ:                   // Play Seq until we recieve a 'H'alt
-             statusPacket(id,0);
-             while(doPlaySeq() > 0);
-             break;
+            case ARB_LOOP_SEQ:                   // Play Seq until we recieve a 'H'alt
+              statusPacket(id,0);
+              while(doPlaySeq() > 0);
+              break;
 
 #ifdef USE_BASE   
-           case ARB_TEST:
-             statusPacket(id,0);
-             doTest();
-             break;
+            case ARB_TEST:
+              statusPacket(id,0);
+              doTest();
+              break;
 #endif
-         }
-       }else if(id == 0xFE){
-         // sync read or write
-         if(ins == ARB_SYNC_READ){
-           int start = params[0];    // address to read in control table
-           int bytes = params[1];    // # of bytes to read from each servo
-           int k = 2;
-           checksum = id + (bytes*(length-4)) + 2;                            
-           Serial.print(0xff,BYTE);
-           Serial.print(0xff,BYTE);
-           Serial.print(id,BYTE);
-           Serial.print(2+(bytes*(length-4)),BYTE);
-           Serial.print(0,BYTE);     // error code
-           // send actual data
-           for(k=2; k<length-2; k++){
-             ax12GetRegister(params[k], start, bytes);
-             for(i=0;i<bytes;i++){
-               checksum += ax_rx_buffer[5+i];
-               Serial.print(ax_rx_buffer[5+i],BYTE);
-             }
-           }
-           Serial.print(255-((checksum)%256),BYTE);
-         }else{    // TODO: sync write pass thru
-         
+          }
+        }else if(id == 0xFE){
+          // sync read or write
+          if(ins == ARB_SYNC_READ){
+            int start = params[0];    // address to read in control table
+            int bytes = params[1];    // # of bytes to read from each servo
+            int k = 2;
+            checksum = id + (bytes*(length-4)) + 2;                            
+            Serial.print(0xff,BYTE);
+            Serial.print(0xff,BYTE);
+            Serial.print(id,BYTE);
+            Serial.print(2+(bytes*(length-4)),BYTE);
+            Serial.print(0,BYTE);     // error code
+            // send actual data
+            for(k=2; k<length-2; k++){
+              ax12GetRegister(params[k], start, bytes);
+              for(i=0;i<bytes;i++){
+                checksum += ax_rx_buffer[5+i];
+                Serial.print(ax_rx_buffer[5+i],BYTE);
+              }
+            }
+            Serial.print(255-((checksum)%256),BYTE);
+          }else{    
+            // TODO: sync write pass thru
            
-           // no return
-         }       
-       }else{ // ID != 253, pass thru 
-         switch(ins){
-           // TODO: streamline this
-           case AX_READ_DATA:
-             ax12GetRegister(id, params[0], params[1]);
-             // return a packet: FF FF id Len Err params check
-             if(ax_rx_buffer[3] > 0){
-               for(i=0;i<ax_rx_buffer[3]+4;i++)
-                 Serial.print(ax_rx_buffer[i],BYTE);
-             }
-             ax_rx_buffer[3] = 0;
-             break;
+           
+            // no return
+          }       
+        }else{ // ID != 253, pass thru 
+          switch(ins){
+            // TODO: streamline this
+            case AX_READ_DATA:
+              ax12GetRegister(id, params[0], params[1]);
+              // return a packet: FF FF id Len Err params check
+              if(ax_rx_buffer[3] > 0){
+                for(i=0;i<ax_rx_buffer[3]+4;i++)
+                  Serial.print(ax_rx_buffer[i],BYTE);
+              }
+              ax_rx_buffer[3] = 0;
+              break;
              
-           case AX_WRITE_DATA:
-             if(length == 4){
-               ax12SetRegister(id, params[0], params[1]);
-             }else{
-               int x = params[1] + (params[2]<<8);
-               ax12SetRegister2(id, params[0], x);
-             }
-             statusPacket(id,0);
-             break;
+            case AX_WRITE_DATA:
+              if(length == 4){
+                ax12SetRegister(id, params[0], params[1]);
+              }else{
+                int x = params[1] + (params[2]<<8);
+                ax12SetRegister2(id, params[0], x);
+              }
+              statusPacket(id,0);
+              break;
              
-         }
-       }
-     }
-   } // end mode == 5
- } // end while(available)
- // update joints
- bioloid.interpolateStep();
+          }
+        }
+      }
+    } // end mode == 5
+  } // end while(available)
+  // update joints
+  bioloid.interpolateStep();
  
 #ifdef USE_BASE
- // update pid
- updatePID();
+  // update pid
+  updatePID();
 #endif
  
 #ifdef USE_PML
- step_pml();
+  step_pml();
 #endif
 }
