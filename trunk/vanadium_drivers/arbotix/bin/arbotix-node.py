@@ -266,6 +266,8 @@ class ArbotiX_ROS(ArbotiX):
             msg.effort = list()
 
             try:
+                # TODO: add torque/heat recovery
+                #   a.write(id,P_TORQUE_LIMIT_L,[255,3])
                 if use_sync: 
                     # arbotix/servostik/wifi board sync_read
                     val = self.syncRead(self.sync_servos, P_PRESENT_POSITION_L, 2)
@@ -303,7 +305,7 @@ class ArbotiX_ROS(ArbotiX):
         return GetAnalogResponse( self.getAnalog(req.pin) )
 
     def setDigitalCb(self, req):
-        self.setDigital(req.pin, req.dir, req.value)
+        self.setDigital(req.pin, req.value, req.dir)
         return SetDigitalResponse()                        
 
 if __name__ == "__main__":

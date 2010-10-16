@@ -58,7 +58,7 @@ class controllerGUI(wx.Frame):
         headSizer = wx.GridBagSizer(5,5)
         headSizer.Add(wx.StaticText(self, -1, "Pan:"),(0,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
         headSizer.Add(wx.StaticText(self, -1, "L"),(0,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        self.pan = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL )
+        self.pan = wx.Slider(self, -1, 0, -157, 157, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL )
         headSizer.Add(self.pan,(0,2))
         headSizer.Add(wx.StaticText(self, -1, "R"),(0,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
 
