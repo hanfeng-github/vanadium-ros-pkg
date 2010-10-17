@@ -187,14 +187,15 @@ class HobbyServo(DynamixelServo):
 class ArbotiX_ROS(ArbotiX):
     
     def __init__(self):
+        #rospy.init_node('arbotix', log_level=rospy.DEBUG)
         rospy.init_node('arbotix')
         # load configurations    
         port = rospy.get_param("~port", "/dev/ttyUSB0")                     
         baud = int(rospy.get_param("~baud", "38400"))
-        rospy.loginfo("Starting ArbotiX-ROS on port "+port)
 
         # start an arbotix driver
         ArbotiX.__init__(self, port, baud)        
+        rospy.loginfo("Started ArbotiX-ROS on port "+port)
 
         # initialize servos and state publishing
         use_sync = rospy.get_param("~use_sync",True)                        # use sync read?
@@ -219,9 +220,6 @@ class ArbotiX_ROS(ArbotiX):
             servo = HobbyServo(name, servos[name], self)
             self.servos[servo.name] = servo
             self.no_sync_names.append(servo.name)
-
-        print self.sync_names
-        print self.no_sync_names
 
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
 
@@ -288,11 +286,8 @@ class ArbotiX_ROS(ArbotiX):
                     for name in self.no_sync_names: 
                         msg.name.append(name)
                         msg.position.append(self.servos[name].getAngleStored())
-                    #for servo in self.servos.values():
-                    #    msg.name.append(servo.name)
-                    #    msg.position.append(servo.getAngle())                  
             except:
-                print "Error in filling joint_states message"
+                rospy.loginfo("Error in filling joint_states message")
     
             msg.header.stamp = rospy.Time.now()
             self.jointStatePub.publish(msg)                  
