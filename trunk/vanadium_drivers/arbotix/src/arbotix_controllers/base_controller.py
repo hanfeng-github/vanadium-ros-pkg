@@ -47,19 +47,23 @@ class base_controller(Thread):
         # handle for robocontroller
         self.device = device
 
-        # parameters
+        # parameters: topics, rate and geometry
+        self.topic = rospy.get_param("~controllers/"+name+"/topic","cmd_vel")
+        self.odom_topic = rospy.get_param("~controllers/"+name+"/odom_topic","odom")
         self.rate = float(rospy.get_param("~controllers/"+name+"/rate",15.0))
         self.ticks_meter = float(rospy.get_param("~controllers/"+name+"/ticks_meter", 26154))
         self.base_width = float(rospy.get_param("~controllers/"+name+"/base_width", 0.144))
 
+        # parameters: PID
         self.Kp = rospy.get_param("~controllers/"+name+"/Kp", 5)
         self.Kd = rospy.get_param("~controllers/"+name+"/Kd", 1)
         self.Ki = rospy.get_param("~controllers/"+name+"/Ki", 0)
         self.Ko = rospy.get_param("~controllers/"+name+"/Ko", 50)
+        self.device.write(253,device.KP,[self.Kp,self.Kd,self.Ki,self.Ko])        
+
+        # parameters: acceleration
         self.accel_limit = rospy.get_param("~controllers/"+name+"/accel_limit", 0.1)
         self.max_accel = int(self.accel_limit*self.ticks_meter/self.rate)
-        #self.max_accel = int(self.ticks_meter/(self.rate * 16))  # 0.0625m/s^2
-        self.device.write(253,device.KP,[self.Kp,self.Kd,self.Ki,self.Ko])        
 
         # internal data            
         self.v_left = 0             # current setpoint velocity
@@ -74,8 +78,8 @@ class base_controller(Thread):
         self.then = datetime.now()  # time for determining dx/dy
 
         # subscriptions
-        rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
-        self.odomPub = rospy.Publisher('odom',Odometry)
+        rospy.Subscriber(self.topic, Twist, self.cmdVelCb)
+        self.odomPub = rospy.Publisher(self.odom_topic,Odometry)
         self.odomBroadcaster = TransformBroadcaster()
 		
         rospy.loginfo("Started base_controller '"+name+"' for a base of " + str(self.base_width) + "m wide with " + str(self.ticks_meter) + " ticks per meter")
@@ -95,7 +99,7 @@ class base_controller(Thread):
             except:
                 rospy.logerr("Could not update encoders")
                 continue
-            #rospy.loginfo("Encoders: " + str(left) +","+ str(right))
+            rospy.logdebug("Encoders: " + str(left) +","+ str(right))
 
             # calculate odometry
             d_left = (left - self.enc_left)/self.ticks_meter
@@ -184,7 +188,7 @@ class base_controller(Thread):
             r = (x + th * self.base_width/2.0) * self.ticks_meter
 
         # clean up and log values                  
-        rospy.loginfo("Twist move: "+str(l)+","+str(r))
+        rospy.logdebug("Twist move: "+str(l)+","+str(r))
         l = int(l/30.0)
         r = int(r/30.0)      
         # set motor speeds in ticks per 1/30s
