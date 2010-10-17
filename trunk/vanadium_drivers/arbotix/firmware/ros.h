@@ -78,9 +78,18 @@
 #define REG_KI              71
 #define REG_KO              72
 
-#define REG_PML_SERVO       78  // servo ID for PML
-#define REG_PML_SCAN        79  // scan or no?
-#define REG_PML_BASE        80
+#define REG_PML_SERVO       80  // ID for PML servo
+#define REG_PML_SENSOR      81  // ID for PML sensor
+#define REG_PML_MIN_L       82  // minimum ticks, low byte
+#define REG_PML_MIN_H       83
+#define REG_PML_STEP        84  // ticks per step
+#define REG_PML_STEPS       85  // number of steps
+#define REG_PML_ENABLE      86  // scan or no?
+
+#define REG_PML_DIR         88  // direction of scan last taken
+#define REG_PML_TIME_L      89  // low byte of time offset from first read on this scan
+#define REG_PML_TIME_H      90  // high byte of time offset from first read on this scan
+#define REG_PML_BASE        91  // start of data bytes for this scan
 
 /* Packet Decoding */
 int mode = 0;                   // where we are in the frame
@@ -91,6 +100,12 @@ unsigned char ins = 0;          // instruction of this frame
 
 unsigned char params[50];       // parameters
 unsigned char index = 0;        // index in param buffer
+
+#ifdef USE_PML
+int scan_dir;
+//unsigned char * pml_buffer;
+//unsigned long * pml_time;
+#endif
 
 int checksum;                   // checksum
 

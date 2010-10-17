@@ -36,6 +36,13 @@
 #include <BioloidController.h>
 BioloidController bioloid = BioloidController(1000000);
 
+#include "ros.h"
+
+#ifdef USE_PML
+  #include <pml.h>
+  PML pml = PML();
+#endif
+
 #ifdef USE_HW_SERVOS
   #include <HServo.h>
   HServo servos[2];
@@ -43,8 +50,6 @@ BioloidController bioloid = BioloidController(1000000);
   #include <Servo.h>
   Servo servos[10];
 #endif
-
-#include "ros.h"
 
 #ifdef USE_BASE
   #ifdef USE_BIG_MOTORS
@@ -56,10 +61,6 @@ BioloidController bioloid = BioloidController(1000000);
   #endif
   #include <EncodersAB.h>
   #include "pid.h"
-#endif
-
-#ifdef USE_PML 
-  #include "pml.h"
 #endif
 
 /* Register Storage */
@@ -101,7 +102,7 @@ void setup(){
 #endif
 
 #ifdef USE_PML
-  init_pml();
+  pml.init();
 #endif
 
 // note: ARBOTIX_PLUS and SERVO_STIK are defined in our Bioloid library.
@@ -234,9 +235,15 @@ unsigned char handleWrite(){
 
 #ifdef USE_PML
     }else if(addr == REG_PML_SERVO){
-      set_pml_servo(params[k]);
-    }else if(addr == REG_PML_SCAN){
-      set_pml_enable(params[k]);
+      //set_pml_servo(params[k]);
+      pml.setServo(params[k]);
+    }else if(addr == REG_PML_SENSOR){
+      pml.setSensor(params[k]);
+    }else if(addr < REG_PML_ENABLE){
+      // TODO: range setup
+    }else if(addr == REG_PML_ENABLE){
+      if(params[k] > 0) pml.enable();
+      else pml.disable();
 #endif
     }else{
       return INSTRUCTION_ERROR;
@@ -300,9 +307,23 @@ int handleRead(){
 #endif
       
 #ifdef USE_PML
-    }else if(addr < REG_PML_BASE + 60){
-      v = pml_readings[addr-REG_PML_BASE];
+    }else if(addr < REG_PML_DIR){
+      v = 0;
+    }else if(addr == REG_PML_DIR){
+      scan_dir = pml.getScanID(); //pml_buffer, pml_time);
+      v = scan_dir;
+    }else if(addr == REG_PML_TIME_L){
+      v = pml.scan_time & 0xff;
+    }else if(addr == REG_PML_TIME_H){
+      v = (pml.scan_time>>8) & 0xff;
+    }else if(addr < REG_PML_BASE+60){
+      if(scan_dir == UP_SCAN){
+        v = pml.data_up[addr-REG_PML_BASE];
+      }else{
+        v = pml.data_dn[addr-REG_PML_BASE];
+      } //v = pml_buffer[addr-REG_PML_BASE];      
 #endif
+
     }else{
       v = 0;        
     }
@@ -537,6 +558,6 @@ void loop(){
 #endif
  
 #ifdef USE_PML
-  step_pml();
+  pml.step();
 #endif
 }
