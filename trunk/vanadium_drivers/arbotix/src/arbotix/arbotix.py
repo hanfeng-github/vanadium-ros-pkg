@@ -252,10 +252,6 @@ class ArbotiX:
     KD = 70
     KI = 71
     KO = 72
-    
-    PML_SERVO = 78
-    PML_ENABLE = 79
-    PML_BASE = 80
 
     def rescan(self):
         self.write(253, self.REG_RESCAN, [1,])
@@ -361,12 +357,6 @@ class ArbotiX:
             return [x,y,th]
         except:
             return None        
-
-    def enablePML(self, value):
-        if value:
-            return self.write(253, self.PML_ENABLE, [1])
-        else:
-            return self.write(253, self.PML_ENABLE, [0])
 
 if __name__ == "__main__":
     # some simple testing
