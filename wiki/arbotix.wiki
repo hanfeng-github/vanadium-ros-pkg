@@ -1,18 +1,6 @@
 #summary Package Documentation: arbotix
 
- * [arbotix#Overview Overview]
- * [arbotix#Firmware Firmware]
- * [arbotix#arbotix-node.py ArbotiX Node]
-   * [arbotix#Topics-and-Services Topics and Services]
-   * [arbotix#Parameters Parameters]
- * [arbotix#Controllers Controllers ]
-   * [arbotix#base_controller base_controller]
-   * [arbotix#joint_controller joint_controller]
- * [arbotix#Sensors Sensors]
-   * [arbotix#pml pml]
-
-= Overview =
-The ArbotiX package consists of custom firmware for the ArbotiX RoboController, and an ROS node which interacts over a USB serial connection. The node is designed to be highly modular: the core module interacts with, and holds onto state information about servos, encoders, motors and IO. Individual "controllers" and "sensors" are then loaded to provide ROS topic- or action-based interfaces to these hardware devices.
+Most of this has been moved to the ROS wiki -- only those parts still in need of migration/deletion remain. Please see http://www.ros.org/wiki/arbotix
 
 = Firmware = 
 The ArbotiX firmware provides access to:
@@ -24,38 +12,8 @@ The ArbotiX firmware provides access to:
  * IK-based control of walking robots (this requires a special NUKE-based firmware).
 
 The firmware consists of several files, which must be placed in the _arduino-sketchbook/ros_ folder: 
- * ros.pde - the main program. There are several build configurations possible, by commenting or uncommenting lines: 
-   * USE_PML - build the Planar Meta-Laser support.
-   * USE_BASE - build support for differential drive base.
-   * USE_BIG_MOTORS - build support for the !BigMotors library.
-   * USE_HW_SERVOS - use hardware servo library.
- * ros.h - header file with register table definitions
- * pml.h - the Poor Man's Lidar code. 
- * pid.h - motor control code. 
 
 Support for NUKE walkers is provided by replacing the default exported sketch with the _ros-nuke.pde_ file (editing where noted), and copying _ros.h_ and _pml.h_ into the sketch folder. 
-----
-= arbotix-node.py = 
-The arbotix-node.py is the main node for this package. It is highly reconfigurable and can load a number of controllers and services. 
-
-== Topics-and-Services ==
-arbotix-node.py offers basic services and start-time configuration through a number of parameters. The services offered are: 
- * getAnalog
- * getDigital
- * setDigital
-
-The core also publishes servo positions to the _joint_states_ topic. 
-
-== Parameters ==
-The following parameters are used for arbotix-node.py, parameters for individual sensors and controllers are documented later. 
- * port (default: /dev/ttyUSB0)
- * baud (default: 38400) - baud rate, in bps. 
- * rate (default: 15.0) - rate at which to publish the _joint_states_ topic. 
- * dynamixels - a dictionary configuration of dynamixel servo names and parameters. 
- * servos - a dictionary configuration of hobby servo names and parameters. 
- * use_sync (default: True) - whether to use sync_read or not. Must be disabled when using hardware such as a USB2Dynamixel, or when there are no dynamixels attached. 
- * controllers - a dictionary of controller names and parameters.
- * sensors - a dictionary of sensor names and parameters. 
 
 Servos also have the following parameters: 
  * id - must be specified for each servo. For dynamixel servos, this is the ID on the bus, for hobby servos it is the pin number to use. 
@@ -66,47 +24,6 @@ Servos also have the following parameters:
  * sync (default: True for dynamixels, false for hobby) - whether servo should be queried for position when doing joint_state update. If false, last known position is used for joint_state publications. 
  * range - range of servo in degrees, must be set before ticks if used.
  * ticks (default: 1024 or 2000us) - number of ticks, for EX-106s, you would have to pass in 4096, other servos likely won't change this. 
-----
-= Controllers = 
-Controllers provide a higher-level interface to hardware devices, in a more ROS-like fashion. 
-
-== base_controller == 
-The base controller provides high level control of a differential drive robot. This includes taking velocity commands and publishing odometry and tf information for the navigation stack. The nuke_controller for controlling NUKE-based walkers is nearly identical, however the only parameter is _rate_. 
-
-Parameters to the base_controller are: 
- * rate (default: 15.0) - rate to publish odometry
- * base_width - track width, in meters.  
- * ticks_meter - encoder ticks per meter of travel. 
- * Kp - proportional parameter for PID, loaded into ArbotiX at start of node.
- * Kd - derivative parameter for PID, loaded into ArbotiX at start of node.
- * Ki - integral parameter for PID, loaded into ArbotiX at start of node.
- * Ko - scaling parameter for PID, loaded into ArbotiX at start of node.
- * accel_limit - limit to acceleration in m/s^2.
-
-Publishes: 
- * odom (nav_msgs/Odometry)
- * tf transform from base_link to odom. 
-
-Subscribes To: 
- * cmd_vel (geometry_msgs/Twist)
-
-The PID loop runs on the ArbotiX and calculates how to change PWM output in light of encoder values. PWM can vary from -255 to 255. The PID loop runs at 30hz, and thus encoder counts are accumulated for 1/30 of a second. This works well for high-count encoders, and not so well on low-count ones -- future releases may allow the loop rate to be varied. The update to output values is calculated as: 
-
-{{{
-Error = DesiredCount - ActualCount;
-output_update = (Kp*Error + Kd*(Error - PreviousError) + Ki*p->Ierror)/Ko;
-}}}
-
-Where PreviousError is the error from the previous loop, and Ierror is the accumulated error over time. The default values of Kp,Kd,Ki,Ko of 5,1,0, and 50 provide good results on the Lynxmotion 12V gearmotors with 100cpr encoders. These values can be tuned to improve how the PID reacts.
-
-== joint_controller ==
-The joint_controller is the simplest of servo controllers. It subscribes to a _cmd_joints_ topic, of type JointState, and manages a set of joints -- often an arm or head unit. Simple positional requests can be sent over this topic, and servos are moved to the desired position (instantly, no smoothing or trajectory management is employed). 
-
-Parameters: 
- * joints - a list of joint names to control. 
-
-Subscribes To: 
- * cmd_joints (sensor_msgs/JointState)
 
 == Other Controllers==
 Planned controllers include:
@@ -114,13 +31,9 @@ Planned controllers include:
  * Action based single joint controller (arbotix_controllers/single_traj_action).
  * Action based head controller (arbotix_controllers/head_action).
  * Low level joint trajectory controllers (arbotix_controllers/joint_traj_controller).
- * The Planar Meta-Laser (PML), which broadcasts laser_scan topics using a long range IR sensor and AX-12. (arbotix_sensors/pml).
 
 A joint_traj_controller allows more advanced control of a set of servos by passing a series of trajectories, rather than a single position. It subscribes to the _command_ topic within it's namespace. The single_traj_controller is a similar controller, but for single servo control. A joint_traj_action can be used to pass trajectories to a joint_traj_controller via an action interface. 
 
-A head_action allows positioning a head to point at a location in space. It uses our _cmd_joints_ topic.  
-
-----
 = Sensors =
 The ArbotiX is also capable of interfacing high-level sensors to ROS. 
 
