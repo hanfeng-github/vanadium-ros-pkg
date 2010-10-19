@@ -1,0 +1,11 @@
+<package>
+  <description brief="arbotix_firmware">
+    Firmware source code for ArbotiX-ROS bindings.
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/arbotix_firmware</url>
+</package>
+
+
