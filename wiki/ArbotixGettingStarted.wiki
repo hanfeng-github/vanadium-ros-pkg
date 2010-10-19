@@ -1,10 +1,12 @@
 #summary Quick Introduction to the ArbotiX Package
 
+_NOTE:_ this is slowly being moved to the ROS wiki...
+
 = Introduction =
 This is a quick start guide to the ArbotiX ROS drivers. It is a work in progress. Before we begin, a bit of background. This package contains an ROS node (bin/arbotix-node.py) which, combined with a custom firmware, turns the ArbotiX into a powerful hardware interface device for ROS. It allows access to digital and analog signals, servo control, and control of a differential drive or walking robot base. Because this driver can do so many different things, there are many options during setup. 
 
 = Installing Firmware =
-You'll want to update the firmware on your ArbotiX or ServoStiK. You'll need to follow the instructions found on the [http://code.google.com/p/arbotix/wiki/GettingSetup ArbotiX wiki], including installing the Arduino IDE, and robocontroller libraries (our 0.3.0 release requires RoboController 0008). You can then copy the files found in the _firmware_ folder into your sketchbook. (In future releases, we'll have precompiled binaries of the firmware, so that you only need to install _avrdude_). 
+See http://www.ros.org/wiki/arbotix_firmware
 
 = Installing The ArbotiX Package =
 You'll need to install ROS and subversion. You can then install the _vanadium_drivers_ stack, which includes the _arbotix_ package: 
