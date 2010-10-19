@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  pml.py - a Poor Man's Scanning Laser
+  pml.py - the Planer Meta-Laser (formerly Poor Man's Scanning Laser)
   Copyright (c) 2008-2010 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@ class pml(Thread):
         self.name = name
 
         # parameters
-        self.rate = rospy.get_param("~sensors/"+name+"/rate",1.0)
+        #self.rate = rospy.get_param("~sensors/"+name+"/rate",1.0)
         self.frame_id = rospy.get_param("~sensors/"+name+"/frame","base_laser") 
         self.servo_id = rospy.get_param("~sensors/"+name+"/servo_id",200) 
         self.sensor_id = rospy.get_param("~sensors/"+name+"/sensor_id",0)
@@ -68,9 +68,9 @@ class pml(Thread):
 
         # sensor type: choices are A710YK (40-216"), A02YK (8-60"), A21YK (4-30")
         self.sensor = rospy.get_param("~sensors/"+name+"/sensor_type","A710YK")
-        if self.sensor = "A710YK" or self.sensor = "ultralong":
+        if self.sensor == "A710YK" or self.sensor == "ultralong":
             self.conversion = self.gpA710YK
-        else if self.sensor = "A02YK" or self.sensor = "long":
+        elif self.sensor == "A02YK" or self.sensor == "long":
             self.conversion = self.gpA02YK
         else:
             self.conversion = self.gpA21YK
@@ -90,29 +90,45 @@ class pml(Thread):
         self.device.write(253, self.PML_SERVO, [self.servo_id, self.sensor_id])
         self.device.write(253, self.PML_ENABLE, [0])
         # run
-        r = rospy.Rate(self.rate)
+        r = rospy.Rate(10) #self.rate)
+        d = self.DN_SCAN
         while not rospy.is_shutdown():
             if self.enable:
-                # get ranges
-                v = self.device.read(253, self.PML_DIR, 3+self.step_count*2)   
-                print "PML:", v[0], v[1]+(v[2]<<8)
-                ranges = list()
-                for i in range(30):
-                    k = v[i*2+3] + (v[i*2+4]<<8)
-                    ranges.append( self.conversion(k) )
-                # now post laser scan
-                scan = LaserScan()
-                scan.header.stamp = rospy.Time.now()        
-                scan.header.frame_id = self.frame_id
-                scan.angle_min = -1.57
-                scan.angle_max = 1.57
-                scan.angle_increment = 0.108275862
-                scan.scan_time = self.rate
-                scan.range_min = 0.5
-                scan.range_max = 6.0
-                scan.ranges = ranges    
-                self.scanPub.publish(scan)
+                # check if new data
+                if self.device.read(253,self.PML_DIR,1)[0] == d:                
+                    # get ranges
+                    v = self.device.read(253, self.PML_DIR, 3+self.step_count*2) 
+                    offset =  (v[1]+(v[2]<<8))/1000.0
+                    print "PML:", v[0], offset
+                    ranges = list()
+                    for i in range(30):
+                        if d == self.UP_SCAN:
+                            k = v[i*2+3] + (v[i*2+4]<<8)
+                        else:
+                            k = v[61-i*2] + (v[62-i*2]<<8)
+                        ranges.append( self.conversion(k) )
+                    # now post laser scan
+                    scan = LaserScan()
+                    scan.header.stamp = rospy.Time.now() - rospy.Duration.from_sec(offset)      
+                    scan.header.frame_id = self.frame_id
+                    if d == self.UP_SCAN:
+                        scan.angle_min = -1.57
+                        scan.angle_max = 1.57
+                        scan.angle_increment = 0.108275862
+                    else:
+                        scan.angle_min = 1.57
+                        scan.angle_max = -1.57
+                        scan.angle_increment = -0.108275862
+                    scan.scan_time = 1.5 #self.rate
+                    scan.range_min = 0.5
+                    scan.range_max = 6.0
+                    scan.ranges = ranges    
+                    self.scanPub.publish(scan)
+                    if d == self.UP_SCAN: d = self.DN_SCAN
+                    else: d = self.UP_SCAN
             r.sleep()
+        # it's annoying, turn it off before we leave!
+        self.disable_callback(None)
 
     def enable_callback(self, req):
         rospy.loginfo("PML Enabled")
@@ -130,16 +146,16 @@ class pml(Thread):
     def gpA710YK(self, value):
         if value > 100:
             return (497.0/(value-56))
-        else
+        else:
             return 0.0 
     def gpA02YK(self, value):
         if value > 80:
             return (115.0/(value-12))
-        else
+        else:
             return 0.0 
     def gpA21YK(self, value):
         if value > 40:
             return (52.0/(value-12))
-        else
+        else:
             return 0.0 
 
