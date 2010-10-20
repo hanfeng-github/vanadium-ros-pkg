@@ -214,6 +214,8 @@ class ArbotiX_ROS(ArbotiX):
                 self.sync_names.append(servo.name)    
             else:
                 self.no_sync_names.append(servo.name)
+        if len(self.sync_servos) == 0:
+            use_sync = False
 
         servos = rospy.get_param("~servos", dict())
         for name in servos.keys():
