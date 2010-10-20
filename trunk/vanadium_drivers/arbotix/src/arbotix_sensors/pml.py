@@ -90,6 +90,7 @@ class pml(Thread):
     def run(self):
         # set PML servo, sensor IDs, make sure it's disabled
         self.device.write(253, self.PML_SERVO, [self.servo_id, self.sensor_id])
+        self.device.write(253, self.PML_MIN_L, [self.step_start%256, self.step_start>>8, self.step_value, self.step_count])
         self.device.write(253, self.PML_ENABLE, [0])
         # run
         r = rospy.Rate(self.rate * 8)   # 8 times oversampled...
@@ -101,26 +102,25 @@ class pml(Thread):
                     # get ranges
                     v = self.device.read(253, self.PML_DIR, 3+self.step_count*2) 
                     offset =  (v[1]+(v[2]<<8))/1000.0
-                    print "PML:", v[0], offset
                     ranges = list()
-                    for i in range(30):
+                    for i in range(self.step_count):
                         if d == self.UP_SCAN:
                             k = v[i*2+3] + (v[i*2+4]<<8)
                         else:
-                            k = v[61-i*2] + (v[62-i*2]<<8)
+                            k = v[(self.step_count*2+1)-i*2] + (v[(self.step_count*2+2)-i*2]<<8)
                         ranges.append( self.conversion(k) )
                     # now post laser scan
                     scan = LaserScan()
                     scan.header.stamp = rospy.Time.now() - rospy.Duration.from_sec(offset)      
                     scan.header.frame_id = self.frame_id
                     if d == self.UP_SCAN:
-                        scan.angle_min = -1.57
-                        scan.angle_max = 1.57
-                        scan.angle_increment = 0.108275862
+                        scan.angle_min = (self.step_start-512) * 0.00511
+                        scan.angle_max = (self.step_start+self.step_value*(self.step_count-1)-512) * 0.00511
+                        scan.angle_increment = self.step_value * 0.00511
                     else:
-                        scan.angle_min = 1.57
-                        scan.angle_max = -1.57
-                        scan.angle_increment = -0.108275862
+                        scan.angle_min = (self.step_start+self.step_value*(self.step_count-1)-512) * 0.00511
+                        scan.angle_max = (self.step_start-512) * 0.00511
+                        scan.angle_increment = -self.step_value * 0.00511
                     scan.scan_time = offset #self.rate
                     scan.range_min = 0.5
                     scan.range_max = 6.0
