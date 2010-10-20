@@ -40,12 +40,12 @@ class pml(Thread):
     PML_MIN_L = 82      # minimum position (in ticks)
     PML_STEP = 84       # step, in ticks
     PML_STEPS = 85      # number of steps in a scan (max 30)
-    PML_ENABLE = 86     # scan or no?
+    PML_ENABLE = 86     # scan or no?    
 
     PML_DIR = 88        # direction of read scan
     PML_TIME_L = 89     # time offset from first reading
-    PML_BASE = 91       # base of readings array
-
+    PML_BASE = 91       # base of readings array, array goes to index 150
+    
     UP_SCAN = 0         # Right to left...?
     DN_SCAN = 1
 
@@ -57,10 +57,11 @@ class pml(Thread):
         self.name = name
 
         # parameters
-        #self.rate = rospy.get_param("~sensors/"+name+"/rate",1.0)
+        self.rate = rospy.get_param("~sensors/"+name+"/rate",1.0)
         self.frame_id = rospy.get_param("~sensors/"+name+"/frame","base_laser") 
         self.servo_id = rospy.get_param("~sensors/"+name+"/servo_id",200) 
         self.sensor_id = rospy.get_param("~sensors/"+name+"/sensor_id",0)
+        self.pml_id = rospy.get_param("~sensors/"+name+"/pml_id",0)
 
         self.step_start = rospy.get_param("~sensors/"+name+"/step_start",209)
         self.step_value = rospy.get_param("~sensors/"+name+"/step_value",21)
@@ -74,6 +75,7 @@ class pml(Thread):
             self.conversion = self.gpA02YK
         else:
             self.conversion = self.gpA21YK
+        self.out_of_range = rospy.get_param("~sensors/"+name+"/out_of_range",0.0)
         
         # annoyingly loud, allow servo panning to be turned on/off
         self.enable = rospy.get_param("~sensors/"+name+"/enabled",False)
@@ -90,7 +92,7 @@ class pml(Thread):
         self.device.write(253, self.PML_SERVO, [self.servo_id, self.sensor_id])
         self.device.write(253, self.PML_ENABLE, [0])
         # run
-        r = rospy.Rate(10) #self.rate)
+        r = rospy.Rate(self.rate * 8)   # 8 times oversampled...
         d = self.DN_SCAN
         while not rospy.is_shutdown():
             if self.enable:
@@ -119,7 +121,7 @@ class pml(Thread):
                         scan.angle_min = 1.57
                         scan.angle_max = -1.57
                         scan.angle_increment = -0.108275862
-                    scan.scan_time = 1.5 #self.rate
+                    scan.scan_time = offset #self.rate
                     scan.range_min = 0.5
                     scan.range_max = 6.0
                     scan.ranges = ranges    
@@ -147,15 +149,15 @@ class pml(Thread):
         if value > 100:
             return (497.0/(value-56))
         else:
-            return 0.0 
+            return self.out_of_range
     def gpA02YK(self, value):
         if value > 80:
             return (115.0/(value-12))
         else:
-            return 0.0 
+            return self.out_of_range 
     def gpA21YK(self, value):
         if value > 40:
             return (52.0/(value-12))
         else:
-            return 0.0 
+            return self.out_of_range 
 
