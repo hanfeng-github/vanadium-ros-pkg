@@ -27,7 +27,7 @@
 
 /* Build Configuration */
 #define USE_PML             // Enable support for a PML (All)
-#define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
+//#define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
 //#define USE_BIG_MOTORS      // Enable Pololu 30A support (ArbotiX+)
 #define USE_HW_SERVOS       // Enable only 2/8 servos, but using hardware control (All)
 
@@ -222,7 +222,7 @@ unsigned char handleWrite(){
       
     }else if(addr < REG_KP){
       // can't write encoders?  
-      
+      return INSTRUCTION_ERROR;
     }else if(addr == REG_KP){
       Kp = params[k];  
     }else if(addr == REG_KD){
@@ -239,12 +239,19 @@ unsigned char handleWrite(){
       pml.setServo(params[k]);
     }else if(addr == REG_PML_SENSOR){
       pml.setSensor(params[k]);
-    }else if(addr < REG_PML_ENABLE){
-      // TODO: range setup
+    }else if(addr == REG_STEP_START_L){
+      step_start = params[k];
+    }else if(addr == REG_STEP_START_H){
+      step_start += params[k]<<8;
+    }else if(addr == REG_STEP_VALUE){
+      step_value = params[k];
+    }else if(addr == REG_STEP_COUNT){
+      pml.setupStep(step_start,step_value,params[k]);
     }else if(addr == REG_PML_ENABLE){
       if(params[k] > 0) pml.enable();
       else pml.disable();
 #endif
+
     }else{
       return INSTRUCTION_ERROR;
     }
@@ -321,9 +328,8 @@ int handleRead(){
         v = pml.data_up[addr-REG_PML_BASE];
       }else{
         v = pml.data_dn[addr-REG_PML_BASE];
-      } //v = pml_buffer[addr-REG_PML_BASE];      
+      }
 #endif
-
     }else{
       v = 0;        
     }

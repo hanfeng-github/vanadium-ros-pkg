@@ -80,10 +80,10 @@
 
 #define REG_PML_SERVO       80  // ID for PML servo
 #define REG_PML_SENSOR      81  // ID for PML sensor
-#define REG_PML_MIN_L       82  // minimum ticks, low byte
-#define REG_PML_MIN_H       83
-#define REG_PML_STEP        84  // ticks per step
-#define REG_PML_STEPS       85  // number of steps
+#define REG_STEP_START_L    82  // minimum ticks, low byte
+#define REG_STEP_START_H    83
+#define REG_STEP_VALUE      84  // ticks per step
+#define REG_STEP_COUNT      85  // number of steps
 #define REG_PML_ENABLE      86  // scan or no?
 
 #define REG_PML_DIR         88  // direction of scan last taken
@@ -103,8 +103,8 @@ unsigned char index = 0;        // index in param buffer
 
 #ifdef USE_PML
 int scan_dir;
-//unsigned char * pml_buffer;
-//unsigned long * pml_time;
+int step_start;
+int step_value;
 #endif
 
 int checksum;                   // checksum
