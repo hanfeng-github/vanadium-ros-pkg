@@ -7,9 +7,17 @@
   * Stable Controllers: joint_traj_controller, joint_traj_action, single_traj_action
 
 === 0.4.0 - Early November ===
-  * Stable Sensors: pml -- _in progress_
   * Stable Controllers: head_action
-  * New Experimental Controllers: joint_traj_controller, joint_traj_action, single_traj_action, head_action
+  * New Experimental Controllers: joint_traj_controller, joint_traj_action, single_traj_action
+
+=== 0.3.2 - Early November ===
+  * Stable Sensors: pml -- _in progress_
+
+=== 0.3.1 - r130 - 10/20/10 ===
+  * PML scanning and data storage code has been split off into an Arduino library. Library release with RoboControllerLib 0009
+  * Major updates to firmware/pml driver to handle skew of sensor readings under motion.
+  * Add ability to adjust the scanning range of the PML at startup.
+  * Fixed bug where no dynamixels and sync_read leads to failed read. (Issue #1)
 
 === 0.3.0 - r106 - 10/16/10 ===
   * Stable Controllers:  base_controller (upload PID parameters, do ramping in driver, clear I/D accumulators on stop (issue 4)). 
