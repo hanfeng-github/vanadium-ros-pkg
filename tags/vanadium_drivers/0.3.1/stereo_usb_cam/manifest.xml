@@ -1,0 +1,18 @@
+<package>
+  <description brief="stereo_usb_cam">
+    A modified usb_cam driver, for capturing stereo images, fakes synchronization.
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/stereo_usb_cam</url>
+  <depend package="image_transport"/>
+  <depend package="usb_cam"/>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="self_test"/>
+
+</package>
+
+
