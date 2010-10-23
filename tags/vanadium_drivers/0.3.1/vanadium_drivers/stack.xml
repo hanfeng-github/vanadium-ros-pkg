@@ -1,8 +1,0 @@
-<stack>
-  <description brief="vanadium_drivers">This stack contains drivers developed at Vanadium Labs, in particular the ArbotiX-ROS bindings.</description>
-  <author>Maintained by Michael Ferguson</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/vanadium_drivers</url>
-  <depend stack="ros" />
-</stack>
