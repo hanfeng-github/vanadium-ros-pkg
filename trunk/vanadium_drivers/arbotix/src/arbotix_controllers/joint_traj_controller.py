@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  single_traj_controller.py - controls single joint, such as a torso lift
+  joint_traj_controller.py - controls joints using trajectory msgs
   Copyright (c) 2010 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -55,11 +55,14 @@ class joint_traj_controller(Thread):
         rospy.Subscriber(name+'/command', JointTrajectory, self.cmdTrajCb)
         rospy.loginfo("Started joint_controller '"+name+"' controlling: " + str(self.joints))
 
+    def restart(self):
+        self.time_traj  = dict()    
+
     def run(self):
         """ Do joint interpolation. """
         rospy.spin()
         r = rospy.Rate(self.rate)
-        while not rospy.is_shutdown():
+        while not rospy.is_shutdown):
             self.mutex.acquire()  
 
             self.mutex.release()
@@ -77,16 +80,22 @@ class joint_traj_controller(Thread):
         """ The callback that stores JointTrajectory updates. """
         # grab mutex
         self.mutex.acquire()  
-        # find start time of this trajectory set
-        # TODO
 
-        # grabbed mutex, now process data, one trajectory at a time.
-        #for i in range(len(msg.points):
-        
-        # total crap, first pass to see how this works with joystick teleop
-        for i in range(len(msg.joint_names)):
-            name = msg.joint_names[i]
-            position = msg.points[0].positions[i]
-            self.device.servos[name].setAngle( position )
+        # Stop?
+        if len(msg.points) == 0:
+            self.restart()
+        else:
+
+            # find start time of this trajectory set
+            # TODO
+
+            # grabbed mutex, now process data, one trajectory at a time.
+            #for i in range(len(msg.points):
+            
+            # total crap, first pass to see how this works with joystick teleop
+            for i in range(len(msg.joint_names)):
+                name = msg.joint_names[i]
+                position = msg.points[0].positions[i]
+                self.device.servos[name].setAngle( position )
         self.mutex.release()
 
