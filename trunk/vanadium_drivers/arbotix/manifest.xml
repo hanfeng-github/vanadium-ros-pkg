@@ -1,5 +1,5 @@
 <package>
-  <description brief="arbotix">Bindings for ArbotiX-powered robots.</description>
+  <description brief="arbotix">Bindings and low-level controllers for ArbotiX-powered robots.</description>
   <author>Michael Ferguson</author>
   <license>BSD</license>
 
@@ -15,9 +15,6 @@
   <depend package="trajectory_msgs"/>
   <depend package="nav_msgs"/>
   <depend package="std_srvs"/>
-
-  <depend package="actionlib"/>
-  <depend package="actionlib_msgs"/>
 
 </package>
 
