@@ -1,15 +1,26 @@
 #summary Development RoadMap
 
-= vanadium_drivers stack = 
+= vanadium_drivers Planning = 
+== arbotix ==
+As we approach 0.5.0, the following should be reasonably stable and developed:
+ * arbotix-node.py, and other core code
+ * base_controller
+ * joint_controller
+ * joint_traj_controller - 
 
-== arbotix package ==
-=== 0.5.0 - November ===
-  * Stable Controllers: joint_traj_controller, joint_traj_action, single_traj_action
+== arbotix_firmware ==
+Approaching 0.5.0, the following should be implemented:
+ * sync_write pass through
 
-=== 0.4.0 - Early November ===
-  * Stable Controllers: head_action
-  * New Experimental Controllers: joint_traj_controller, joint_traj_action, single_traj_action
+== simple_controllers == 
+Approaching 0.5.0, the following action-based controllers should be reasonable stable:
+ * head_point_action
+ * joint_traj_action
+ * single_traj_action
 
+= vanadium_drivers Releases = 
+
+==arbotix==
 === 0.3.2 - Early November ===
   * Stable Sensors: pml -- _in progress_
 
@@ -45,5 +56,5 @@
 === 0.4.0 - October ===
   * add camera calibration _set_ functions 
 
-=== 0.3.0 - September === 
-  * stereo capture, fake synchronization -- _done_
+=== 0.3.0 - r106 - 10/16/10 ===
+  * stereo capture, fake synchronization
