@@ -62,7 +62,7 @@ class joint_traj_controller(Thread):
         """ Do joint interpolation. """
         rospy.spin()
         r = rospy.Rate(self.rate)
-        while not rospy.is_shutdown):
+        while not rospy.is_shutdown():
             self.mutex.acquire()  
 
             self.mutex.release()
