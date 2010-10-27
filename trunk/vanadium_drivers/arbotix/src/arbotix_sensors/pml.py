@@ -71,10 +71,16 @@ class pml(Thread):
         self.sensor = rospy.get_param("~sensors/"+name+"/sensor_type","A710YK")
         if self.sensor == "A710YK" or self.sensor == "ultralong":
             self.conversion = self.gpA710YK
+            self.range_min = 0.75
+            self.range_max = 5.50
         elif self.sensor == "A02YK" or self.sensor == "long":
             self.conversion = self.gpA02YK
+            self.range_min = 0.20
+            self.range_max = 1.50
         else:
             self.conversion = self.gpA21YK
+            self.range_min = 0.10
+            self.range_max = 0.80
         self.out_of_range = rospy.get_param("~sensors/"+name+"/out_of_range",0.0)
         
         # annoyingly loud, allow servo panning to be turned on/off
@@ -121,9 +127,10 @@ class pml(Thread):
                         scan.angle_min = (self.step_start+self.step_value*(self.step_count-1)-512) * 0.00511
                         scan.angle_max = (self.step_start-512) * 0.00511
                         scan.angle_increment = -self.step_value * 0.00511
-                    scan.scan_time = offset #self.rate
-                    scan.range_min = 0.5
-                    scan.range_max = 6.0
+                    scan.scan_time = offset
+                    scan.time_increment = offset/(self.step_count-1)
+                    scan.range_min = self.range_min
+                    scan.range_max = self.range_max
                     scan.ranges = ranges    
                     self.scanPub.publish(scan)
                     if d == self.UP_SCAN: d = self.DN_SCAN
