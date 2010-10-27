@@ -42,7 +42,7 @@ from arbotix_sensors.v_monitor import *
 from arbotix_controllers.base_controller import *
 from arbotix_controllers.nuke_controller import *
 from arbotix_controllers.joint_controller import *
-from arbotix_controllers.joint_traj_controller import *
+#from arbotix_controllers.joint_traj_controller import *
 
 from math import sin,cos,pi,radians
 from datetime import datetime
@@ -241,9 +241,9 @@ class ArbotiX_ROS(ArbotiX):
                 if params["type"] == "joint_controller":
                     jc = joint_controller(self, controller)
                     jc.start()
-                elif params["type"] == "joint_traj_controller":
-                    jtc = joint_traj_controller(self, controller)
-                    jtc.start()
+                #elif params["type"] == "joint_traj_controller":
+                #    jtc = joint_traj_controller(self, controller)
+                #    jtc.start()
                 elif params["type"] == "base_controller":
                     bc = base_controller(self, controller)
                     bc.start()
