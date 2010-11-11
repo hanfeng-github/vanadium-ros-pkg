@@ -27,23 +27,23 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import rospy
-import thread
-
+import rospy, thread
 from threading import Thread
+
 from trajectory_msgs.msg import JointTrajectory
 
 class joint_traj_controller(Thread):
-    """ Controller to handle basic servo control. """
+    """ Controller to handle trajectory-based servo control. """
 
-    def __init__(self, device, name, joints=None):
+    def __init__(self, device, name):
         Thread.__init__ (self)
         
         # handle for robocontroller
         self.device = device
         self.name = name
 
-        # joint trajectory storage
+        # joint trajectory storage, [time] = {servo: pos, servo: pos, ...}
+        self.trajectories = list()
         self.time_traj  = dict()    
         self.mutex = thread.allocate_lock()
 
@@ -51,51 +51,71 @@ class joint_traj_controller(Thread):
         self.joints = rospy.get_param("~controllers/"+name+"/joints")
         self.rate = rospy.get_param("~controllers/"+name+"/rate",15.0)
 
-        # subscriptions
+        # subscriptions and services
         rospy.Subscriber(name+'/command', JointTrajectory, self.cmdTrajCb)
         rospy.loginfo("Started joint_controller '"+name+"' controlling: " + str(self.joints))
 
     def restart(self):
+        """ Restart the controller, by clearing out trajectory lists. """
+        self.trajectories = list()    
         self.time_traj  = dict()    
+        print self.name+" aborting trajectory, restart"
 
     def run(self):
         """ Do joint interpolation. """
-        rospy.spin()
         r = rospy.Rate(self.rate)
-        while not rospy.is_shutdown():
+        # simple linear interpolation
+        while not rospy.is_shutdown():        
             self.mutex.acquire()  
-
+            # remove missed frames
+            now = rospy.Time.now()
+            while self.trajectories and self.trajectories[0] < now:
+                print self.name+": delete trajectory at "+str(self.trajectories[0])
+                del self.time_traj[self.trajectories[0]]
+                del self.trajectories[0]
+            if self.trajectories:    
+                # should this frame be output now?
+                if self.trajectories[0] > now + rospy.Duration(1/self.rate):
+                    print "Skipping this iteration, wait for next frame"
+                else:
+                    time = self.trajectories[0]
+                    traj = self.time_traj[time]
+                    # update servos
+                    for servo in traj.keys():
+                        self.device.servos[servo].setAngle( traj[servo] )
+                    # clean up
+                    del self.trajectories[0]
+                    del self.time_traj[time]
             self.mutex.release()
             r.sleep()
-          
-#            for joint in msg.joint_names:
-#            if joint in self.joints:            
-#                if self.mode == "servo":
-#                    self.device.servos[joint].setAngle( msg.points[msg.joint_names.index(joint)].positions[0] )
-#                else:
-#                    pass
-
 
     def cmdTrajCb(self, msg):
         """ The callback that stores JointTrajectory updates. """
         # grab mutex
         self.mutex.acquire()  
-
         # Stop?
         if len(msg.points) == 0:
             self.restart()
         else:
-
             # find start time of this trajectory set
-            # TODO
-
-            # grabbed mutex, now process data, one trajectory at a time.
-            #for i in range(len(msg.points):
-            
-            # total crap, first pass to see how this works with joystick teleop
-            for i in range(len(msg.joint_names)):
-                name = msg.joint_names[i]
-                position = msg.points[0].positions[i]
-                self.device.servos[name].setAngle( position )
+            start = msg.header.stamp
+            # remove trajectories after start
+            while self.trajectories and self.trajectories[-1] > start + msg.points[0].time_from_start:
+                print self.name+": delete trajectory at "+str(self.trajectories[-1])
+                del self.time_traj[self.trajectories[-1]]
+                del self.trajectories[-1]
+            # insert trajectories
+            for point in range(len(msg.points)):
+                points = msg.points[point]
+                time = start + points.time_from_start
+                #print self.name+": append trajectory at "+str(time)
+                if time > rospy.Time.now(): # + rospy.Duration(1/self.rate):
+                    self.trajectories.append(time)
+                    traj = dict()
+                    for servo in range(len(msg.joint_names)):
+                        traj[msg.joint_names[servo]] = points.positions[servo]
+                    self.time_traj[time] = traj
+            self.trajectories = sorted(self.trajectories)
+        # release mutex
         self.mutex.release()
 
