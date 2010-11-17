@@ -45,6 +45,9 @@ class joint_traj_controller(Thread):
         # joint trajectory storage, [time] = {servo: pos, servo: pos, ...}
         self.trajectories = list()
         self.time_traj  = dict()    
+        self.servo_pos = dict()
+        self.last_time = rospy.Time.from_sec(0)
+        #self.last_traj = 0
         self.mutex = thread.allocate_lock()
 
         # parameters
@@ -59,6 +62,7 @@ class joint_traj_controller(Thread):
         """ Restart the controller, by clearing out trajectory lists. """
         self.trajectories = list()    
         self.time_traj  = dict()    
+        self.last_time = rospy.Time.from_sec(0)
         print self.name+" aborting trajectory, restart"
 
     def run(self):
@@ -70,20 +74,40 @@ class joint_traj_controller(Thread):
             # remove missed frames
             now = rospy.Time.now()
             while self.trajectories and self.trajectories[0] < now:
-                print self.name+": delete trajectory at "+str(self.trajectories[0])
+                self.last_traj = self.time_traj[self.trajectories[0]]
+                self.last_time = self.trajectories[0]
+                print self.name+": delete trajectory at "+str(self.trajectories[0]), self.trajectories
                 del self.time_traj[self.trajectories[0]]
                 del self.trajectories[0]
             if self.trajectories:    
                 # should this frame be output now?
-                if self.trajectories[0] > now + rospy.Duration(1/self.rate):
-                    print "Skipping this iteration, wait for next frame"
-                else:
-                    time = self.trajectories[0]
-                    traj = self.time_traj[time]
-                    # update servos
+#               if self.trajectories[0] > now + rospy.Duration(1/self.rate):
+#                   print "Skipping this iteration, wait for next frame"
+#               else:
+                time = self.trajectories[0]
+                traj = self.time_traj[time]
+                if self.last_time.to_nsec() > 0:   
+                    transition = float((now-self.last_time).to_nsec())/float((time-self.last_time).to_nsec())
+                    print "Do interpolate, transition = " + str(transition)
+                    # interpolate, and update servos
                     for servo in traj.keys():
-                        self.device.servos[servo].setAngle( traj[servo] )
-                    # clean up
+                        pos = traj[servo]
+                        last_pos = self.last_traj[servo]
+                        pos_ch = (pos - last_pos)*transition
+                        if pos_ch <> 0:
+                            self.device.servos[servo].setAngle( pos_ch + last_pos )
+                else:
+                    # startup
+                    self.last_traj = self.time_traj[time]
+                    self.last_time = self.trajectories[0]
+                    print "startup last_time at " + str(self.last_time)
+                    del self.trajectories[0]
+                    del self.time_traj[time]
+                # clean up
+                if time < now+rospy.Duration(1/self.rate):
+                    self.last_traj = self.time_traj[time]
+                    self.last_time = self.trajectories[0]
+                    print self.name+": delete trajectory at "+str(self.trajectories[0]), self.trajectories
                     del self.trajectories[0]
                     del self.time_traj[time]
             self.mutex.release()
@@ -101,7 +125,7 @@ class joint_traj_controller(Thread):
             start = msg.header.stamp
             # remove trajectories after start
             while self.trajectories and self.trajectories[-1] > start + msg.points[0].time_from_start:
-                print self.name+": delete trajectory at "+str(self.trajectories[-1])
+                print self.name+": delete trajectory at "+str(self.trajectories[-1]), self.trajectories
                 del self.time_traj[self.trajectories[-1]]
                 del self.trajectories[-1]
             # insert trajectories
