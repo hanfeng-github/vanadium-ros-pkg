@@ -79,17 +79,14 @@ class torso_traj_controller(Thread):
                     self.device.setDigital(self.a, 0xff, 0xff)
                     self.device.setDigital(self.b, 0x00, 0xff)
                     self.device.setDigital(self.pwm, 0xff, 0xff)
-                    print "Torso UP"
                 elif v - 2 > goal:
                     # go down
                     self.device.setDigital(self.a, 0x00, 0xff)
                     self.device.setDigital(self.b, 0xff, 0xff)
                     self.device.setDigital(self.pwm, 0xff, 0xff)
-                    print "Torso DOWN"
                 else:
                     self.device.setDigital(self.pwm,0)
                     self.goal_position = -1.0
-                    print "Torso Done"
                 self.mutex.release()
             r.sleep()
 
@@ -99,6 +96,6 @@ class torso_traj_controller(Thread):
         self.mutex.acquire()  
         if msg.joint_names[0] == self.joint:
             self.goal_position = msg.points[0].positions[-1]
-            print "Setting torso position to " + str(self.goal_position) + " " + str(self.last_position)
+#            print "Setting torso position to " + str(self.goal_position) + " " + str(self.last_position)
         self.mutex.release()
 
