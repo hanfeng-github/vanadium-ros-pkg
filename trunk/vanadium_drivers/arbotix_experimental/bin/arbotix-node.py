@@ -39,6 +39,8 @@ from arbotix.ax12 import *
 # TODO: generalize these, add init.py in packages
 from arbotix_sensors.pml import *
 from arbotix_sensors.v_monitor import *
+from arbotix_sensors.tilt_stage import *
+from arbotix_controllers.base_laser_from_tilt import *
 from arbotix_controllers.base_controller import *
 from arbotix_controllers.nuke_controller import *
 from arbotix_controllers.joint_controller import *
@@ -268,6 +270,9 @@ class ArbotiX_ROS(ArbotiX):
                 elif params["type"] == "base_controller":
                     bc = base_controller(self, controller)
                     bc.start()
+                elif params["type"] == "tilt_stage":
+                    ts = tilt_stage(self, controller)
+                    ts.start()
         # initialize sensors
         sensor_list = rospy.get_param("~sensors",list())
         if len(sensor_list) > 0:
@@ -275,9 +280,12 @@ class ArbotiX_ROS(ArbotiX):
                 if params["type"] == "pml":
                     mylidar = pml(self, sensor)
                     mylidar.start()
-                if params["type"] == "v_monitor":
+                elif params["type"] == "v_monitor":
                     vmon = v_monitor(self, sensor)
                     vmon.start()
+                elif params["type"] == "base_laser_from_tilt":
+                    bl = base_laser_from_tilt(self, sensor)
+                    bl.start()
 
         # publish joint states (everything else is a service/topic callback)
         r = rospy.Rate(int(rospy.get_param("~rate",10)))
