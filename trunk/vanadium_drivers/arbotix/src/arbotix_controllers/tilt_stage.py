@@ -43,7 +43,7 @@ class tilt_stage(Thread):
 
         # parameters
         self.rate = rospy.get_param("~controllers/"+name+"/rate",10) 
-        self.joint = rospy.get_param("~controllers/"+name+"/joint","laser_tilt_joint")
+        self.joint = rospy.get_param("~controllers/"+name+"/joint","laser_tilt_mount_joint")
         self.lower_bound = rospy.get_param("~controllers/"+name+"/lower_bound",400) - 512
         self.upper_bound = rospy.get_param("~controllers/"+name+"/upper_bound",600) - 512
         self.step_value = rospy.get_param("~controllers/"+name+"/step",10)
@@ -66,6 +66,6 @@ class tilt_stage(Thread):
                     pos = self.lower_bound
                     self.step = self.step_value
             self.device.servos[self.joint].setAngle( (pos)*(radians(300.0)/1024) )
-            print "Move laser to " + str(pos)
+            #print "Move laser to " + str(pos)
             r.sleep()
 
