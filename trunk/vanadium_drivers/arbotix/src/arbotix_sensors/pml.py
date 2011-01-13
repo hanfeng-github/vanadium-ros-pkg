@@ -30,6 +30,7 @@
 import rospy
 from threading import Thread
 from sensor_msgs.msg import LaserScan
+from arbotix.msg import ScanParameters
 from std_srvs.srv import *
 
 class pml(Thread):
@@ -88,8 +89,9 @@ class pml(Thread):
         rospy.Service('EnablePML',Empty,self.enable_callback)   
         rospy.Service('DisablePML',Empty,self.disable_callback)
 
-        # publisher
+        # publishers and subscribers
         self.scanPub = rospy.Publisher('base_scan', LaserScan)
+        rospy.Subscriber('scan_parameters',ScanParameters,self.scan_callback)
 
         rospy.loginfo("Started pml sensor '"+name+"' using servo: " + str(self.servo_id))
 
@@ -150,6 +152,14 @@ class pml(Thread):
         self.enable = False
         self.device.write(253, self.PML_ENABLE, [0])
         return EmptyResponse()
+
+    def scan_callback(self, req):
+        """ Process updates to scan parameters. """
+        self.step_start = 512 + int(req.angle_min*195.56)   # convert radians to ticks
+        self.step_count = req.readings
+        self.step_value = int(req.angle_increment*195.56) #(req.angle_min*-2*195.56)/req.readings)
+        rospy.loginfo("Setting scan parameters to: " + str(self.step_start) + "," + str(self.step_value) + "," + str(self.step_count) )
+        self.device.write(253, self.PML_MIN_L, [self.step_start%256, self.step_start>>8, self.step_value, self.step_count])
 
     # voltage to distance conversion functions
     def gpA710YK(self, value):

@@ -29,9 +29,9 @@
 
 import rospy
 from threading import Thread
-from sensor_msgs.msg import LaserScan, JointStates
+from sensor_msgs.msg import LaserScan, JointState
 
-class base_scan_from_tilt(Thread):
+class base_laser_from_tilt(Thread):
     """ Create a base scan from a tilting laser. """
 
     def __init__(self, device, name):
@@ -42,16 +42,16 @@ class base_scan_from_tilt(Thread):
         self.name = name
 
         # parameters
-        self.joint = rospy.get_param("~sensors/"+name+"/joint","laser_tilt_joint")
+        self.joint = rospy.get_param("~sensors/"+name+"/joint","laser_tilt_mount_joint")
         self.copy_position = rospy.get_param("~sensors/"+name+"/copy_position",0.0)
         self.copy_threshold = rospy.get_param("~sensors/"+name+"/copy_threshold",0.05)
         self.tilt_scan = rospy.get_param("~sensors/"+name+"/tilt_scan","tilt_scan")
-        self.new_scan = rospy.get_param("~sensors/"+name+"/new_scan","tilt_scan")
+        self.new_scan = rospy.get_param("~sensors/"+name+"/new_scan","base_scan")
         self.new_frame_id = rospy.get_param("~sensors/"+name+"/frame","base_laser") 
 
         # publisher
         self.scanPub = rospy.Publisher("base_scan", LaserScan)
-        rospy.Subscriber(self.scan_name, LaserScan, self.laserCb)
+        rospy.Subscriber(self.tilt_scan, LaserScan, self.laserCb)
         rospy.Subscriber('joint_states', JointState, self.stateCb)
 
         self.copy = False
@@ -60,8 +60,8 @@ class base_scan_from_tilt(Thread):
 
     def laserCb(self, msg):
         if self.copy:
-            msg.head.frame_id = self.frame_id
-            self.scanPub.publish(s)
+            msg.header.frame_id = self.new_frame_id
+            self.scanPub.publish(msg)
             print "Published Base Scan"
             self.copy = False
 
