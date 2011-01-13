@@ -106,37 +106,40 @@ class pml(Thread):
         while not rospy.is_shutdown():
             if self.enable:
                 # check if new data
-                if self.device.read(253,self.PML_DIR,1)[0] == d:                
-                    # get ranges
-                    v = self.device.read(253, self.PML_DIR, 3+self.step_count*2) 
-                    offset =  (v[1]+(v[2]<<8))/1000.0
-                    ranges = list()
-                    for i in range(self.step_count):
+                try:
+                    if self.device.read(253,self.PML_DIR,1)[0] == d:                
+                        # get ranges
+                        v = self.device.read(253, self.PML_DIR, 3+self.step_count*2) 
+                        offset =  (v[1]+(v[2]<<8))/1000.0
+                        ranges = list()
+                        for i in range(self.step_count):
+                            if d == self.UP_SCAN:
+                                k = v[i*2+3] + (v[i*2+4]<<8)
+                            else:
+                                k = v[(self.step_count*2+1)-i*2] + (v[(self.step_count*2+2)-i*2]<<8)
+                            ranges.append( self.conversion(k) )
+                        # now post laser scan
+                        scan = LaserScan()
+                        scan.header.stamp = rospy.Time.now() - rospy.Duration.from_sec(offset)      
+                        scan.header.frame_id = self.frame_id
                         if d == self.UP_SCAN:
-                            k = v[i*2+3] + (v[i*2+4]<<8)
+                            scan.angle_min = (self.step_start-512) * 0.00511
+                            scan.angle_max = (self.step_start+self.step_value*(self.step_count-1)-512) * 0.00511
+                            scan.angle_increment = self.step_value * 0.00511
                         else:
-                            k = v[(self.step_count*2+1)-i*2] + (v[(self.step_count*2+2)-i*2]<<8)
-                        ranges.append( self.conversion(k) )
-                    # now post laser scan
-                    scan = LaserScan()
-                    scan.header.stamp = rospy.Time.now() - rospy.Duration.from_sec(offset)      
-                    scan.header.frame_id = self.frame_id
-                    if d == self.UP_SCAN:
-                        scan.angle_min = (self.step_start-512) * 0.00511
-                        scan.angle_max = (self.step_start+self.step_value*(self.step_count-1)-512) * 0.00511
-                        scan.angle_increment = self.step_value * 0.00511
-                    else:
-                        scan.angle_min = (self.step_start+self.step_value*(self.step_count-1)-512) * 0.00511
-                        scan.angle_max = (self.step_start-512) * 0.00511
-                        scan.angle_increment = -self.step_value * 0.00511
-                    scan.scan_time = offset
-                    scan.time_increment = offset/(self.step_count-1)
-                    scan.range_min = self.range_min
-                    scan.range_max = self.range_max
-                    scan.ranges = ranges    
-                    self.scanPub.publish(scan)
-                    if d == self.UP_SCAN: d = self.DN_SCAN
-                    else: d = self.UP_SCAN
+                            scan.angle_min = (self.step_start+self.step_value*(self.step_count-1)-512) * 0.00511
+                            scan.angle_max = (self.step_start-512) * 0.00511
+                            scan.angle_increment = -self.step_value * 0.00511
+                        scan.scan_time = offset
+                        scan.time_increment = offset/(self.step_count-1)
+                        scan.range_min = self.range_min
+                        scan.range_max = self.range_max
+                        scan.ranges = ranges    
+                        self.scanPub.publish(scan)
+                        if d == self.UP_SCAN: d = self.DN_SCAN
+                        else: d = self.UP_SCAN
+                except:
+                    rospy.logerr("Dropped a PML packet")
             r.sleep()
         # it's annoying, turn it off before we leave!
         self.disable_callback(None)
