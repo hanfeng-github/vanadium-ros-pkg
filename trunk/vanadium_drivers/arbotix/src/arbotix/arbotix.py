@@ -216,6 +216,27 @@ class ArbotiX:
         except:
             return True
         return d != 0
+    
+    ###########################################################################
+    # Helper functions for 'wheel mode'
+    def enableWheelMode(self, index):
+        """ Enable wheel mode. """
+        self.write(index, P_CCW_ANGLE_LIMIT_L, [0,0])
+    def disableWheelMode(self, index):
+        """ Reset to joint mode. """
+        self.write(index, P_CCW_ANGLE_LIMIT_L, [255,3])
+
+    FORWARD = 0
+    BACKWARD = 1
+    def setWheelSpeed(self, index, direction, speed):
+        """ If a value in the range of 0~1023 is used, it is stopped by setting to 0 while rotating to CCW direction.
+            If a value in the range of 1024~2047 is used, it is stopped by setting to 1024 while rotating to CW direction.
+            That is, the 10th bit becomes the direction bit to control the direction. """
+        if direction == self.FORWARD:
+            self.write(index, P_GOAL_SPEED_L, [speed%256, speed>>8])
+        else:
+            speed += 1024
+            self.write(index, P_GOAL_SPEED_L, [speed%256, speed>>8])
 
     ###########################################################################
     # Extended ArbotiX Driver
