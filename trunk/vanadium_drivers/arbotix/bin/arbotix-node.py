@@ -39,12 +39,9 @@ from arbotix.ax12 import *
 # TODO: generalize these, add init.py in packages
 from arbotix_sensors.pml import *
 from arbotix_sensors.v_monitor import *
-from arbotix_sensors.tilt_stage import *
-from arbotix_controllers.base_laser_from_tilt import *
 from arbotix_controllers.base_controller import *
 from arbotix_controllers.nuke_controller import *
 from arbotix_controllers.joint_controller import *
-#from arbotix_controllers.joint_traj_controller import *
 
 from math import sin,cos,pi,radians
 from datetime import datetime
@@ -64,12 +61,14 @@ class DynamixelServo():
         self.rad_per_tick = radians(300.0)/1024     # adjust for EX-106, etc
         self.max_angle = radians(150)               # limit angle, radians
         self.min_angle = radians(-150)
-        self.max_speed = radians(1)                 # radians per second
+        self.max_speed = radians(684.0)             # max speed = 114 rpm - 684 deg/s
+
         self.invert = False
         self.sync = True
         self.setParams(params)
 
         self.angle = 0.0                            # current position
+        self.velocity = 0.0                         # current velocity
 
         # some callbacks
         if single:
@@ -300,11 +299,11 @@ class ArbotiX_ROS(ArbotiX):
                     for name in self.no_sync_names: 
                         msg.name.append(name)
                         msg.position.append(self.servos[name].getAngleStored())
+                msg.header.stamp = rospy.Time.now()
+                self.jointStatePub.publish(msg)   
             except:
                 rospy.loginfo("Error in filling joint_states message")
-    
-            msg.header.stamp = rospy.Time.now()
-            self.jointStatePub.publish(msg)                  
+                   
             r.sleep()
 
     def getDigitalCb(self, req):
