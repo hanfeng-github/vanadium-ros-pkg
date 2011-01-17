@@ -1,24 +1,6 @@
 #summary Development RoadMap
 
-= vanadium_drivers Planning = 
-== arbotix ==
-As we approach 0.5.0, the following should be reasonably stable and developed:
- * arbotix-node.py, and other core code
- * base_controller
- * joint_controller
- * joint_traj_controller - 
-
-== arbotix_firmware ==
-Approaching 0.5.0, the following should be implemented:
- * sync_write pass through
-
-== simple_controllers == 
-Approaching 0.5.0, the following action-based controllers should be reasonable stable:
- * head_point_action
- * joint_traj_action
- * single_traj_action
-
-= vanadium_drivers Releases = 
+See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread.
 
 ==arbotix==
 === 0.3.2 - Early November ===
