@@ -28,42 +28,40 @@
 """
 
 import rospy
-from threading import Thread
 
 from math import sin,cos,pi
-from datetime import datetime
+from datetime import datetime   # TODO remove this dependency!
 
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 
-class base_controller(Thread):
+class base_controller:
     """ Controller to handle movement & odometry feedback for a differential 
             drive mobile base. """
-    def __init__(self, device, name):
-        Thread.__init__ (self)
+    def __init__(self, device):
 
         # handle for robocontroller
         self.device = device
 
-        # parameters: topics, rate and geometry
-        self.topic = rospy.get_param("~controllers/"+name+"/topic","cmd_vel")
-        self.odom_topic = rospy.get_param("~controllers/"+name+"/odom_topic","odom")
-        self.rate = float(rospy.get_param("~controllers/"+name+"/rate",15.0))
-        self.ticks_meter = float(rospy.get_param("~controllers/"+name+"/ticks_meter", 26154))
-        self.base_width = float(rospy.get_param("~controllers/"+name+"/base_width", 0.144))
+        # parameters: topics, throttle rate and geometry
+        self.topic = rospy.get_param("~base/topic","cmd_vel")
+        self.odom_topic = rospy.get_param("~base/odom_topic","odom")
+        self.throttle = float(rospy.get_param("~base/throttle",10))
+        self.ticks_meter = float(rospy.get_param("~base/ticks_meter", 26154))
+        self.base_width = float(rospy.get_param("~base/base_width", 0.144))
 
         # parameters: PID
-        self.Kp = rospy.get_param("~controllers/"+name+"/Kp", 5)
-        self.Kd = rospy.get_param("~controllers/"+name+"/Kd", 1)
-        self.Ki = rospy.get_param("~controllers/"+name+"/Ki", 0)
-        self.Ko = rospy.get_param("~controllers/"+name+"/Ko", 50)
+        self.Kp = rospy.get_param("~base/Kp", 5)
+        self.Kd = rospy.get_param("~base/Kd", 1)
+        self.Ki = rospy.get_param("~base/Ki", 0)
+        self.Ko = rospy.get_param("~base/Ko", 50)
         self.device.write(253,device.KP,[self.Kp,self.Kd,self.Ki,self.Ko])        
 
         # parameters: acceleration
-        self.accel_limit = rospy.get_param("~controllers/"+name+"/accel_limit", 0.1)
-        self.max_accel = int(self.accel_limit*self.ticks_meter/self.rate)
+        self.accel_limit = rospy.get_param("~base/accel_limit", 0.1)
+        self.max_accel = int(self.accel_limit*self.ticks_meter/(device.rate/self.throttle))
 
         # internal data            
         self.v_left = 0             # current setpoint velocity
@@ -82,94 +80,92 @@ class base_controller(Thread):
         self.odomPub = rospy.Publisher(self.odom_topic,Odometry)
         self.odomBroadcaster = TransformBroadcaster()
 		
-        rospy.loginfo("Started base_controller '"+name+"' for a base of " + str(self.base_width) + "m wide with " + str(self.ticks_meter) + " ticks per meter")
+        rospy.loginfo("Started base_controller for a base of " + str(self.base_width) + "m wide with " + str(self.ticks_meter) + " ticks per meter")
 
-    def run(self):
-        r = rospy.Rate(self.rate)
-        while not rospy.is_shutdown():
-            r.sleep()
-            now = datetime.now()
-            elapsed = now - self.then
-            self.then = now
-            elapsed = float(elapsed.seconds) + elapsed.microseconds/1000000.
+    def update(self):
+        now = datetime.now()
+        elapsed = now - self.then
+        self.then = now
+        elapsed = float(elapsed.seconds) + elapsed.microseconds/1000000.
 
-            # read encoders
-            try:
-                left, right = self.device.getEncoders()
-            except:
-                rospy.logerr("Could not update encoders")
-                continue
-            rospy.logdebug("Encoders: " + str(left) +","+ str(right))
+        # read encoders
+        try:
+            left, right = self.device.getEncoders()
+        except:
+            rospy.logerr("Could not update encoders")
+            continue
+        rospy.logdebug("Encoders: " + str(left) +","+ str(right))
 
-            # calculate odometry
-            d_left = (left - self.enc_left)/self.ticks_meter
-            d_right = (right - self.enc_right)/self.ticks_meter
-            self.enc_left = left
-            self.enc_right = right
+        # calculate odometry
+        d_left = (left - self.enc_left)/self.ticks_meter
+        d_right = (right - self.enc_right)/self.ticks_meter
+        self.enc_left = left
+        self.enc_right = right
 
-            d = (d_left+d_right)/2
-            th = (d_right-d_left)/self.base_width
-            dx = d / elapsed
-            dth = th / elapsed
+        d = (d_left+d_right)/2
+        th = (d_right-d_left)/self.base_width
+        dx = d / elapsed
+        dth = th / elapsed
 
-            if (d != 0):
-                x = cos(th)*d
-                y = -sin(th)*d
-                self.x = self.x + (cos(self.th)*x - sin(self.th)*y)
-                self.y = self.y + (sin(self.th)*x + cos(self.th)*y)
+        if (d != 0):
+            x = cos(th)*d
+            y = -sin(th)*d
+            self.x = self.x + (cos(self.th)*x - sin(self.th)*y)
+            self.y = self.y + (sin(self.th)*x + cos(self.th)*y)
+        if (th != 0):
+            self.th = self.th + th
+        quaternion = Quaternion()
+        quaternion.x = 0.0 
+        quaternion.y = 0.0
+        quaternion.z = sin(self.th/2)
+        quaternion.w = cos(self.th/2)
+        # publish or perish
+        self.odomBroadcaster.sendTransform(
+            (self.x, self.y, 0), 
+            (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
+            rospy.Time.now(),
+            "base_link",
+            "odom"
+            )
 
-            if (th != 0):
-                self.th = self.th + th
+        odom = Odometry()
+        odom.header.frame_id = "odom"
+        odom.pose.pose.position.x = self.x
+        odom.pose.pose.position.y = self.y
+        odom.pose.pose.position.z = 0
+        odom.pose.pose.orientation = quaternion
+        odom.child_frame_id = "base_link"
+        odom.twist.twist.linear.x = dx
+        odom.twist.twist.linear.y = 0
+        odom.twist.twist.angular.z = dth
+        self.odomPub.publish(odom)
 
-            quaternion = Quaternion()
-            quaternion.x = 0.0 
-            quaternion.y = 0.0
-            quaternion.z = sin(self.th/2)
-            quaternion.w = cos(self.th/2)
-
-            # publish or perish
-            self.odomBroadcaster.sendTransform(
-                (self.x, self.y, 0), 
-                (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
-                rospy.Time.now(),
-                "base_link",
-                "odom"
-                )
-
-            odom = Odometry()
-            odom.header.frame_id = "odom"
-            odom.pose.pose.position.x = self.x
-            odom.pose.pose.position.y = self.y
-            odom.pose.pose.position.z = 0
-            odom.pose.pose.orientation = quaternion
-
-            odom.child_frame_id = "base_link"
-            odom.twist.twist.linear.x = dx
-            odom.twist.twist.linear.y = 0
-            odom.twist.twist.angular.z = dth
-
-            self.odomPub.publish(odom)
-
-            # update motors
+        # update motors
+        if self.v_left < self.v_des_left:
+            self.v_left += self.max_accel
+            if self.v_left > self.v_des_left:
+                self.v_left = self.v_des_left
+        else:
+            self.v_left -= self.max_accel
             if self.v_left < self.v_des_left:
-                self.v_left += self.max_accel
-                if self.v_left > self.v_des_left:
-                    self.v_left = self.v_des_left
-            else:
-                self.v_left -= self.max_accel
-                if self.v_left < self.v_des_left:
-                    self.v_left = self.v_des_left
-           
+                self.v_left = self.v_des_left
+        
+        if self.v_right < self.v_des_right:
+            self.v_right += self.max_accel
+            if self.v_right > self.v_des_right:
+                self.v_right = self.v_des_right
+        else:
+            self.v_right -= self.max_accel
             if self.v_right < self.v_des_right:
-                self.v_right += self.max_accel
-                if self.v_right > self.v_des_right:
-                    self.v_right = self.v_des_right
-            else:
-                self.v_right -= self.max_accel
-                if self.v_right < self.v_des_right:
-                    self.v_right = self.v_des_right
-            self.device.setSpeeds(self.v_left, self.v_right)
+                self.v_right = self.v_des_right
+        self.device.setSpeeds(self.v_left, self.v_right)
  
+    def startup(self):
+        pass
+    
+    def shutdown(self):
+        self.device.setSpeeds(0,0)
+
     def cmdVelCb(self,req):
         """ Handle movement requests. """
         x = req.linear.x        # m/s
