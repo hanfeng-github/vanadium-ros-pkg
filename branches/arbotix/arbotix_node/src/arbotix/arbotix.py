@@ -390,12 +390,5 @@ class ArbotiX:
             th = unpack('l',th_values)[0]
             return [x,y,th]
         except:
-            return None        
-
-if __name__ == "__main__":
-    # some simple testing
-    print "Testing arbotix.py"
-    d = ArbotiX(sys.argv[1])  # open a port
-    d.setPosition(1,512)
-    print d.getPosition(1)
+            return None    
 
