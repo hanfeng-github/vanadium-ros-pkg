@@ -2,7 +2,7 @@
 
 """
   ArbotiX Driver: serial connection to an ArbotiX board w/ PyPose/NUKE/ROS
-  Copyright (c) 2008-2010 Vanadium Labs LLC.  All right reserved.
+  Copyright (c) 2008-2011 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -146,9 +146,22 @@ class ArbotiX:
         ax12.syncWrite(reg, ((id1, val1, val2), (id2, val1, val2))) """ 
         output = list()
         for i in values:
-            output = output + i   
-        checksum = 255 - ((254 + 4 +len(output) + AX_SYNC_WRITE + start + len(values[0]) - 1 + sum(output))%256)        
-        self.execute(0xFE, AX_SYNC_WRITE, [start, len(values[0])-1 ] + values, False)
+            output = output + i 
+        length = len(output) + 4                # length of overall packet
+        lbytes = len(values[0])-1               # length of bytes to write to a servo               
+        self.mutex.acquire()  
+        try:      
+            self.ser.flushInput()
+        except:
+            pass  
+        self.ser.write(chr(0xFF)+chr(0xFF)+chr(254)+chr(length)+chr(AX_SYNC_WRITE))        
+        self.ser.write(chr(start))              # start address
+        self.ser.write(chr(lbytes))   # bytes to write each servo
+        for i in output:
+            self.ser.write(chr(i))
+        checksum = 255 - ((254 + length + AX_SYNC_WRITE + start + lbytes + sum(output))%256)
+        self.ser.write(chr(checksum))
+        self.mutex.release()
 
     def syncRead(self, servos, start, length):
         """ syncRead( [1,2,3,4], P_PRESENT_POSITION_L, 2) """
