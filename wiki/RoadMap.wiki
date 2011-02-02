@@ -6,13 +6,13 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
  * *arbotix* Stack
    * *arbotix_python* - formerly _arbotix_
      * joint_state publication includes velocity
-     * streamline to single, synchronous update
-     * add _throttle_ parameters to anything in the main loop
+     * ~~streamline to single, synchronous update~~
+     * ~~add _throttle_ parameters to anything in the main loop~~
      * use sync_write to update servos
      * ~~default baud to 115200~~
      * each servo now has JointTrajectoryPoint-based control topic
      * [streams move analog/digital to topic based.] 
-     * integrated into core: base and pml drivers
+     * ~~integrated into core: base and pml drivers~~
    * *arbotix_controllers* 
      * joint_controller.py - classic joint_state style to maintain compatibility
      * linear_controller.py - overhauled torso_traj_controller.py
