@@ -2,7 +2,7 @@
 
 """
   ArbotiX ROS Node: serial connection to an ArbotiX board w/ PyPose/NUKE/ROS
-  Copyright (c) 2008-2010 Michael E. Ferguson.  All right reserved.
+  Copyright (c) 2008-2011 Michael E. Ferguson.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,7 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import roslib; roslib.load_manifest('arbotix')
+import roslib; roslib.load_manifest('arbotix_python')
 import rospy
 
 from sensor_msgs.msg import JointState

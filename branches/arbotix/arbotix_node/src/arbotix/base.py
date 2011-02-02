@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-  base_controller.py - controller for a differential drive base
-  Copyright (c) 2010 Vanadium Labs LLC.  All right reserved.
+  base.py - controller for a differential drive or NUKE base
+  Copyright (c) 2010-2011 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
