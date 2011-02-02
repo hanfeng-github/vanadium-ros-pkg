@@ -93,7 +93,6 @@ class base_controller:
             left, right = self.device.getEncoders()
         except:
             rospy.logerr("Could not update encoders")
-            continue
         rospy.logdebug("Encoders: " + str(left) +","+ str(right))
 
         # calculate odometry
