@@ -9,7 +9,7 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
      * streamline to single, synchronous update
      * add _throttle_ parameters to anything in the main loop
      * use sync_write to update servos
-     * default baud to 115200
+     * ~~default baud to 115200~~
      * each servo now has JointTrajectoryPoint-based control topic
      * [streams move analog/digital to topic based.] 
      * integrated into core: base and pml drivers
