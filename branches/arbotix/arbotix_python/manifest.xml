@@ -6,7 +6,7 @@
   <license>BSD</license>
 
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/arbotix_node</url>
+  <url>http://ros.org/wiki/arbotix_python</url>
 
   <rosdep name="python-serial"/>
 
