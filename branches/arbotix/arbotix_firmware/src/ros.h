@@ -98,7 +98,7 @@ unsigned char id = 0;           // id of this frame
 unsigned char length = 0;       // length of this frame
 unsigned char ins = 0;          // instruction of this frame
 
-unsigned char params[50];       // parameters
+unsigned char params[143];      // parameters (match RX-64 buffer size)
 unsigned char index = 0;        // index in param buffer
 
 #ifdef USE_PML

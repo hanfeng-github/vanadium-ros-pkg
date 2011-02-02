@@ -523,8 +523,15 @@ void loop(){
             Serial.print(255-((checksum)%256),BYTE);
           }else{    
             // TODO: sync write pass thru
-           
-           
+            int k;
+            setTXall();
+            ax12write(0xff);
+            ax12write(0xff);
+            ax12write(id);
+            ax12write(length);
+            ax12write(ins);
+            for(k=0; k<length; k++)
+                ax12write(params[k]);
             // no return
           }       
         }else{ // ID != 253, pass thru 
