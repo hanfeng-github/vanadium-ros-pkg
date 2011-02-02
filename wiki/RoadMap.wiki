@@ -19,7 +19,7 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
    * *arbotix_sensors*
      * ~~base_laser_from_tilt.py - extract a "base_scan" from a tilting laser.~~
    * *arbotix_firmware*
-     * support for sync_write.
+     * ~~support for sync_write.~~
 
 = 0.4.5 =
  * *arbotix* Stack
