@@ -94,7 +94,7 @@ void scan(){
 }
 #endif
 void setup(){
-  Serial.begin(38400);  
+  Serial.begin(115200);  
 
 #ifdef USE_BASE  
   Encoders.Begin();
