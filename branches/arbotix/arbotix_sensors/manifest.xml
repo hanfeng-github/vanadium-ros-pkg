@@ -8,7 +8,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/arbotix_sensors</url>
 
-  <depend package="arbotix"/>
+  <depend package="arbotix_python"/>
 </package>
 
 

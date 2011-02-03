@@ -1,9 +1,13 @@
 <stack>
-  <description brief="arbotix">ArbotiX drivers and other stuff</description>
+  <description brief="ArbotiX drivers and other stuff">
+    This stack provides comprehensive access to the ArbotiX RoboController and associated peripherals. 
+  </description>
   <author>Maintained by Michael Ferguson</author>
-  <license></license>  
+  <license>BSD,</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/arbotix</url>
+  <depend stack="common_msgs" /> <!-- nav_msgs, geometry_msgs, trajectory_msgs, sensor_msgs -->
+  <depend stack="geometry" /> <!-- tf -->
   <depend stack="ros" />
-  <depend stack="common_msgs" />
+  <depend stack="ros_comm" /> <!-- nav_msgs, std_srvs, roscpp, trajectory_msgs, sensor_msgs, rospy, tf, geometry_msgs -->
 </stack>
