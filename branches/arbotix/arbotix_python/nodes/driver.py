@@ -74,6 +74,7 @@ class Servo():
         self.desired = 0.0             # desired position (radians)
         self.last_cmd = 0.0            # last position sent (radians)
         self.velocity = self.max_speed # current velocity limit (radians/sec)
+        self.speed = 0.0               # moving speed
         
         # ROS interfaces
         rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
@@ -123,10 +124,12 @@ class Servo():
             elif -cmd > self.velocity/float(frame):
                 cmd = -self.velocity/float(frame)
             self.last_cmd += cmd
+            self.speed = cmd*frame
             if self.last_cmd == self.desired:
                 self.dirty = False
             return self.neutral + (self.last_cmd/self.rad_per_tick)
         else:
+            self.speed = 0.0
             return None
 
 
@@ -153,6 +156,7 @@ class HobbyServo(Servo):
 
         self.angle = 0.0               # current position
         self.desired = 0.0             # desired position
+        self.speed = 0.0
         
         # ROS interfaces
         #rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
@@ -327,8 +331,8 @@ class ArbotiX_ROS(ArbotiX):
                 for servo in self.dynamixels.values() + self.servos.values():
                     msg.name.append(servo.name)
                     msg.position.append(servo.angle)
-                    msg.velocity.append(servo.velocity)
-                self.jointStatePub.publish(msg)   
+                    msg.velocity.append(servo.speed)
+                self.jointStatePub.publish(msg)
 
             f += 1
             r.sleep()      
