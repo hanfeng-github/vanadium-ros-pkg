@@ -14,7 +14,7 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
      * ~~default baud to 115200~~
      * ~~integrated into core: base and pml drivers~~
    * *arbotix_controllers* 
-     * joint_controller.py - classic joint_state style to maintain compatibility
+     * ~~joint_controller.py - classic joint_state style to maintain compatibility~~
      * linear_controller.py - overhauled torso_traj_controller.py
    * *arbotix_sensors*
      * ~~base_laser_from_tilt.py - extract a "base_scan" from a tilting laser.~~
