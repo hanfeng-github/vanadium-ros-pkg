@@ -2,7 +2,7 @@
 
 """ 
   A simple Controller GUI to drive robots and pose heads.
-  Copyright (c) 2008-2010 Michael E. Ferguson.  All right reserved.
+  Copyright (c) 2008-2011 Michael E. Ferguson.  All right reserved.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -108,8 +108,6 @@ class controllerGUI(wx.Frame):
         dc.DrawLine(width/2, 0, width/2, width)
         dc.DrawLine(0, width/2, width, width/2)
         dc.SetPen(wx.Pen("red",2))
-        # draw arm        
-        #dc.DrawLine(width/2, width/2, (width/2) + self.turn*(width/2), (width/2) - self.forward*(width/2))
         dc.SetBrush(wx.Brush('red', wx.SOLID))
         dc.SetPen(wx.Pen("black",2))
         dc.DrawCircle((width/2) + self.X*(width/2), (width/2) - self.Y*(width/2), 5)  
