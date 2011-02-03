@@ -68,14 +68,17 @@ class Servo():
         self.invert = rospy.get_param(n+"invert",False)
         self.sync = rospy.get_param(n+"sync",device.use_sync)
 
-        self.angle = 0.0               # current position
-        self.desired = 0.0             # desired position
-        self.velocity = 0.0            # current velocity
+        self.dirty = False             # newly updated position?
+        self.angle = 0.0               # current position, as returned by servo (radians)
+        self.last_angle = 0.0          # last position, as returned by servo (for speed calcs)
+        self.desired = 0.0             # desired position (radians)
+        self.last_cmd = 0.0            # last position sent (radians)
+        self.velocity = self.max_speed # current velocity limit (radians/sec)
         
         # ROS interfaces
         rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
-        rospy.Subscriber(name+'/simple_command', Float64, self.simple_commandCb)
-        self.srvRelax = rospy.Service(name+'relax',Relax, self.relaxCb)
+        #rospy.Subscriber(name+'/simple_command', Float64, self.simple_commandCb)
+        self.srvRelax = rospy.Service(name+'/relax',Relax, self.relaxCb)
 
     def relaxCb(self, req):
         """ Turn off servo torque, so that it is pose-able. """
@@ -85,18 +88,22 @@ class Servo():
     def commandCb(self, req):
         # TODO: make this more advanced
         try:
+            self.dirty = True
             self.desired = req.positions[0]
             self.velocity = req.velocities[0]
+            if self.velocity > self.max_speed:
+                self.velocity = self.max_speed
         except:
             pass
 
-    def simple_commandCb(self, req):
-        self.desired = req.data
-        print self.desired
+    #def simple_commandCb(self, req):
+    #    self.desired = req.data
+    #    print self.desired
         
     def update(self, value):
         """ Update angle in radians by reading from servo, or
             by using pos passed in from a sync read.  """
+        self.last_angle = self.angle
         if value < 0:
             # read servo
             if self.sync:
@@ -109,18 +116,19 @@ class Servo():
 
     def interpolate(self, frame):
         """ Get the new position to move to, in ticks. """
-        return self.neutral + (self.desired/self.rad_per_tick)
+        if self.dirty:
+            cmd = self.desired - self.last_cmd
+            if cmd > self.velocity/float(frame):
+                cmd = self.velocity/float(frame)
+            elif -cmd > self.velocity/float(frame):
+                cmd = -self.velocity/float(frame)
+            self.last_cmd += cmd
+            if self.last_cmd == self.desired:
+                self.dirty = False
+            return self.neutral + (self.last_cmd/self.rad_per_tick)
+        else:
+            return None
 
-#    def setAngle(self, ang):
-#        if ang > self.max_angle or ang < self.min_angle:
-#            rospy.logerr("Servo "+self.name+": angle out of range ("+str(ang)+"). Limits are: " + str(self.min_angle) + "," + str(self.max_angle))  
-#            return 
-#        self.angle = ang    # store it for joint state updates
-#        if self.invert:
-#            ang = ang * -1.0
-#        ticks = int(round( ang / self.rad_per_tick ))
-#        ticks += int(self.neutral)
-#        self.device.setPosition(self.id, ticks)
 
 class HobbyServo(Servo):
     """ Class to handle services and updates for a single Hobby Servo, connected to 
@@ -159,7 +167,7 @@ class HobbyServo(Servo):
 
     def interpolate(self, frame):
         """ Get the new position to move to, in ticks. """
-        return self.neutral
+        return self.desired
 
 
 ###############################################################################
@@ -218,6 +226,7 @@ class ArbotiX_ROS(ArbotiX):
 
         # start an arbotix driver
         ArbotiX.__init__(self, port, baud)        
+        rospy.sleep(1.0)
         rospy.loginfo("Started ArbotiX connection on port "+port)
         
         # initialize dynamixel & hobby servos
@@ -263,9 +272,11 @@ class ArbotiX_ROS(ArbotiX):
             if f%self.throttle_w == 0:
                 syncpkt = list()
                 for servo in self.dynamixels.values():
-                    v = int(servo.interpolate(self.rate/self.throttle_w))
-                    syncpkt.append([servo.id,v%256,v>>8])        
-                self.syncWrite(P_GOAL_POSITION_L,syncpkt)
+                    v = servo.interpolate(self.rate/self.throttle_w)
+                    if v != None:
+                        syncpkt.append([servo.id,int(v)%256,int(v)>>8])  
+                if len(syncpkt) > 0:      
+                    self.syncWrite(P_GOAL_POSITION_L,syncpkt)
 
             # update base
             if self.use_base and f%self.base.throttle == 0:
