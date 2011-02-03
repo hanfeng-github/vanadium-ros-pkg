@@ -109,7 +109,7 @@ class Servo():
 
     def interpolate(self, frame):
         """ Get the new position to move to, in ticks. """
-        return self.desired
+        return self.neutral + (self.desired/self.rad_per_tick)
 
 #    def setAngle(self, ang):
 #        if ang > self.max_angle or ang < self.min_angle:
@@ -218,8 +218,8 @@ class ArbotiX_ROS(ArbotiX):
             if f%self.throttle_w == 0:
                 syncpkt = list()
                 for servo in self.dynamixels.values():
-                    v = servo.interpolate()
-                    syncpkt.append([servo.id,v%256,v<<8])        
+                    v = int(servo.interpolate(self.rate/self.throttle_w))
+                    syncpkt.append([servo.id,v%256,v>>8])        
                 self.syncWrite(P_GOAL_POSITION_L,syncpkt)
 
             # update base
