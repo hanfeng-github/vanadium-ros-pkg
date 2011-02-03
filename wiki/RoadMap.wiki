@@ -5,7 +5,7 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
 
  * *arbotix* Stack
    * *arbotix_python* - formerly _arbotix_
-     * [streams move analog/digital to topic based.] 
+     * ~~move analog/digital to topic based.~~ see [streams]
      * ~~joint_state publication includes velocity~~ -- still requires some work to have accurate velocities.
      * ~~use sync_write to update servos~~
      * ~~each servo now has JointTrajectoryPoint-based control topic~~ -- could still use improvement for interpolation.
