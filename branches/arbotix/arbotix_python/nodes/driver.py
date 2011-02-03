@@ -161,6 +161,47 @@ class HobbyServo(Servo):
         """ Get the new position to move to, in ticks. """
         return self.neutral
 
+
+###############################################################################
+# IO Infrastructure
+
+class DigitalServo:
+    def __init__(self, name, device):
+        self.device = device
+        self.value = 0
+        self.direction = 0
+        self.pin = rospy.get_param('~digital_servos/'+name+'/pin')
+        self.throttle = rospy.get_param('~digital_servos/'+name+'/throttle')
+        rospy.Subscriber('~'+name, Digital, self.stateCb)
+    def stateCb(self, msg):
+        self.value = msg.value
+        self.direction = msg.direction
+    def update(self):
+        self.device.setDigital(self.pin, self.value, self.direction)
+
+class DigitalSensor:
+    def __init__(self, name, device):
+        self.device = device
+        self.pin = rospy.get_param('~digital_sensors/'+name+'/pin')
+        self.throttle = rospy.get_param('~digital_sensors/'+name+'/throttle')
+        self.pub = rospy.Publisher('~'+name, Digital)
+    def update(self):
+        msg = Digital()
+        msg.value = self.device.getDigital(self.pin)
+        self.pub.publish(msg)
+
+class AnalogSensor: 
+    def __init__(self, name, device):
+        self.device = device
+        self.pin = rospy.get_param('~analog_sensors/'+name+'/pin')
+        self.throttle = rospy.get_param('~analog_sensors/'+name+'/throttle')
+        self.pub = rospy.Publisher('~'+name, Analog)
+    def update(self):
+        msg = Digital()
+        msg.value = self.device.getAnalog(self.pin)
+        self.pub.publish(msg)
+
+
 ###############################################################################
 # Main ROS interface
 class ArbotiX_ROS(ArbotiX):
@@ -193,7 +234,11 @@ class ArbotiX_ROS(ArbotiX):
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
 
         # initialize digital/analog IO streams
-        # TODO
+        self.io = dict()
+        for v,t in {"digital_servos":DigitalServo,"digital_sensors":DigitalSensor,"analog_sensors":AnalogSensor}.items():
+            temp = rospy.get_param(v,dict())
+            for name in temp.keys():
+                self.io[name] = t(name,self)
         
         # setup a base controller
         self.use_base = False
@@ -229,6 +274,11 @@ class ArbotiX_ROS(ArbotiX):
             # update pml
             if self.use_pml and f%self.pml.throttle == 0:
                 self.pml.update()
+
+            # update io
+            for s in self.io.values():
+                if f%s.throttle == 0:
+                    s.update()
 
             # publish joint states
             if f%self.throttle_r == 0:
