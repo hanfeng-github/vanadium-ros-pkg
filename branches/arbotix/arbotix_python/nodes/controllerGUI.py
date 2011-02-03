@@ -19,12 +19,12 @@
   Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import roslib; roslib.load_manifest('arbotix')
+import roslib; roslib.load_manifest('arbotix_python')
 import rospy
 import wx
 
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import JointState
+from trajectory_msgs.msg import JointTrajectoryPoint
 
 width = 300
 
@@ -91,7 +91,9 @@ class controllerGUI(wx.Frame):
         self.Show(True)
 
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist)
-        self.cmd_joints = rospy.Publisher('cmd_joints', JointState)
+        self.cmd_pan = rospy.Publisher('head_pan_joint/command', JointTrajectoryPoint)
+        self.cmd_tilt = rospy.Publisher('head_tilt_joint/command', JointTrajectoryPoint)
+        self.cmd_tilt2 = rospy.Publisher('head_tilt2_joint/command', JointTrajectoryPoint)
 
     def onClose(self, event):
         self.timer.Stop()
@@ -127,10 +129,15 @@ class controllerGUI(wx.Frame):
         
     def onTimer(self, event=None):
         # send joint updates
-        j = JointState()
-        j.name = ["head_pan_joint", "head_tilt_joint", "head_tilt2_joint"]
-        j.position = [-self.pan.GetValue()/100.0, self.tilt.GetValue()/100.0, self.tilt2.GetValue()/100.0]
-        self.cmd_joints.publish(j)
+        pan = JointTrajectoryPoint()
+        pan.positions = [-self.pan.GetValue()/100.0]
+        tilt = JointTrajectoryPoint()
+        tilt.positions = [self.tilt.GetValue()/100.0]
+        tilt2 = JointTrajectoryPoint()
+        tilt2.positions = [self.tilt2.GetValue()/100.0]
+        self.cmd_pan.publish(pan)
+        self.cmd_tilt.publish(tilt)
+        self.cmd_tilt2.publish(tilt2)
         # send base updates
         t = Twist()
         t.linear.x = self.forward/200.0; t.linear.y = 0; t.linear.z = 0
