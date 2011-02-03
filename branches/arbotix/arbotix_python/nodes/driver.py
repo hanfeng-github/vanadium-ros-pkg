@@ -84,8 +84,11 @@ class Servo():
 
     def commandCb(self, req):
         # TODO: make this more advanced
-        self.desired = req.positions[0]
-        self.velocity = req.velocities[0]
+        try:
+            self.desired = req.positions[0]
+            self.velocity = req.velocities[0]
+        except:
+            pass
 
     def simple_commandCb(self, req):
         self.desired = req.data
@@ -106,7 +109,7 @@ class Servo():
 
     def interpolate(self, frame):
         """ Get the new position to move to, in ticks. """
-        return self.neutral
+        return self.desired
 
 #    def setAngle(self, ang):
 #        if ang > self.max_angle or ang < self.min_angle:
@@ -147,6 +150,9 @@ class HobbyServo(Servo):
         #rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
         rospy.Subscriber(name+'/simple_command', Float64, self.simple_commandCb)   
 
+    def simple_commandCb(self, req):
+        self.desired = req.data
+
     def update(self, value):
         """ For model compliance only -- we can't read the value of a hobby servo. """
         pass
@@ -175,10 +181,11 @@ class ArbotiX_ROS(ArbotiX):
         
         # initialize dynamixel & hobby servos
         dynamixels = rospy.get_param("~dynamixels", dict())
+        self.dynamixels = dict()
+        for name in dynamixels.keys():
+            self.dynamixels[name] = Servo(name,self)
         hobbyservos = rospy.get_param("~servos", dict())
         self.servos = dict()
-        for name in dynamixels.keys():
-            self.servos[name] = Servo(name,self)
         for name in hobbyservos.keys():
             self.servos[name] = HobbyServo(name, self)
 
@@ -207,9 +214,13 @@ class ArbotiX_ROS(ArbotiX):
         # main loop -- do all the read/write here
         while not rospy.is_shutdown():
     
-            # update servo positions
+            # update servo positions (via sync_write)
             if f%self.throttle_w == 0:
-                pass
+                syncpkt = list()
+                for servo in self.dynamixels.values():
+                    v = servo.interpolate()
+                    syncpkt.append([servo.id,v%256,v<<8])        
+                self.syncWrite(P_GOAL_POSITION_L,syncpkt)
 
             # update base
             if self.use_base and f%self.base.throttle == 0:
@@ -227,13 +238,13 @@ class ArbotiX_ROS(ArbotiX):
                     if self.use_sync:
                         # arbotix/servostik/wifi board sync_read
                         synclist = list()
-                        for servo in self.servos.values():
+                        for servo in self.dynamixels.values():
                             if servo.sync:
                                 synclist.append(servo.id)
                         if len(synclist) > 0:
                             val = self.syncRead(synclist, P_PRESENT_POSITION_L, 2)
                             if val != None: 
-                                for servo in self.servos.values():
+                                for servo in self.dynamixels.values():
                                     try:
                                         i = synclist.index(servo.id)
                                         servo.update(val[i]+(val[i+1]<<8))
@@ -241,7 +252,7 @@ class ArbotiX_ROS(ArbotiX):
                                         continue # not a sync readable servo
                     else:
                         # direct connection, or other hardware with no sync_read capability
-                        for servo in self.servos.values():
+                        for servo in self.dynamixels.values():
                             servo.update(-1)
                 except:
                     rospy.loginfo("Error in filling joint_states message")             
@@ -252,8 +263,7 @@ class ArbotiX_ROS(ArbotiX):
                 msg.name = list()
                 msg.position = list()
                 msg.velocity = list()
-                msg.effort = list()
-                for servo in self.servos.values():
+                for servo in self.dynamixels.values() + self.servos.values():
                     msg.name.append(servo.name)
                     msg.position.append(servo.angle)
                     msg.velocity.append(servo.velocity)
