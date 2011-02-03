@@ -8,5 +8,5 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/arbotix_controllers</url>
 
-  <depend package="arbotix"/>
+  <depend package="arbotix_python"/>
 </package>
