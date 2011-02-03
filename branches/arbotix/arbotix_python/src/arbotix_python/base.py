@@ -56,8 +56,7 @@ class base_controller:
         self.Kp = rospy.get_param("~base/Kp", 5)
         self.Kd = rospy.get_param("~base/Kd", 1)
         self.Ki = rospy.get_param("~base/Ki", 0)
-        self.Ko = rospy.get_param("~base/Ko", 50)
-        self.device.write(253,device.KP,[self.Kp,self.Kd,self.Ki,self.Ko])        
+        self.Ko = rospy.get_param("~base/Ko", 50)       
 
         # parameters: acceleration
         self.accel_limit = rospy.get_param("~base/accel_limit", 0.1)
@@ -160,7 +159,7 @@ class base_controller:
         self.device.setSpeeds(self.v_left, self.v_right)
  
     def startup(self):
-        pass
+        self.device.write(253,self.device.KP,[self.Kp,self.Kd,self.Ki,self.Ko]) 
     
     def shutdown(self):
         self.device.setSpeeds(0,0)
