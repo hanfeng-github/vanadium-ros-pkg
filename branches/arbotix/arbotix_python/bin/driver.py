@@ -31,6 +31,7 @@ import roslib; roslib.load_manifest('arbotix_python')
 import rospy
 
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Float64
 from trajectory_msgs.msg import *
 from arbotix_msgs.msg import *
 from arbotix_msgs.srv import *
@@ -41,7 +42,6 @@ from arbotix_python.base import *
 from arbotix_python.pml import *
 
 from math import sin,cos,pi,radians
-#from datetime import datetime
 
 ###############################################################################
 # Servo handling classes    
@@ -50,31 +50,31 @@ class Servo():
         robocontroller's AX/RX-bus. """
     def __init__(self, name, device):
         self.name = name
-        name = "~dynamixels/"+name+"/"
         self.device = device           # ArbotiX instance
+        n = "~dynamixels/"+name+"/"
 
         # TODO: load URDF specs
 
-        self.id = int(rospy.get_param(name+"id"))
-        self.neutral = rospy.get_param(name+"neutral",512)
-        self.ticks = rospy.get_param(name+"ticks",1024)
-        self.rad_per_tick = radians(rospy.get_param(name+"range",300.0))/self.ticks
+        self.id = int(rospy.get_param(n+"id"))
+        self.neutral = rospy.get_param(n+"neutral",512)
+        self.ticks = rospy.get_param(n+"ticks",1024)
+        self.rad_per_tick = radians(rospy.get_param(n+"range",300.0))/self.ticks
 
-        self.max_angle = radians(rospy.get_param(name+"max_angle",150))
-        self.min_angle = radians(rospy.get_param(name+"min_angle",-150))
-        self.max_speed = radians(rospy.get_param(name+"max_speed",684.0)) 
+        self.max_angle = radians(rospy.get_param(n+"max_angle",150))
+        self.min_angle = radians(rospy.get_param(n+"min_angle",-150))
+        self.max_speed = radians(rospy.get_param(n+"max_speed",684.0)) 
                                        # max speed = 114 rpm - 684 deg/s
 
-        self.invert = rospy.get_param(name+"invert",False)
-        self.sync = rospy.get_param(name+"sync",device.use_sync)
+        self.invert = rospy.get_param(n+"invert",False)
+        self.sync = rospy.get_param(n+"sync",device.use_sync)
 
         self.angle = 0.0               # current position
         self.desired = 0.0             # desired position
         self.velocity = 0.0            # current velocity
         
         # ROS interfaces
-        rospy.Subscriber(name+'command', JointTrajectoryPoint, self.commandCb)
-        #rospy.Subscriber(name+'simple_command', Float64, self.simple_commandCb)
+        rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
+        rospy.Subscriber(name+'/simple_command', Float64, self.simple_commandCb)
         self.srvRelax = rospy.Service(name+'relax',Relax, self.relaxCb)
 
     def relaxCb(self, req):
@@ -87,6 +87,10 @@ class Servo():
         self.desired = req.positions[0]
         self.velocity = req.velocities[0]
 
+    def simple_commandCb(self, req):
+        self.desired = req.data
+        print self.desired
+        
     def update(self, value):
         """ Update angle in radians by reading from servo, or
             by using pos passed in from a sync read.  """
@@ -120,28 +124,28 @@ class HobbyServo(Servo):
         an ArbotiX robocontroller. """
     def __init__(self, name, device):
         self.name = name
-        name = "~servos/"+name+"/"
         self.device = device           # ArbotiX instance
+        n = "~servos/"+name+"/"
 
         # TODO: load URDF specs
 
-        self.id = int(rospy.get_param(name+"id"))
-        self.neutral = rospy.get_param(name+"neutral",1500) # might be adjusted for crappy servos
-        self.ticks = rospy.get_param(name+"ticks",2000)
-        self.rad_per_tick = radians(rospy.get_param(name+"range",180.0))/self.ticks
+        self.id = int(rospy.get_param(n+"id"))
+        self.neutral = rospy.get_param(n+"neutral",1500) # might be adjusted for crappy servos
+        self.ticks = rospy.get_param(n+"ticks",2000)
+        self.rad_per_tick = radians(rospy.get_param(n+"range",180.0))/self.ticks
 
-        self.max_angle = radians(rospy.get_param(name+"max_angle",90))
-        self.min_angle = radians(rospy.get_param(name+"min_angle",-90))
+        self.max_angle = radians(rospy.get_param(n+"max_angle",90))
+        self.min_angle = radians(rospy.get_param(n+"min_angle",-90))
 
-        self.invert = rospy.get_param(name+"invert",False)
-        self.sync = rospy.get_param(name+"sync",device.use_sync)
+        self.invert = rospy.get_param(n+"invert",False)
+        self.sync = rospy.get_param(n+"sync",device.use_sync)
 
         self.angle = 0.0               # current position
         self.desired = 0.0             # desired position
         
         # ROS interfaces
-        #rospy.Subscriber(name+'command', JointTrajectoryPoint, self.commandCb)
-        rospy.Subscriber(name+'simple_command', Float64, self.simple_commandCb)   
+        #rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
+        rospy.Subscriber(name+'/simple_command', Float64, self.simple_commandCb)   
 
     def update(self, value):
         """ For model compliance only -- we can't read the value of a hobby servo. """
