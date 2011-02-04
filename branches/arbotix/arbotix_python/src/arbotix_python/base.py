@@ -48,7 +48,7 @@ class base_controller:
         # parameters: topics, throttle rate and geometry
         self.topic = rospy.get_param("~base/topic","cmd_vel")
         self.odom_topic = rospy.get_param("~base/odom_topic","odom")
-        self.throttle = float(rospy.get_param("~base/throttle",10))
+        self.throttle = int(device.rate/rospy.get_param("~base/rate",10))
         self.ticks_meter = float(rospy.get_param("~base/ticks_meter", 26154))
         self.base_width = float(rospy.get_param("~base/base_width", 0.144))
 

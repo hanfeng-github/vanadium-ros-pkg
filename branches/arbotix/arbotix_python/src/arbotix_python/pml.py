@@ -55,7 +55,7 @@ class pml:
         self.device = device
 
         # parameters
-        self.throttle = rospy.get_param("~pml/throttle",20)
+        self.throttle = int(device.rate/rospy.get_param("~pml/rate",5))
         self.frame_id = rospy.get_param("~pml/frame","base_laser") 
         self.servo_id = rospy.get_param("~pml/servo_id",200) 
         self.sensor_id = rospy.get_param("~pml/sensor_id",0)

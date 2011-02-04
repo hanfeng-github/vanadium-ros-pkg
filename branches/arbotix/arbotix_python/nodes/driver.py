@@ -224,8 +224,8 @@ class ArbotiX_ROS(ArbotiX):
         port = rospy.get_param("~port", "/dev/ttyUSB0")                     
         baud = int(rospy.get_param("~baud", "115200"))     
         self.rate = int(rospy.get_param("~rate", "100"))
-        self.throttle_r = int(rospy.get_param("~read/throttle", "10")) # throttle rate for read
-        self.throttle_w = int(rospy.get_param("~write/throttle", "10")) # throttle rate for write
+        self.throttle_r = int(self.rate/rospy.get_param("~read_rate", "10")) # throttle rate for read
+        self.throttle_w = int(self.rate/rospy.get_param("~write_rate", "10")) # throttle rate for write
         self.use_sync  = rospy.get_param("~use_sync",True) # use sync read?
 
         # start an arbotix driver
