@@ -66,7 +66,7 @@ class Servo():
                                        # max speed = 114 rpm - 684 deg/s
 
         self.invert = rospy.get_param(n+"invert",False)
-        self.sync = rospy.get_param(n+"sync",device.use_sync)
+        self.sync = rospy.get_param(n+"sync",True)
 
         self.dirty = False             # newly updated position?
         self.angle = 0.0               # current position, as returned by servo (radians)
