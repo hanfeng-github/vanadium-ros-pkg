@@ -77,7 +77,7 @@ class Servo():
         
         # ROS interfaces
         rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
-        self.srvRelax = rospy.Service(name+'/relax',Relax, self.relaxCb)
+        rospy.Service(name+'/relax',Relax, self.relaxCb)
 
     def relaxCb(self, req):
         """ Turn off servo torque, so that it is pose-able. """
@@ -247,16 +247,19 @@ class ArbotiX_ROS(ArbotiX):
         for name in hobbyservos.keys():
             self.servos[name] = HobbyServo(name, self)
 
-        # joint state publication
+        # publishers, subscribers and services
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
+        rospy.Service(~'SetupAnalogIn',SetupChannels, self.analogInCb)
+        rospy.Service(~'SetupDigitalIn',SetupChannels, self.digitalInCb)
+        rospy.Service(~'SetupDigitalOut',SetupChannels, self.digitalOutCb)
 
         # initialize digital/analog IO streams
         self.io = dict()
         for v,t in {"digital_servos":DigitalServo,"digital_sensors":DigitalSensor,"analog_sensors":AnalogSensor}.items():
             temp = rospy.get_param(v,dict())
             for name in temp.keys():
-                pin = rospy.get_param('~'+v+'/'+name+'/pin')
-                rate = rospy.get_param('~'+v+'/'+name+'/rate')
+                pin = rospy.get_param('~'+v+'/'+name+'/pin',1)
+                rate = rospy.get_param('~'+v+'/'+name+'/rate',10)
                 self.io[name] = t(name, pin, rate, self)
         
         # setup a base controller
@@ -349,6 +352,16 @@ class ArbotiX_ROS(ArbotiX):
             self.base.shutdown()
         if self.use_pml:
             self.pml.shutdown()
+
+    # IO Callbacks
+    def analogInCb(self, req):
+        # TODO: Add check, only 1 service per pin
+        self.io[req.topic_name] = AnalogSensor(req.topic_name, req.pin, req.rate, self) 
+    def digitalInCb(self, req):
+        self.io[req.topic_name] = DigitalSensor(req.topic_name, req.pin, req.rate, self) 
+    def digitalOutCb(self, req):
+        self.io[req.topic_name] = DigitalServo(req.topic_name, req.pin, req.rate, self) 
+
 
 if __name__ == "__main__":
     a = ArbotiX_ROS()
