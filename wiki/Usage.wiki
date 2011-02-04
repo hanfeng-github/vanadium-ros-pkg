@@ -5,13 +5,13 @@ Several nodes and packages have been renamed:
  * The original ''arbotix'' package is now ''arbotix_python''. The ''arbotix-node.py'' executable is now ''driver.py'' within the new package. 
  * The original joint controller has been moved into the ''arbotix_controllers'' package, as a standalone executable called ''joint_controller.py''. It takes a single parameter -- a list of ''joints'', which it converts from a cmd_joints topic into individual JointTrajectoryPoint messages. 
 
-= Rates and Throttling =
-The new ''driver.py'' has a single main loop, which mitigates issues caused to race conditions. The single main loop will run at a frequency determined by the ''rate'' parameter (default: 100). Each main module then has a frequency it runs at, determined by its ''throttle'' parameter. For instance, if our ''rate'' is 100, and our base_controller has a ''throttle'' parameter of 10, it will run at 100hz/10 = 10hz. Parameters of interest include:
+= Rates =
+The new ''driver.py'' has a single main loop, which mitigates issues caused to race conditions. The single main loop will run at a frequency determined by the ''rate'' parameter (default: 100). Each main module then has a frequency it runs at, determined by its ''rate'' parameter:
  * ~rate - the rate to run the loop at (default: 100)
- * ~throttle_r - dynamixel read rate throttle (default: 10)
- * ~throttle_w - dynamixel sync_write rate throttle (default: 10)
- * ~base_controller/throttle - (default: 10)
- * ~pml/throttle - (default: 20)
+ * ~read_rate - dynamixel read rate throttle (default: 10)
+ * ~write_rate - dynamixel sync_write rate throttle (default: 10)
+ * ~base/rate - (default: 10)
+ * ~pml/rate - (default: 5)
 
 = Digital and Analog =
 The old get/set digital and analog services are now gone, in their place is a new topic streaming system. This system is much faster than the old services-based one, but requires some setup:
@@ -22,7 +22,13 @@ The old get/set digital and analog services are now gone, in their place is a ne
  analog_sensors: {topic_name: {pin: 1}, another_topic_name: {pin: 2}}
  digital_servos: {topic_name: {pin: 3}, another_topic_name: {pin: 4}}
  }}}
- Pin numbers correspond to arduino analog/digital pins. Each sensor/servo can also take a throttle parameter, the default is 10. 
+ Pin numbers correspond to arduino analog/digital pins. Each sensor/servo can also take a throttle parameter, the default is 10.  Additionally, we provide a service to setup new IO channels (SetupChannel.srv):
+ {{{
+ # message to setup an IO channel
+ string topic_name
+ uint8 pin
+ uint8 rate
+ }}}
 
 = Base Controller =
 There is no longer a ''controllers'' collection. Most have moved to become new standalone nodes, however the base_controller is fully integrated into the main package. Configuration and parameters are similar to before, but no longer inside a ''controllers'' dictionary. To configure it: 
