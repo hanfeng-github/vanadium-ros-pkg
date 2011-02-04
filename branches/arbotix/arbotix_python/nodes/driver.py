@@ -182,12 +182,12 @@ class HobbyServo(Servo):
 # IO Infrastructure
 
 class DigitalServo:
-    def __init__(self, name, device):
+    def __init__(self, name, pin, rate, device):
         self.device = device
         self.value = 0
         self.direction = 0
-        self.pin = rospy.get_param('~digital_servos/'+name+'/pin')
-        self.throttle = rospy.get_param('~digital_servos/'+name+'/throttle')
+        self.pin = pin
+        self.throttle = device.rate/rate
         rospy.Subscriber('~'+name, Digital, self.stateCb)
     def stateCb(self, msg):
         self.value = msg.value
@@ -196,10 +196,10 @@ class DigitalServo:
         self.device.setDigital(self.pin, self.value, self.direction)
 
 class DigitalSensor:
-    def __init__(self, name, device):
+    def __init__(self, name, pin, rate, device):
         self.device = device
-        self.pin = rospy.get_param('~digital_sensors/'+name+'/pin')
-        self.throttle = rospy.get_param('~digital_sensors/'+name+'/throttle')
+        self.pin = pin
+        self.throttle = device.rate/rate
         self.pub = rospy.Publisher('~'+name, Digital)
     def update(self):
         msg = Digital()
@@ -207,10 +207,10 @@ class DigitalSensor:
         self.pub.publish(msg)
 
 class AnalogSensor: 
-    def __init__(self, name, device):
+    def __init__(self, name, pin, rate, device):
         self.device = device
-        self.pin = rospy.get_param('~analog_sensors/'+name+'/pin')
-        self.throttle = rospy.get_param('~analog_sensors/'+name+'/throttle')
+        self.pin = pin
+        self.throttle = device.rate/rate
         self.pub = rospy.Publisher('~'+name, Analog)
     def update(self):
         msg = Digital()
@@ -255,7 +255,9 @@ class ArbotiX_ROS(ArbotiX):
         for v,t in {"digital_servos":DigitalServo,"digital_sensors":DigitalSensor,"analog_sensors":AnalogSensor}.items():
             temp = rospy.get_param(v,dict())
             for name in temp.keys():
-                self.io[name] = t(name,self)
+                pin = rospy.get_param('~'+v+'/'+name+'/pin')
+                rate = rospy.get_param('~'+v+'/'+name+'/rate')
+                self.io[name] = t(name, pin, rate, self)
         
         # setup a base controller
         self.use_base = False
