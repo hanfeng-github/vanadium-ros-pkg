@@ -11,7 +11,7 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
      * ~~use sync_write to update servos~~
      * ~~each servo now has !JointTrajectoryPoint-based control topic and does local interpolation~~
      * ~~streamline to single, synchronous update~~
-     * ~~add _throttle_ parameters to anything in the main loop~~
+     * ~~add _throttle_ calculations to anything in the main loop~~
      * ~~default baud to 115200~~
      * ~~integrated into core: base and pml drivers~~
    * *arbotix_controllers* 
