@@ -42,7 +42,7 @@ AX_LOOP_SEQ = 11
 class ArbotiX:
     """ Class to open a serial port and control AX-12 servos 
     through an ArbotiX board or USBDynamixel. """
-    def __init__(self, port="/dev/ttyUSB0",baud=38400, interpolation=False, direct=False, timeout = 0.1):
+    def __init__(self, port="/dev/ttyUSB0",baud=115200, interpolation=False, direct=False, timeout = 0.1):
         """ This may throw errors up the line -- that's a good thing. """
         self.mutex = thread.allocate_lock()
         self.ser = serial.Serial()
