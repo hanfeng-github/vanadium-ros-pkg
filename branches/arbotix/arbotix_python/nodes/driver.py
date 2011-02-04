@@ -31,7 +31,6 @@ import roslib; roslib.load_manifest('arbotix_python')
 import rospy
 
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64
 from trajectory_msgs.msg import *
 from arbotix_msgs.msg import *
 from arbotix_msgs.srv import *
@@ -78,7 +77,6 @@ class Servo():
         
         # ROS interfaces
         rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
-        #rospy.Subscriber(name+'/simple_command', Float64, self.simple_commandCb)
         self.srvRelax = rospy.Service(name+'/relax',Relax, self.relaxCb)
 
     def relaxCb(self, req):
@@ -87,7 +85,7 @@ class Servo():
         return RelaxResponse()
 
     def commandCb(self, req):
-        # TODO: make this more advanced
+        # TODO: make this more advanced (buffer multiple trajectory points, etc)
         try:
             self.dirty = True
             self.desired = req.positions[0]
@@ -96,20 +94,16 @@ class Servo():
                 self.velocity = self.max_speed
         except:
             pass
-
-    #def simple_commandCb(self, req):
-    #    self.desired = req.data
-    #    print self.desired
         
     def update(self, value):
         """ Update angle in radians by reading from servo, or
             by using pos passed in from a sync read.  """
-        self.last_angle = self.angle
         if value < 0:
             # read servo
             if self.sync:
                 value = self.device.getPosition(self.id)
         if value != -1:
+            self.last_angle = self.angle
             if self.invert:
                 self.angle = -1.0 * (value - self.neutral) * self.rad_per_tick
             else:
@@ -152,26 +146,36 @@ class HobbyServo(Servo):
         self.min_angle = radians(rospy.get_param(n+"min_angle",-90))
 
         self.invert = rospy.get_param(n+"invert",False)
-        self.sync = rospy.get_param(n+"sync",device.use_sync)
+        self.sync = False              # can't read a hobby servo!
 
+        self.dirty = False             # newly updated position?
         self.angle = 0.0               # current position
-        self.desired = 0.0             # desired position
-        self.speed = 0.0
+        self.speed = 0.0               # this currently doesn't provide info for hobby servos
         
         # ROS interfaces
-        #rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
-        rospy.Subscriber(name+'/simple_command', Float64, self.simple_commandCb)   
+        rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
 
-    def simple_commandCb(self, req):
-        self.desired = req.data
+    def commandCb(self, req):
+        """ Callback to set position to angle, in radians. """
+        try:
+            ang = req.positions[0]
+            if ang > self.max_angle or ang < self.min_angle:
+                rospy.logerr("Servo "+self.name+": angle out of range ("+str(ang)+")") 
+            else:        
+                self.dirty = True
+                self.angle = ang
+        except:
+            pass
 
     def update(self, value):
-        """ For model compliance only -- we can't read the value of a hobby servo. """
-        pass
-
-    def interpolate(self, frame):
-        """ Get the new position to move to, in ticks. """
-        return self.desired
+        """ If dirty, update value of servo at device. """
+        if self.dirty:
+            ang = self.angle
+            if self.invert:
+                ang = ang * -1.0
+            ticks = int(round( ang / self.rad_per_tick ))
+            self.device.setServo(self.id, ticks)
+            self.dirty = False
 
 
 ###############################################################################
@@ -306,6 +310,8 @@ class ArbotiX_ROS(ArbotiX):
                         for servo in self.dynamixels.values():
                             if servo.sync:
                                 synclist.append(servo.id)
+                            else:
+                                servo.update(-1)
                         if len(synclist) > 0:
                             val = self.syncRead(synclist, P_PRESENT_POSITION_L, 2)
                             if val != None: 
