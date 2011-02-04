@@ -35,4 +35,10 @@ There is no longer a ''controllers'' collection. Most have moved to become new s
 {{{
 base: {base_width: 0.36195, ticks_meter: 66348, Kp: 2, Kd: 0, Ki: 0, Ko: 100}
 }}}
-A parameter of importance is ''throttle'' which will decide the rate at which updates occur. See discussion above. 
+
+= PML =
+As with the ''controllers'', there is no longer a ''sensors'' collection as most have moved to standalone nodes. The lone exception is the PML. As with the base controller, it can be configured as:
+{{{
+pml: {frame: base_laser, servo_id: 200, sensor_id: 0}
+}}}
+Parameters have not changed from before. 
