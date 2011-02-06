@@ -208,6 +208,7 @@ class DigitalSensor:
         self.pub = rospy.Publisher('~'+name, Digital)
     def update(self):
         msg = Digital()
+        msg.header.stamp = rospy.Time.now()
         msg.value = self.device.getDigital(self.pin)
         self.pub.publish(msg)
 
@@ -219,6 +220,7 @@ class AnalogSensor:
         self.pub = rospy.Publisher('~'+name, Analog)
     def update(self):
         msg = Analog()
+        msg.header.stamp = rospy.Time.now()
         msg.value = self.device.getAnalog(self.pin)
         self.pub.publish(msg)
 

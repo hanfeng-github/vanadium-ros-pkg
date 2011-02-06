@@ -260,9 +260,7 @@ class ArbotiX:
 
     # ArbotiX-specific register table
                         # We do Model, Version, ID, Baud, just like the AX-12
-    DIG_BLOCK_1 = 5     # Read digital pins 0-7
-    DIG_BLOCK_2 = 6     # Read digital pins 8-15
-    DIG_BASE = 7        # Write digital
+    DIG_BASE = 5        # Write digital, Read digital pins 0-7
     REG_RESCAN = 15     
                         # 16, 17 = RETURN, ALARM
     ANA_BASE = 18       # First analog port (Read only)
@@ -301,10 +299,12 @@ class ArbotiX:
         """ Read a digital port, returns 0 (low) or 0xFF (high) (-1 if error).\
             (index = 0 to 15) """
         try:
-            if index > 7:
-                x = self.read(253, self.DIG_BLOCK_2, 1)[0]
+            if index > 15:
+                x = self.read(253, self.DIG_BASE+2, 1)[0]
+            elif index > 7:
+                x = self.read(253, self.DIG_BASE+1, 1)[0]
             else:
-                x = self.read(253, self.DIG_BLOCK_1, 1)[0]                
+                x = self.read(253, self.DIG_BASE, 1)[0]                
         except:
             return -1
         if x & (2**(index%8)):
