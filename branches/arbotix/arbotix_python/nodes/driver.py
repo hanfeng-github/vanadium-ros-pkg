@@ -218,7 +218,7 @@ class AnalogSensor:
         self.throttle = device.rate/rate
         self.pub = rospy.Publisher('~'+name, Analog)
     def update(self):
-        msg = Digital()
+        msg = Analog()
         msg.value = self.device.getAnalog(self.pin)
         self.pub.publish(msg)
 
@@ -254,9 +254,9 @@ class ArbotiX_ROS(ArbotiX):
 
         # publishers, subscribers and services
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
-        #rospy.Service('~SetupAnalogIn',SetupChannels, self.analogInCb)
-        #rospy.Service('~SetupDigitalIn',SetupChannels, self.digitalInCb)
-        #rospy.Service('~SetupDigitalOut',SetupChannels, self.digitalOutCb)
+        rospy.Service('~SetupAnalogIn',SetupChannel, self.analogInCb)
+        rospy.Service('~SetupDigitalIn',SetupChannel, self.digitalInCb)
+        rospy.Service('~SetupDigitalOut',SetupChannel, self.digitalOutCb)
 
         # initialize digital/analog IO streams
         self.io = dict()
@@ -362,10 +362,13 @@ class ArbotiX_ROS(ArbotiX):
     def analogInCb(self, req):
         # TODO: Add check, only 1 service per pin
         self.io[req.topic_name] = AnalogSensor(req.topic_name, req.pin, req.rate, self) 
+        return SetupChannelResponse()
     def digitalInCb(self, req):
         self.io[req.topic_name] = DigitalSensor(req.topic_name, req.pin, req.rate, self) 
+        return SetupChannelResponse()
     def digitalOutCb(self, req):
         self.io[req.topic_name] = DigitalServo(req.topic_name, req.pin, req.rate, self) 
+        return SetupChannelResponse()
 
 
 if __name__ == "__main__":
