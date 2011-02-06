@@ -37,12 +37,9 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
      * joint_traj_controller.py - converts a JointTrajectory command
      * tilting_stage.py - controls a tilting sensor stage (such as for a laser range finder). Offers settings for period and magnitude of tilt oscillation, emits trigger for laserscan_assembler. 
 
-= 0.5.0 and beyond =
- * Add spline parameter interpolation (in firmware + node).
-
 ==arbotix==
-=== 0.3.2 - Early November ===
-  * Stable Sensors: pml -- _in progress_
+=== 0.3.2 - r149 - 10/26/10 ===
+  * Stable Sensors: pml
 
 === 0.3.1 - r130 - 10/20/10 ===
   * PML scanning and data storage code has been split off into an Arduino library. Library release with RoboControllerLib 0009
