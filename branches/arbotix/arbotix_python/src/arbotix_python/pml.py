@@ -33,6 +33,8 @@ from sensor_msgs.msg import LaserScan
 from arbotix_msgs.msg import ScanParameters
 from std_srvs.srv import *
 
+from arbotix_python.sensors import *
+
 class pml:
     """ Laser scan sensor interface. """
 
@@ -65,20 +67,13 @@ class pml:
         self.step_count = rospy.get_param("~pml/step_count",30)
 
         # sensor type: choices are A710YK (40-216"), A02YK (8-60"), A21YK (4-30")
-        self.sensor = rospy.get_param("~pml/sensor_type","A710YK")
-        if self.sensor == "A710YK" or self.sensor == "ultralong":
-            self.conversion = self.gpA710YK
-            self.range_min = 0.75
-            self.range_max = 5.50
-        elif self.sensor == "A02YK" or self.sensor == "long":
-            self.conversion = self.gpA02YK
-            self.range_min = 0.20
-            self.range_max = 1.50
+        self.sensor_t = rospy.get_param("~pml/sensor_type","A710YK")
+        if self.sensor_t == "A710YK" or self.sensor_t == "ultralong":
+            self.sensor = gpA710YK()
+        elif self.sensor_t == "A02YK" or self.sensor_t == "long":
+            self.sensor = gpA02YK()
         else:
-            self.conversion = self.gpA21YK
-            self.range_min = 0.10
-            self.range_max = 0.80
-        self.out_of_range = rospy.get_param("~pml/out_of_range",0.0)
+            self.sensor = gp2d12()
         
         # annoyingly loud, allow servo panning to be turned on/off
         self.enable = rospy.get_param("~pml/enabled",False)
@@ -105,7 +100,7 @@ class pml:
                             k = v[i*2+3] + (v[i*2+4]<<8)
                         else:
                             k = v[(self.step_count*2+1)-i*2] + (v[(self.step_count*2+2)-i*2]<<8)
-                        ranges.append( self.conversion(k) )
+                        ranges.append( self.sensor.convert(k) )
                     # now post laser scan
                     scan = LaserScan()
                     scan.header.stamp = rospy.Time.now() - rospy.Duration.from_sec(offset)      
@@ -120,8 +115,8 @@ class pml:
                         scan.angle_increment = -self.step_value * 0.00511
                     scan.scan_time = offset
                     scan.time_increment = offset/(self.step_count-1)
-                    scan.range_min = self.range_min
-                    scan.range_max = self.range_max
+                    scan.range_min = self.sensor.min_range
+                    scan.range_max = self.sensor.max_range
                     scan.ranges = ranges    
                     self.scanPub.publish(scan)
                     if self.d == self.UP_SCAN: self.d = self.DN_SCAN
@@ -159,21 +154,4 @@ class pml:
         self.step_value = int(req.angle_increment*195.56)
         rospy.loginfo("Setting scan parameters to: " + str(self.step_start) + "," + str(self.step_value) + "," + str(self.step_count) )
         self.device.write(253, self.PML_MIN_L, [self.step_start%256, self.step_start>>8, self.step_value, self.step_count])
-
-    # voltage to distance conversion functions
-    def gpA710YK(self, value):
-        if value > 100:
-            return (497.0/(value-56))
-        else:
-            return self.out_of_range
-    def gpA02YK(self, value):
-        if value > 80:
-            return (115.0/(value-12))
-        else:
-            return self.out_of_range 
-    def gpA21YK(self, value):
-        if value > 40:
-            return (52.0/(value-12))
-        else:
-            return self.out_of_range 
 
