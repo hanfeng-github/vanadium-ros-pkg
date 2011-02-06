@@ -128,7 +128,7 @@ unsigned char handleWrite(){
       UBRR1L = params[k];      
     }else if(addr < REG_RESCAN){
       // write digital 
-      int pin = addr - REG_DIG_BASE;
+      int pin = addr - REG_DIGITAL;
     #ifdef SERVO_STIK
       pin = 31-pin;
     #endif
@@ -278,7 +278,25 @@ int handleRead(){
       v = 34; // 56700
     }else if(addr < REG_RETURN_LEVEL){
       // send digital read
-      v = PINB;
+      if(addr == REG_DIGITAL){
+        // 0->7
+    #ifdef SERVO_STIK
+        v = PINA;
+    #else
+        v = PINB;
+    #endif
+      }else if(addr == REG_DIGITAL+1){
+        // 8-15
+    #ifdef SERVO_STIK
+        v = (PINB>>1);
+    #else
+        v = PIND;
+    #endif        
+      }else{
+        // 16-23
+        v = PIND;
+      }
+      
     }else if(addr == REG_RETURN_LEVEL){
       v = ret_level;
     }else if(addr == REG_ALARM_LED){
