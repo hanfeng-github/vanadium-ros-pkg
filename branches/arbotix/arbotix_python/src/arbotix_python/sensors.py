@@ -36,7 +36,7 @@ class SharpIR:
     max_range = 1.0
 
     def convert(self, raw):
-        """ Convert raw analog (8-bit) to distance. """
+        """ Convert raw analog (10-bit) to distance. """
         return raw
 
 class gpA710YK(SharpIR):
