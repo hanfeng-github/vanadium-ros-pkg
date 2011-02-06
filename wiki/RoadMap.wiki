@@ -5,8 +5,7 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
 
  * *arbotix* Stack
    * *arbotix_python* - formerly _arbotix_
-     * ~~move analog/digital to topic based.~~ see [streams]
-       * add service to start new analog/digital topics
+     * ~~move analog/digital to topic based. Add service to start new analog/digital topics. See [streams]. ~~ 
      * ~~joint_state publication includes velocity~~
      * ~~use sync_write to update servos~~
      * ~~each servo now has !JointTrajectoryPoint-based control topic and does local interpolation~~
@@ -18,7 +17,7 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
      * ~~joint_controller.py - classic joint_state style to maintain compatibility~~
      * linear_controller.py - overhauled torso_traj_controller.py
    * *arbotix_sensors*
-     * ~~base_laser_from_tilt.py - extract a "base_scan" from a tilting laser.~~
+     * ir_ranger.py - subscribes to an analog channel, converts to a range command. Works with most Sharp IR rangers.
    * *arbotix_firmware*
      * ~~support for sync_write.~~
 
@@ -29,8 +28,8 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
    * *arbotix_controllers*
      * joint_traj_controller.py - converts a JointTrajectory command
      * tilting_stage.py - controls a tilting sensor stage (such as for a laser range finder). Offers settings for period and magnitude of tilt oscillation, emits trigger for laserscan_assembler. 
+     * base_laser_from_tilt.py - extract a "base_scan" from a tilting laser.
    * *arbotix_sensors*
-     * ir_ranger.py - subscribes to an analog channel, converts to a range command. Works with most Sharp IR rangers.
      * max_sonar.py - subscribes to an analog channel, converts to a range command. Works with maxbotix sonars.
 
 = 0.5.0 and beyond =
