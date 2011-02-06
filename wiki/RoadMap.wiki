@@ -17,7 +17,7 @@ See [http://forums.trossenrobotics.com/showthread.php?t=4612 TRC forum] thread f
      * ~~joint_controller.py - classic joint_state style to maintain compatibility~~
      * linear_controller.py - overhauled torso_traj_controller.py
    * *arbotix_sensors*
-     * ir_ranger.py - subscribes to an analog channel, converts to a range command. Works with most Sharp IR rangers.
+     * ~~ir_ranger.py - subscribes to an analog channel, converts to a range~~ command. Works with most Sharp IR rangers.
    * *arbotix_firmware*
      * ~~support for sync_write.~~
 
