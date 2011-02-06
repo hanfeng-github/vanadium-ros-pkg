@@ -22,12 +22,18 @@ The old get/set digital and analog services are now gone, in their place is a ne
  analog_sensors: {topic_name: {pin: 1}, another_topic_name: {pin: 2}}
  digital_servos: {topic_name: {pin: 3}, another_topic_name: {pin: 4}}
  }}}
- Pin numbers correspond to arduino analog/digital pins. Each sensor/servo can also take a throttle parameter, the default is 10.  Additionally, we provide a service to setup new IO channels (SetupChannel.srv):
+ Pin numbers correspond to arduino analog/digital pins. Each sensor/servo can also take a throttle parameter, the default is 10.  Additionally, we provide services to setup new IO channels (SetupChannel.srv):
  {{{
  # message to setup an IO channel
  string topic_name
  uint8 pin
  uint8 rate
+ ---
+
+ }}}
+ You can start an analog channel, on pin 1, publishing at 10hz, like this:
+ {{{
+ rosservice call /arbotix/SetupAnalogIn atest 1 10
  }}}
 
 = Base Controller =
