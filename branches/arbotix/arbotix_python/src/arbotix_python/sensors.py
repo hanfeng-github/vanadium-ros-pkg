@@ -30,10 +30,10 @@
 from sensor_msgs.msg import Range
 
 class SharpIR:
-    self.radiation_type = Range.INFRARED
-    self.field_of_view = 0.001
-    self.min_range = 0.0
-    self.max_range = 1.0
+    radiation_type = Range.INFRARED
+    field_of_view = 0.001
+    min_range = 0.0
+    max_range = 1.0
 
     def convert(self, raw):
         """ Convert raw analog (8-bit) to distance. """
@@ -41,36 +41,36 @@ class SharpIR:
 
 class gpA710YK(SharpIR):
     """ Ultra long-range Sharp IR sensor. """
-    self.min_range = 0.75
-    self.max_range = 5.50
+    min_range = 0.75
+    max_range = 5.50
 
     def convert(self, raw):
-        """ Convert raw analog (8-bit) to distance. """
+        """ Convert raw analog (10-bit) to distance. """
         if raw > 100:
             return (497.0/(raw-56))
         else:
             return self.max_range+0.1
         
 class gpA02YK(SharpIR):
-    self.min_range = 0.20
-    self.max_range = 1.50
+    min_range = 0.20
+    max_range = 1.50
 
     def convert(self, raw):
-        """ Convert raw analog (8-bit) to distance. """
+        """ Convert raw analog (10-bit) to distance. """
         if raw > 80:
             return (115.0/(raw-12))
         else:
-            return self.out_of_range+0.1
+            return self.max_range+0.1
 
 class gp2d12(SharpIR):
     """ The typical GP2D12 IR ranger. """
-    self.min_range = 0.10
-    self.max_range = 0.80
+    min_range = 0.10
+    max_range = 0.80
 
     def convert(self, raw):
-        """ Convert raw analog (8-bit) to distance. """
+        """ Convert raw analog (10-bit) to distance. """
         if raw > 40:
             return (52.0/(raw-12))
         else:
-            return self.out_of_range+0.1
+            return self.max_range+0.1
 
