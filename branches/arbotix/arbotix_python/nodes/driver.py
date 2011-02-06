@@ -74,6 +74,7 @@ class Servo():
         self.last_cmd = 0.0            # last position sent (radians)
         self.velocity = self.max_speed # current velocity limit (radians/sec)
         self.speed = 0.0               # moving speed
+        self.relaxed = True            # are we not under torque control?
         
         # ROS interfaces
         rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
@@ -82,6 +83,7 @@ class Servo():
     def relaxCb(self, req):
         """ Turn off servo torque, so that it is pose-able. """
         self.device.disableTorque(self.id)
+        self.relaxed = True
         return RelaxResponse()
 
     def commandCb(self, req):
@@ -94,7 +96,7 @@ class Servo():
                 self.velocity = self.max_speed
         except:
             pass
-        
+   
     def update(self, value):
         """ Update angle in radians by reading from servo, or
             by using pos passed in from a sync read.  """
@@ -108,10 +110,13 @@ class Servo():
                 self.angle = -1.0 * (value - self.neutral) * self.rad_per_tick
             else:
                 self.angle = (value - self.neutral) * self.rad_per_tick
+        if self.relaxed:
+            self.last_cmd = self.angle
 
     def interpolate(self, frame):
         """ Get the new position to move to, in ticks. """
         if self.dirty:
+            self.relaxed = False
             cmd = self.desired - self.last_cmd
             if cmd > self.velocity/float(frame):
                 cmd = self.velocity/float(frame)
@@ -227,9 +232,9 @@ class ArbotiX_ROS(ArbotiX):
         # load configurations    
         port = rospy.get_param("~port", "/dev/ttyUSB0")                     
         baud = int(rospy.get_param("~baud", "115200"))     
-        self.rate = int(rospy.get_param("~rate", "100"))
-        self.throttle_r = int(self.rate/rospy.get_param("~read_rate", "10")) # throttle rate for read
-        self.throttle_w = int(self.rate/rospy.get_param("~write_rate", "10")) # throttle rate for write
+        self.rate = int(rospy.get_param("~rate", 100))
+        self.throttle_r = int(self.rate/rospy.get_param("~read_rate", 10)) # throttle rate for read
+        self.throttle_w = int(self.rate/rospy.get_param("~write_rate", 10)) # throttle rate for write
         self.use_sync  = rospy.get_param("~use_sync",True) # use sync read?
 
         # start an arbotix driver
@@ -249,9 +254,9 @@ class ArbotiX_ROS(ArbotiX):
 
         # publishers, subscribers and services
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
-        rospy.Service(~'SetupAnalogIn',SetupChannels, self.analogInCb)
-        rospy.Service(~'SetupDigitalIn',SetupChannels, self.digitalInCb)
-        rospy.Service(~'SetupDigitalOut',SetupChannels, self.digitalOutCb)
+        #rospy.Service('~SetupAnalogIn',SetupChannels, self.analogInCb)
+        #rospy.Service('~SetupDigitalIn',SetupChannels, self.digitalInCb)
+        #rospy.Service('~SetupDigitalOut',SetupChannels, self.digitalOutCb)
 
         # initialize digital/analog IO streams
         self.io = dict()
@@ -322,7 +327,7 @@ class ArbotiX_ROS(ArbotiX):
                             if val != None: 
                                 for servo in self.dynamixels.values():
                                     try:
-                                        i = synclist.index(servo.id)
+                                        i = synclist.index(servo.id)*2
                                         servo.update(val[i]+(val[i+1]<<8))
                                     except:
                                         continue # not a sync readable servo
