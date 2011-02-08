@@ -3,7 +3,10 @@
 = Nodes and Packages =
 Several nodes and packages have been renamed:
  * The original ''arbotix'' package is now ''arbotix_python''. The ''arbotix-node.py'' executable is now ''driver.py'' within the new package. 
- * The original joint controller has been moved into the ''arbotix_controllers'' package, as a standalone executable called ''joint_controller.py''. It takes a single parameter -- a list of ''joints'', which it converts from a cmd_joints topic into individual JointTrajectoryPoint messages. 
+ * The original joint controller has been moved into the ''arbotix_controllers'' package, as a standalone executable called ''joint_controller.py''. It takes a single parameter -- a list of ''joints'', which it converts from a cmd_joints topic into individual Float64 messages.
+
+Other changes include:
+ * The ''sync'' parameter for servos is now called ''readable''. 
 
 = Rates =
 The new ''driver.py'' has a single main loop, which mitigates issues caused to race conditions. The single main loop will run at a frequency determined by the ''rate'' parameter (default: 100). Each main module then has a frequency it runs at, determined by its ''rate'' parameter:
