@@ -24,7 +24,7 @@ import rospy
 import wx
 
 from geometry_msgs.msg import Twist
-from trajectory_msgs.msg import JointTrajectoryPoint
+from std_msgs.msg import Float64
 
 width = 300
 
@@ -91,9 +91,9 @@ class controllerGUI(wx.Frame):
         self.Show(True)
 
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist)
-        self.cmd_pan = rospy.Publisher('head_pan_joint/command', JointTrajectoryPoint)
-        self.cmd_tilt = rospy.Publisher('head_tilt_joint/command', JointTrajectoryPoint)
-        self.cmd_tilt2 = rospy.Publisher('head_tilt2_joint/command', JointTrajectoryPoint)
+        self.cmd_pan = rospy.Publisher('head_pan_joint/command', Float64)
+        self.cmd_tilt = rospy.Publisher('head_tilt_joint/command', Float64)
+        self.cmd_tilt2 = rospy.Publisher('head_tilt2_joint/command', Float64)
 
     def onClose(self, event):
         self.timer.Stop()
@@ -127,12 +127,12 @@ class controllerGUI(wx.Frame):
         
     def onTimer(self, event=None):
         # send joint updates
-        pan = JointTrajectoryPoint()
-        pan.positions = [-self.pan.GetValue()/100.0]
-        tilt = JointTrajectoryPoint()
-        tilt.positions = [self.tilt.GetValue()/100.0]
-        tilt2 = JointTrajectoryPoint()
-        tilt2.positions = [self.tilt2.GetValue()/100.0]
+        pan = Float64()
+        pan.data = -self.pan.GetValue()/100.0
+        tilt = Float64()
+        tilt.data = self.tilt.GetValue()/100.0
+        tilt2 = Float64()
+        tilt2.data = self.tilt2.GetValue()/100.0
         self.cmd_pan.publish(pan)
         self.cmd_tilt.publish(tilt)
         self.cmd_tilt2.publish(tilt2)
