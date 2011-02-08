@@ -37,7 +37,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 
-class base_controller:
+class BaseController:
     """ Controller to handle movement & odometry feedback for a differential 
             drive mobile base. """
     def __init__(self, device):
@@ -73,6 +73,10 @@ class base_controller:
         self.y = 0
         self.th = 0
         self.then = datetime.now()  # time for determining dx/dy
+
+        # output for joint states
+        self.names = ["base_l_wheel_joint","base_r_wheel_joint"]
+        self.positions = [0,0]
 
         # subscriptions
         rospy.Subscriber(self.topic, Twist, self.cmdVelCb)
