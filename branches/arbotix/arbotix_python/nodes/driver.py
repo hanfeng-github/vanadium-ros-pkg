@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  ArbotiX ROS Node: serial connection to an ArbotiX board w/ PyPose/NUKE/ROS
+  ArbotiX Node: serial connection to an ArbotiX board w/ PyPose/NUKE/ROS
   Copyright (c) 2008-2011 Michael E. Ferguson.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ import roslib; roslib.load_manifest('arbotix_python')
 import rospy
 
 from sensor_msgs.msg import JointState
-from trajectory_msgs.msg import *
+from std_msgs.msg import Float64
 from arbotix_msgs.msg import *
 from arbotix_msgs.srv import *
 
@@ -40,7 +40,7 @@ from arbotix_python.ax12 import *
 from arbotix_python.base import *
 from arbotix_python.pml import *
 
-from math import sin,cos,pi,radians
+from math import radians
 
 ###############################################################################
 # Servo handling classes    
@@ -63,22 +63,20 @@ class Servo():
         self.min_angle = radians(rospy.get_param(n+"min_angle",-150))
         self.max_speed = radians(rospy.get_param(n+"max_speed",684.0)) 
                                        # max speed = 114 rpm - 684 deg/s
-
         self.invert = rospy.get_param(n+"invert",False)
-        self.sync = rospy.get_param(n+"sync",True)
+        self.readable = rospy.get_param(n+"readable",True)
 
         self.dirty = False             # newly updated position?
         self.angle = 0.0               # current position, as returned by servo (radians)
-        self.last_angle = 0.0          # last position, as returned by servo (for speed calcs)
         self.desired = 0.0             # desired position (radians)
         self.last_cmd = 0.0            # last position sent (radians)
-        self.velocity = self.max_speed # current velocity limit (radians/sec)
-        self.speed = 0.0               # moving speed
+        self.velocity = 0.0            # moving speed
         self.relaxed = True            # are we not under torque control?
+        self.last = rospy.Time.now()
         
         # ROS interfaces
-        rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
-        rospy.Service(name+'/relax',Relax, self.relaxCb)
+        rospy.Subscriber(name+'/command', Float64, self.commandCb)
+        rospy.Service(name+'/relax', Relax, self.relaxCb)
 
     def relaxCb(self, req):
         """ Turn off servo torque, so that it is pose-able. """
@@ -87,48 +85,52 @@ class Servo():
         return RelaxResponse()
 
     def commandCb(self, req):
-        # TODO: make this more advanced (buffer multiple trajectory points, etc)
-        try:
-            self.dirty = True
-            self.desired = req.positions[0]
-            self.velocity = req.velocities[0]
-            if self.velocity > self.max_speed:
-                self.velocity = self.max_speed
-        except:
-            pass
+        self.dirty = True   
+        self.relaxed = False
+        self.desired = req.data
    
     def update(self, value):
         """ Update angle in radians by reading from servo, or
-            by using pos passed in from a sync read.  """
+            by using position passed in from a sync read.  """
         if value < 0:
-            # read servo
-            if self.sync:
+            # read servo locally (no sync_read)
+            if self.readable:
                 value = self.device.getPosition(self.id)
         if value != -1:
-            self.last_angle = self.angle
+            # convert ticks to radians
+            last_angle = self.angle
             if self.invert:
                 self.angle = -1.0 * (value - self.neutral) * self.rad_per_tick
             else:
                 self.angle = (value - self.neutral) * self.rad_per_tick
+            # update velocity estimate
+            t = rospy.Time.now()
+            self.velocity = (t - self.last).to_nsec()/1000000000.0
+            self.last = t
         if self.relaxed:
             self.last_cmd = self.angle
 
     def interpolate(self, frame):
         """ Get the new position to move to, in ticks. """
         if self.dirty:
-            self.relaxed = False
+            # compute command, limit velocity
             cmd = self.desired - self.last_cmd
-            if cmd > self.velocity/float(frame):
-                cmd = self.velocity/float(frame)
-            elif -cmd > self.velocity/float(frame):
-                cmd = -self.velocity/float(frame)
+            if cmd > self.max_speed/float(frame):
+                cmd = self.max_speed/float(frame)
+            elif cmd < -self.max_speed/float(frame):
+                cmd = -self.max_speed/float(frame)
+            # compute angle, apply limits
             self.last_cmd += cmd
+            if self.last_cmd < self.min_angle:
+                self.last_cmd = self.min_angle
+            if self.last_cmd > self.max_angle:
+                self.last_cmd = self.max_angle
             self.speed = cmd*frame
+            # cap movement
             if self.last_cmd == self.desired:
                 self.dirty = False
             return self.neutral + (self.last_cmd/self.rad_per_tick)
         else:
-            self.speed = 0.0
             return None
 
 
@@ -151,30 +153,29 @@ class HobbyServo(Servo):
         self.min_angle = radians(rospy.get_param(n+"min_angle",-90))
 
         self.invert = rospy.get_param(n+"invert",False)
-        self.sync = False              # can't read a hobby servo!
+        self.readable = False          # can't read a hobby servo!
 
         self.dirty = False             # newly updated position?
         self.angle = 0.0               # current position
-        self.speed = 0.0               # this currently doesn't provide info for hobby servos
+        self.velocity = 0.0            # this currently doesn't provide info for hobby servos
         
         # ROS interfaces
-        rospy.Subscriber(name+'/command', JointTrajectoryPoint, self.commandCb)
+        rospy.Subscriber(name+'/command', Float64, self.commandCb)
 
     def commandCb(self, req):
         """ Callback to set position to angle, in radians. """
-        try:
-            ang = req.positions[0]
-            if ang > self.max_angle or ang < self.min_angle:
-                rospy.logerr("Servo "+self.name+": angle out of range ("+str(ang)+")") 
-            else:        
-                self.dirty = True
-                self.angle = ang
-        except:
-            pass
+        self.dirty = True
+        self.angle = req.data
 
     def update(self, value):
         """ If dirty, update value of servo at device. """
         if self.dirty:
+            # test limits
+            if self.angle < self.min_angle:
+                self.angle = self.min_angle
+            if self.angle > self.max_angle:
+                self.angle = self.max_angle
+            # send update to hobby servo
             ang = self.angle
             if self.invert:
                 ang = ang * -1.0
@@ -227,7 +228,7 @@ class AnalogSensor:
 
 ###############################################################################
 # Main ROS interface
-class ArbotiX_ROS(ArbotiX):
+class ArbotixROS(ArbotiX):
     
     def __init__(self):
         rospy.init_node('arbotix')
@@ -242,7 +243,7 @@ class ArbotiX_ROS(ArbotiX):
         # start an arbotix driver
         ArbotiX.__init__(self, port, baud)        
         rospy.sleep(1.0)
-        rospy.loginfo("Started ArbotiX connection on port "+port)
+        rospy.loginfo("Started ArbotiX connection on port " + port)
         
         # initialize dynamixel & hobby servos
         dynamixels = rospy.get_param("~dynamixels", dict())
@@ -273,7 +274,7 @@ class ArbotiX_ROS(ArbotiX):
         self.use_base = False
         if rospy.has_param("~base"):
             self.use_base = True
-            self.base = base_controller(self)
+            self.base = BaseController(self)
             self.base.startup()
 
         # setup a pml  
@@ -320,19 +321,20 @@ class ArbotiX_ROS(ArbotiX):
                         # arbotix/servostik/wifi board sync_read
                         synclist = list()
                         for servo in self.dynamixels.values():
-                            if servo.sync:
+                            if servo.readable:
                                 synclist.append(servo.id)
                             else:
                                 servo.update(-1)
                         if len(synclist) > 0:
                             val = self.syncRead(synclist, P_PRESENT_POSITION_L, 2)
-                            if val != None: 
+                            if val: 
                                 for servo in self.dynamixels.values():
                                     try:
                                         i = synclist.index(servo.id)*2
                                         servo.update(val[i]+(val[i+1]<<8))
                                     except:
-                                        continue # not a sync readable servo
+                                        # not a readable servo
+                                        continue 
                     else:
                         # direct connection, or other hardware with no sync_read capability
                         for servo in self.dynamixels.values():
@@ -349,7 +351,10 @@ class ArbotiX_ROS(ArbotiX):
                 for servo in self.dynamixels.values() + self.servos.values():
                     msg.name.append(servo.name)
                     msg.position.append(servo.angle)
-                    msg.velocity.append(servo.speed)
+                    msg.velocity.append(servo.velocity)
+                if self.use_base:
+                    msg.name += self.base.names
+                    msg.position += self.base.positions
                 self.jointStatePub.publish(msg)
 
             f += 1
@@ -374,5 +379,5 @@ class ArbotiX_ROS(ArbotiX):
 
 
 if __name__ == "__main__":
-    a = ArbotiX_ROS()
+    a = ArbotixROS()
 
