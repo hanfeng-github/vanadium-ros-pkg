@@ -46,8 +46,6 @@ class BaseController:
         self.device = device
 
         # parameters: topics, throttle rate and geometry
-        self.topic = rospy.get_param("~base/topic","cmd_vel")
-        self.odom_topic = rospy.get_param("~base/odom_topic","odom")
         self.throttle = int(device.rate/rospy.get_param("~base/rate",10))
         self.ticks_meter = float(rospy.get_param("~base/ticks_meter", 26154))
         self.base_width = float(rospy.get_param("~base/base_width", 0.144))
@@ -79,8 +77,8 @@ class BaseController:
         self.positions = [0,0]
 
         # subscriptions
-        rospy.Subscriber(self.topic, Twist, self.cmdVelCb)
-        self.odomPub = rospy.Publisher(self.odom_topic,Odometry)
+        rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
+        self.odomPub = rospy.Publisher("odom",Odometry)
         self.odomBroadcaster = TransformBroadcaster()
 		
         rospy.loginfo("Started base_controller for a base of " + str(self.base_width) + "m wide with " + str(self.ticks_meter) + " ticks per meter")
