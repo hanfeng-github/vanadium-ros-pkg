@@ -9,4 +9,5 @@
   <url>http://ros.org/wiki/arbotix_controllers</url>
 
   <depend package="arbotix_python"/>
+  <depend package="trajectory_msgs"/>
 </package>
