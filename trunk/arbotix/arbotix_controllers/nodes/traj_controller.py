@@ -36,7 +36,7 @@ class TrajController:
     """ Controller to handle trajectory-based servo control. """
 
     def __init__(self):
-        rospy.init_node("traj_joint_controller")
+        rospy.init_node("traj_controller")
         self.joints = rospy.get_param("~joints")
 
         # subscriptions
