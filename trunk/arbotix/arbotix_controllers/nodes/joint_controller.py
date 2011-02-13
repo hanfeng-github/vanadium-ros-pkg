@@ -32,23 +32,68 @@ class JointController():
         # initialize a node
         rospy.init_node("joint_controller")
         self.joints = rospy.get_param("~joints")
+        self.rate = rospy.get_param("~rate", 50)
 
-        # subscriptions
+        # joint values
+        self.valid = False
+        self.dirty = False
+        self.current = [0.0 for i in self.joints]
+        self.desired = [0.0 for i in self.joints]   
+        self.velocity = [0.0 for i in self.joints]         
+
+        # subscribers and publishers
         rospy.Subscriber('cmd_joints', JointState, self.cmdJointsCb)
-        
-        # publishers
-        self.publishers = dict()
-        for name in self.joints:
-            self.publishers[name] = rospy.Publisher(name+"/command", Float64)
+        rospy.Subscriber('joint_states', JointState, self.stateCb)
+        self.publishers = dict(zip(self.joints, [rospy.Publisher(name+"/command", Float64) for name in self.joints]))
 
         rospy.loginfo("Started joint_controller controlling: " + str(self.joints))
-        rospy.spin()
+
+        rate = rospy.Rate(self.rate)
+        cumulative = 0.0
+        while not rospy.is_shutdown():
+            if self.dirty and self.valid:
+                err = [ (d-c) for d,c in zip(self.desired,self.current)]
+                for i in range(len(self.joints)):
+                    cmd = err[i]
+                    cumulative += cmd
+                    if self.velocity[i] != 0:
+                        top = self.velocity[i]/self.rate
+                        if cmd > top:
+                            cmd = top
+                        elif cmd < -top:
+                            cmd = -top
+                    self.current[i] += cmd
+                    self.publishers[self.joints[i]].publish(Float64(self.current[i]))
+                if cumulative == 0.0:
+                    self.dirty = False
+            rate.sleep()
 
     def cmdJointsCb(self, msg):
         """ The callback that converts JointState into servo movement. """
-        for joint in msg.name:
-            if joint in self.joints:            
-                self.publishers[joint].publish(Float64(msg.position[msg.name.index(joint)]))
+        try:
+            indexes = [msg.name.index(name) for name in self.joints]
+        except ValueError as val:
+            self.dirty = False
+            rospy.logerr('Invalid joint state message.')
+            return            
+        self.velocity = [ msg.velocity[k] for k in indexes ]
+        self.desired = [ msg.position[k] for k in indexes ]
+        self.dirty = True
+
+    def stateCb(self, msg):
+        """ The callback that converts JointState into servo position for interpolation. """
+        if self.dirty and self.valid:
+            return
+        try:
+            indexes = [msg.name.index(name) for name in self.joints]
+        except ValueError as val:
+            self.valid = False
+            rospy.logerr('Invalid joint state message.')
+            return           
+        self.current = [ msg.position[k] for k in indexes ]
+        if not self.valid:
+            print "First cap", self.current
+        self.valid = True
 
 if __name__=="__main__":
     jc = JointController()
