@@ -91,8 +91,6 @@ class JointController():
             rospy.logerr('Invalid joint state message.')
             return           
         self.current = [ msg.position[k] for k in indexes ]
-        if not self.valid:
-            print "First cap", self.current
         self.valid = True
 
 if __name__=="__main__":
