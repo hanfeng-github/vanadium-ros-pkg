@@ -2,7 +2,7 @@
 
 """
   base_laser_from_tilt.py - extract a base scan from a laser on a tilt stage
-  Copyright (c) 2010-2011 Vanadium Labs LLC.  All right reserved.
+  Copyright (c) 2011 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -11,7 +11,7 @@
       * Redistributions in binary form must reproduce the above copyright
         notice, this list of conditions and the following disclaimer in the
         documentation and/or other materials provided with the distribution.
-      * Neither the name of the Vanadium Labs LLC nor the names of its 
+      * Neither the name of Vanadium Labs LLC nor the names of its 
         contributors may be used to endorse or promote products derived 
         from this software without specific prior written permission.
   
