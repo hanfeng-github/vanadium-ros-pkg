@@ -32,6 +32,7 @@ import rospy
 
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
+from diagnostic_msgs.msg import *
 from arbotix_msgs.msg import *
 from arbotix_msgs.srv import *
 
@@ -72,6 +73,8 @@ class Servo():
         self.last_cmd = 0.0            # last position sent (radians)
         self.velocity = 0.0            # moving speed
         self.relaxed = True            # are we not under torque control?
+        self.voltage = 0.0
+        self.temperature = 0.0
         self.last = rospy.Time.now()
         
         # ROS interfaces
@@ -129,7 +132,10 @@ class Servo():
             # cap movement
             if self.last_cmd == self.desired:
                 self.dirty = False
-            return self.neutral + (self.last_cmd/self.rad_per_tick)
+            if self.invert:
+                return self.neutral - (self.last_cmd/self.rad_per_tick)
+            else:
+                return self.neutral + (self.last_cmd/self.rad_per_tick)
         else:
             return None
 
@@ -238,6 +244,8 @@ class ArbotixROS(ArbotiX):
         self.rate = int(rospy.get_param("~rate", 100))
         self.throttle_r = int(self.rate/rospy.get_param("~read_rate", 10)) # throttle rate for read
         self.throttle_w = int(self.rate/rospy.get_param("~write_rate", 10)) # throttle rate for write
+        self.throttle_d = int(self.rate/rospy.get_param("~diagnostic_rate", 1))
+        self.diagnostic_update = int(rospy.get_param("~diagnostic_update", 5))  # how often to update temperature/voltage 
         self.use_sync  = rospy.get_param("~use_sync",True) # use sync read?
 
         # start an arbotix driver
@@ -257,6 +265,7 @@ class ArbotixROS(ArbotiX):
 
         # publishers, subscribers and services
         self.jointStatePub = rospy.Publisher('joint_states', JointState)
+        self.diagnosticPub = rospy.Publisher('diagnostics', DiagnosticArray)
         rospy.Service('~SetupAnalogIn',SetupChannel, self.analogInCb)
         rospy.Service('~SetupDigitalIn',SetupChannel, self.digitalInCb)
         rospy.Service('~SetupDigitalOut',SetupChannel, self.digitalOutCb)
@@ -286,8 +295,76 @@ class ArbotixROS(ArbotiX):
 
         r = rospy.Rate(self.rate)
         f = 0  # frame ID
+        d = 0  # diagnostic count
         # main loop -- do all the read/write here
         while not rospy.is_shutdown():
+    
+            # diagnostics            
+            if f%self.throttle_d == 0:
+                if d == 0:
+                    # update status of servos
+                    if self.use_sync:
+                        # arbotix/servostik/wifi board sync_read
+                        synclist = list()
+                        for servo in self.dynamixels.values():
+                            if servo.readable:
+                                synclist.append(servo.id)
+                            else:
+                                servo.update(-1)
+                        if len(synclist) > 0:
+                            val = self.syncRead(synclist, P_PRESENT_VOLTAGE, 2)
+                            if val: 
+                                for servo in self.dynamixels.values():
+                                    try:
+                                        i = synclist.index(servo.id)*2
+                                        servo.voltage = val[i]/10.0
+                                        servo.temperature = val[i+1]
+                                    except:
+                                        # not a readable servo
+                                        continue 
+                    else:
+                        # direct connection, or other hardware with no sync_read capability
+                        for servo in self.dynamixels.values():
+                            if servo.readable:
+                                try:
+                                    val = self.read(servo.id, P_PRESENT_VOLTAGE, 2)
+                                    servo.voltage = val[0]
+                                    servo.temperature = val[1]
+                                except:
+                                    pass
+                # publish diagnostics data
+                msg = DiagnosticArray()
+                msg.header.stamp = rospy.Time.now()
+                for servo in self.dynamixels.values():
+                    stat = DiagnosticStatus()
+                    stat.name = "Joint " + servo.name
+                    stat.level = DiagnosticStatus.OK
+                    stat.message = "OK"
+                    stat.values.append(KeyValue("Position", str(servo.angle)))
+                    stat.values.append(KeyValue("Temperature", str(servo.temperature)))
+                    if servo.temperature > 60:
+                        stat.level = DiagnosticStatus.ERROR
+                        stat.message = "OVERHEATED"
+                    elif servo.temperature > 40:
+                        stat.level = DiagnosticStatus.WARN
+                        stat.message = "VERY HOT"
+                    stat.values.append(KeyValue("Voltage", str(servo.voltage)))
+                    if servo.relaxed:
+                        stat.values.append(KeyValue("Torque", "OFF"))
+                    else:
+                        stat.values.append(KeyValue("Torque", "ON"))
+                    msg.status.append(stat)
+                if self.use_base:
+                    stat = DiagnosticStatus()
+                    stat.name = "Encoders"
+                    stat.level = DiagnosticStatus.OK
+                    stat.message = "OK"
+                    stat.values.append(KeyValue("Left", str(self.base.enc_left)))
+                    stat.values.append(KeyValue("Right", str(self.base.enc_right)))
+                    msg.status.append(stat)
+                self.diagnosticPub.publish(msg)
+                # update diagnostic counter
+                d = (d+1)%self.diagnostic_update
     
             # update servo positions (via sync_write)
             if f%self.throttle_w == 0:
