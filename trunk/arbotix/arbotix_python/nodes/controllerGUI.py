@@ -31,10 +31,13 @@ import roslib; roslib.load_manifest('arbotix_python')
 import rospy
 import wx
 
+from math import radians
+
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float64
+from arbotix_python.servos import *
 
-width = 300
+width = 325
 
 class controllerGUI(wx.Frame):
     TIMER_ID = 100
@@ -58,31 +61,38 @@ class controllerGUI(wx.Frame):
         self.turn = 0
         self.X = 0
         self.Y = 0
+        self.cmd_vel = rospy.Publisher('cmd_vel', Twist)
 
-        # Move Head
-        head = wx.StaticBox(self, -1, 'Move Head')
-        head.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.BOLD))
-        headBox = wx.StaticBoxSizer(head,orient=wx.VERTICAL) 
-        headSizer = wx.GridBagSizer(5,5)
-        headSizer.Add(wx.StaticText(self, -1, "Pan:"),(0,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        headSizer.Add(wx.StaticText(self, -1, "L"),(0,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        self.pan = wx.Slider(self, -1, 0, -157, 157, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL )
-        headSizer.Add(self.pan,(0,2))
-        headSizer.Add(wx.StaticText(self, -1, "R"),(0,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+        # Move Servos
+        servo = wx.StaticBox(self, -1, 'Move Servos')
+        servo.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+        servoBox = wx.StaticBoxSizer(servo,orient=wx.VERTICAL) 
+        servoSizer = wx.GridBagSizer(5,5)
 
-        headSizer.Add(wx.StaticText(self, -1, "Tilt:"),(1,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        headSizer.Add(wx.StaticText(self, -1, "D"),(1,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        self.tilt = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL)
-        headSizer.Add(self.tilt,(1,2))
-        headSizer.Add(wx.StaticText(self, -1, "U"),(1,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-
-        headSizer.Add(wx.StaticText(self, -1, "Tilt/Roll:"),(2,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        headSizer.Add(wx.StaticText(self, -1, "D"),(2,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        self.tilt2 = wx.Slider(self, -1, 0, -100, 100, wx.DefaultPosition, (200, -1), wx.SL_HORIZONTAL)
-        headSizer.Add(self.tilt2,(2,2))
-        headSizer.Add(wx.StaticText(self, -1, "U"),(2,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-        headBox.Add(headSizer) 
-        sizer.Add(headBox, (1,0), wx.GBSpan(1,1), wx.EXPAND|wx.BOTTOM|wx.RIGHT|wx.LEFT,5)
+        joint_defaults = getServosFromURDF()
+        
+        i = 0
+        dynamixels = rospy.get_param("/arbotix/dynamixels", dict())
+        self.servos = list()
+        self.publishers = list()
+        # create sliders and publishers
+        for name in sorted(dynamixels.keys()):
+            # pull angles
+            min_angle, max_angle = getServoLimits(name, joint_defaults)
+            # create publisher
+            self.publishers.append(rospy.Publisher(name+'/command', Float64))
+            # create slider
+            if name.find("_joint") > 0:
+                name = name[0:-6]
+            servoSizer.Add(wx.StaticText(self, -1, name+":"),(i,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+            servoSizer.Add(wx.StaticText(self, -1, "-"),(i,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+            self.servos.append(wx.Slider(self, -1, 0, int(min_angle*100), int(max_angle*100), wx.DefaultPosition, (150, -1), wx.SL_HORIZONTAL))
+            servoSizer.Add(self.servos[-1],(i,2))
+            servoSizer.Add(wx.StaticText(self, -1, "+"),(i,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+            i += 1
+        # add everything
+        servoBox.Add(servoSizer) 
+        sizer.Add(servoBox, (1,0), wx.GBSpan(1,1), wx.EXPAND|wx.BOTTOM|wx.RIGHT|wx.LEFT,5)
 
         # timer for output
         self.timer = wx.Timer(self, self.TIMER_ID)
@@ -97,11 +107,6 @@ class controllerGUI(wx.Frame):
 
         self.SetSizerAndFit(sizer)
         self.Show(True)
-
-        self.cmd_vel = rospy.Publisher('cmd_vel', Twist)
-        self.cmd_pan = rospy.Publisher('head_pan_joint/command', Float64)
-        self.cmd_tilt = rospy.Publisher('head_tilt_joint/command', Float64)
-        self.cmd_tilt2 = rospy.Publisher('head_tilt2_joint/command', Float64)
 
     def onClose(self, event):
         self.timer.Stop()
@@ -135,15 +140,10 @@ class controllerGUI(wx.Frame):
         
     def onTimer(self, event=None):
         # send joint updates
-        pan = Float64()
-        pan.data = -self.pan.GetValue()/100.0
-        tilt = Float64()
-        tilt.data = self.tilt.GetValue()/100.0
-        tilt2 = Float64()
-        tilt2.data = self.tilt2.GetValue()/100.0
-        self.cmd_pan.publish(pan)
-        self.cmd_tilt.publish(tilt)
-        self.cmd_tilt2.publish(tilt2)
+        for s,p in zip(self.servos,self.publishers):
+            d = Float64()
+            d.data = s.GetValue()/100.0
+            p.publish(d)
         # send base updates
         t = Twist()
         t.linear.x = self.forward/200.0; t.linear.y = 0; t.linear.z = 0
