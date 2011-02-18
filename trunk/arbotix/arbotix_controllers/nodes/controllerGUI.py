@@ -21,7 +21,7 @@
   Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import roslib; roslib.load_manifest('arbotix_controller')
+import roslib; roslib.load_manifest('arbotix_controllers')
 import rospy
 import wx
 
