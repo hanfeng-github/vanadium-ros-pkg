@@ -27,10 +27,10 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from sensor_msgs.msg import Range
+#from sensor_msgs.msg import Range
 
 class SharpIR:
-    radiation_type = Range.INFRARED
+    #radiation_type = Range.INFRARED
     field_of_view = 0.001
     min_range = 0.0
     max_range = 1.0
