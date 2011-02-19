@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  base.py - controller for a differential drive or NUKE base
+  base.py - controller for a differential drive
   Copyright (c) 2010-2011 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ class BaseController:
         # handle for robocontroller
         self.device = device
 
-        # parameters: topics, throttle rate and geometry
+        # parameters: throttle rate and geometry
         self.throttle = int(device.rate/rospy.get_param("~base/rate",10))
         self.ticks_meter = float(rospy.get_param("~base/ticks_meter", 26154))
         self.base_width = float(rospy.get_param("~base/base_width", 0.144))
