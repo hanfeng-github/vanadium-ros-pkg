@@ -34,17 +34,34 @@ import wx
 from math import radians
 
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
 from arbotix_python.servos import *
 
 width = 325
+
+class servoSlider():
+    def __init__(self, parent, min_angle, max_angle, name, i):
+        self.name = name
+        if name.find("_joint") > 0: # remove _joint for display name
+            name = name[0:-6]
+        self.position = wx.Slider(parent, -1, 0, int(min_angle*100), int(max_angle*100), wx.DefaultPosition, (150, -1), wx.SL_HORIZONTAL)
+        self.enabled = wx.CheckBox(parent, i, name+":")
+        self.enabled.SetValue(False)
+        self.position.Disable()
+
+    def setPosition(self, angle):
+        self.position.SetValue(int(angle*100))
+
+    def getPosition(self):
+        return self.position.GetValue()/100.0
 
 class controllerGUI(wx.Frame):
     TIMER_ID = 100
 
     def __init__(self, parent, debug = False):  
         wx.Frame.__init__(self, parent, -1, "ArbotiX Controller GUI", style = wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        sizer = wx.GridBagSizer(10,10)
+        sizer = wx.GridBagSizer(5,5)
 
         # Move Base
         drive = wx.StaticBox(self, -1, 'Move Base')
@@ -56,7 +73,7 @@ class controllerGUI(wx.Frame):
         wx.StaticLine(self.movebase, -1, (width/2, 0), (1,width), style=wx.LI_VERTICAL)
         wx.StaticLine(self.movebase, -1, (0, width/2), (width,1))
         driveBox.Add(self.movebase)        
-        sizer.Add(driveBox,(0,0),wx.GBSpan(1,1),wx.EXPAND|wx.TOP|wx.RIGHT|wx.LEFT,5)
+        sizer.Add(driveBox,(0,0),wx.GBSpan(1,1),wx.EXPAND|wx.TOP|wx.BOTTOM|wx.LEFT,5)
         self.forward = 0
         self.turn = 0
         self.X = 0
@@ -82,17 +99,17 @@ class controllerGUI(wx.Frame):
             # create publisher
             self.publishers.append(rospy.Publisher(name+'/command', Float64))
             # create slider
-            if name.find("_joint") > 0:
-                name = name[0:-6]
-            servoSizer.Add(wx.StaticText(self, -1, name+":"),(i,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-            servoSizer.Add(wx.StaticText(self, -1, "-"),(i,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-            self.servos.append(wx.Slider(self, -1, 0, int(min_angle*100), int(max_angle*100), wx.DefaultPosition, (150, -1), wx.SL_HORIZONTAL))
-            servoSizer.Add(self.servos[-1],(i,2))
-            servoSizer.Add(wx.StaticText(self, -1, "+"),(i,3), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+            s = servoSlider(self, min_angle, max_angle, name, i)
+            servoSizer.Add(s.enabled,(i,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)   
+            servoSizer.Add(s.position,(i,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+            self.servos.append(s)
             i += 1
         # add everything
         servoBox.Add(servoSizer) 
-        sizer.Add(servoBox, (1,0), wx.GBSpan(1,1), wx.EXPAND|wx.BOTTOM|wx.RIGHT|wx.LEFT,5)
+        sizer.Add(servoBox, (0,1), wx.GBSpan(1,1), wx.EXPAND|wx.TOP|wx.BOTTOM|wx.RIGHT,5)
+        self.Bind(wx.EVT_CHECKBOX, self.enableSliders)
+        # now we can subscribe
+        rospy.Subscriber('joint_states', JointState, self.stateCb)
 
         # timer for output
         self.timer = wx.Timer(self, self.TIMER_ID)
@@ -111,6 +128,22 @@ class controllerGUI(wx.Frame):
     def onClose(self, event):
         self.timer.Stop()
         self.Destroy()
+
+    def enableSliders(self, event):
+        servo = event.GetId()
+        if event.IsChecked(): 
+            self.servos[servo].position.Enable()
+        else:
+            self.servos[servo].position.Disable()
+
+    def stateCb(self, msg):        
+        for servo in self.servos:
+            if not servo.enabled.IsChecked():
+                try:
+                    idx = msg.name.index(servo.name)
+                    servo.setPosition(msg.position[idx])
+                except: 
+                    pass
 
     def onPaint(self, event=None):
         # this is the wx drawing surface/canvas
@@ -141,9 +174,10 @@ class controllerGUI(wx.Frame):
     def onTimer(self, event=None):
         # send joint updates
         for s,p in zip(self.servos,self.publishers):
-            d = Float64()
-            d.data = s.GetValue()/100.0
-            p.publish(d)
+            if s.enabled.IsChecked():
+                d = Float64()
+                d.data = s.getPosition()
+                p.publish(d)
         # send base updates
         t = Twist()
         t.linear.x = self.forward/200.0; t.linear.y = 0; t.linear.z = 0
