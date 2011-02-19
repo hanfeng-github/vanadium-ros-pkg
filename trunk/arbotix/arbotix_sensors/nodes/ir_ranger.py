@@ -61,7 +61,7 @@ class ir_ranger:
 
         # setup a range message to use
         self.msg = Range()
-        self.msg.radiation_type = self.sensor.radiation_type
+        self.msg.radiation_type = Range.INFRARED
         self.msg.field_of_view = self.sensor.field_of_view
         self.msg.min_range = self.sensor.min_range
         self.msg.max_range = self.sensor.max_range
