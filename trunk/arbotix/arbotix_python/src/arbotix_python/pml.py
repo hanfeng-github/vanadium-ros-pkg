@@ -84,7 +84,7 @@ class pml:
         self.scanPub = rospy.Publisher('base_scan', LaserScan)
         rospy.Subscriber('scan_parameters',ScanParameters,self.paramCb)
 
-        rospy.loginfo("Started pml sensor '"+name+"' using servo: " + str(self.servo_id))
+        rospy.loginfo("Started pml sensor using servo: " + str(self.servo_id))
 
     def update(self):
         if self.enable:
@@ -133,7 +133,7 @@ class pml:
 
     def shutdown(self):
         # it's annoying, turn it off before we leave!
-        self.disable_callback(None)
+        self.disableCb(None)
 
     def enableCb(self, req):
         rospy.loginfo("PML Enabled")
