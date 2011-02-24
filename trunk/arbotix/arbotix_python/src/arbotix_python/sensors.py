@@ -74,3 +74,13 @@ class gp2d12(SharpIR):
         else:
             return self.max_range+0.1
 
+class maxSonar():
+    #radiation_type = Range.ULTRASOUND
+    field_of_view = 0.785398163
+    min_range = 0.0
+    max_range = 6.4516 
+
+    def convert(self, raw):
+        """ Convert raw analog (10-bit) to distance. """
+        return 12.7 * (raw/1024.0)
+
