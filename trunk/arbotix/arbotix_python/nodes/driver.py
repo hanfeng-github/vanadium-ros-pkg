@@ -88,9 +88,10 @@ class Servo():
         return RelaxResponse()
 
     def commandCb(self, req):
-        self.dirty = True   
-        self.relaxed = False
-        self.desired = req.data
+        if self.desired != req.data:
+            self.dirty = True   
+            self.relaxed = False
+            self.desired = req.data
    
     def update(self, value):
         """ Update angle in radians by reading from servo, or
@@ -246,7 +247,8 @@ class ArbotixROS(ArbotiX):
         self.throttle_w = int(self.rate/rospy.get_param("~write_rate", 10)) # throttle rate for write
         self.throttle_d = int(self.rate/rospy.get_param("~diagnostic_rate", 1))
         self.diagnostic_update = int(rospy.get_param("~diagnostic_update", 5))  # how often to update temperature/voltage 
-        self.use_sync  = rospy.get_param("~use_sync",True) # use sync read?
+        self.use_sync_read = rospy.get_param("~sync_read",True)      # use sync read?
+        self.use_sync_write = rospy.get_param("~sync_write",True)    # use sync write?
 
         # start an arbotix driver
         ArbotiX.__init__(self, port, baud)        
@@ -303,7 +305,7 @@ class ArbotixROS(ArbotiX):
             if f%self.throttle_d == 0:
                 if d == 0:
                     # update status of servos
-                    if self.use_sync:
+                    if self.use_sync_read:
                         # arbotix/servostik/wifi board sync_read
                         synclist = list()
                         for servo in self.dynamixels.values():
@@ -368,13 +370,19 @@ class ArbotixROS(ArbotiX):
     
             # update servo positions (via sync_write)
             if f%self.throttle_w == 0:
-                syncpkt = list()
-                for servo in self.dynamixels.values():
-                    v = servo.interpolate(self.rate/self.throttle_w)
-                    if v != None:
-                        syncpkt.append([servo.id,int(v)%256,int(v)>>8])  
-                if len(syncpkt) > 0:      
-                    self.syncWrite(P_GOAL_POSITION_L,syncpkt)
+                if self.use_sync_write:
+                    syncpkt = list()
+                    for servo in self.dynamixels.values():
+                        v = servo.interpolate(self.rate/self.throttle_w)
+                        if v != None:   # if was dirty
+                            syncpkt.append([servo.id,int(v)%256,int(v)>>8])  
+                    if len(syncpkt) > 0:      
+                        self.syncWrite(P_GOAL_POSITION_L,syncpkt)
+                else:
+                    for servo in self.dynamixels.values():
+                        v = servo.interpolate(self.rate/self.throttle_w)
+                        if v != None:   # if was dirty      
+                            self.setPosition(servo.id, int(v))
 
             # update base
             if self.use_base and f%self.base.throttle == 0:
@@ -394,7 +402,7 @@ class ArbotixROS(ArbotiX):
                 # TODO: add torque/heat recovery
                 #   a.write(id,P_TORQUE_LIMIT_L,[255,3])
                 try:
-                    if self.use_sync:
+                    if self.use_sync_read:
                         # arbotix/servostik/wifi board sync_read
                         synclist = list()
                         for servo in self.dynamixels.values():
