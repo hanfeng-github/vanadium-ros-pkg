@@ -113,7 +113,8 @@ class TrajController:
 
     def restart(self):
         """ Restart the controller, by clearing out trajectory lists. """
-        self.trajectories = list()    
+        self.trajectories = list()                 
+        self.dirty = False
         rospy.loginfo("Aborting trajectory, restart")
 
     def cmdTrajCb(self, msg):
