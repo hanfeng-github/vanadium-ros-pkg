@@ -109,7 +109,7 @@ class Servo():
                 self.angle = (value - self.neutral) * self.rad_per_tick
             # update velocity estimate
             t = rospy.Time.now()
-            self.velocity = (t - self.last).to_nsec()/1000000000.0
+            self.velocity = (self.angle - last_angle)/((t - self.last).to_nsec()/1000000000.0)
             self.last = t
         if self.relaxed:
             self.last_cmd = self.angle
@@ -195,12 +195,13 @@ class HobbyServo(Servo):
 # IO Infrastructure
 
 class DigitalServo:
-    def __init__(self, name, pin, rate, device):
+    def __init__(self, name, pin, value, rate, device):
         self.device = device
-        self.value = 0
+        self.value = value
         self.direction = 0
         self.pin = pin
         self.throttle = device.rate/rate
+        self.device.setDigital(self.pin, self.value, self.direction)
         rospy.Subscriber('~'+name, Digital, self.stateCb)
     def stateCb(self, msg):
         self.value = msg.value
@@ -209,10 +210,11 @@ class DigitalServo:
         self.device.setDigital(self.pin, self.value, self.direction)
 
 class DigitalSensor:
-    def __init__(self, name, pin, rate, device):
+    def __init__(self, name, pin, value, rate, device):
         self.device = device
         self.pin = pin
         self.throttle = device.rate/rate
+        self.device.setDigital(pin, value, 0)
         self.pub = rospy.Publisher('~'+name, Digital)
     def update(self):
         msg = Digital()
@@ -221,10 +223,11 @@ class DigitalSensor:
         self.pub.publish(msg)
 
 class AnalogSensor: 
-    def __init__(self, name, pin, rate, device):
+    def __init__(self, name, pin, value, rate, device):
         self.device = device
         self.pin = pin
         self.throttle = device.rate/rate
+        self.device.setDigital(pin, value, 0)
         self.pub = rospy.Publisher('~'+name, Analog)
     def update(self):
         msg = Analog()
@@ -275,11 +278,12 @@ class ArbotixROS(ArbotiX):
         # initialize digital/analog IO streams
         self.io = dict()
         for v,t in {"digital_servos":DigitalServo,"digital_sensors":DigitalSensor,"analog_sensors":AnalogSensor}.items():
-            temp = rospy.get_param(v,dict())
+            temp = rospy.get_param("~"+v,dict())
             for name in temp.keys():
                 pin = rospy.get_param('~'+v+'/'+name+'/pin',1)
+                value = rospy.get_param('~'+v+'/'+name+'/value',0)
                 rate = rospy.get_param('~'+v+'/'+name+'/rate',10)
-                self.io[name] = t(name, pin, rate, self)
+                self.io[name] = t(name, pin, value, rate, self)
         
         # setup a base controller
         self.use_base = False
@@ -440,6 +444,7 @@ class ArbotixROS(ArbotiX):
                 if self.use_base:
                     msg.name += self.base.names
                     msg.position += self.base.positions
+                    msg.velocity += self.base.velocities
                 self.jointStatePub.publish(msg)
 
             f += 1
@@ -453,13 +458,13 @@ class ArbotixROS(ArbotiX):
     # IO Callbacks
     def analogInCb(self, req):
         # TODO: Add check, only 1 service per pin
-        self.io[req.topic_name] = AnalogSensor(req.topic_name, req.pin, req.rate, self) 
+        self.io[req.topic_name] = AnalogSensor(req.topic_name, req.pin, req.value, req.rate, self) 
         return SetupChannelResponse()
     def digitalInCb(self, req):
-        self.io[req.topic_name] = DigitalSensor(req.topic_name, req.pin, req.rate, self) 
+        self.io[req.topic_name] = DigitalSensor(req.topic_name, req.pin, req.value, req.rate, self) 
         return SetupChannelResponse()
     def digitalOutCb(self, req):
-        self.io[req.topic_name] = DigitalServo(req.topic_name, req.pin, req.rate, self) 
+        self.io[req.topic_name] = DigitalServo(req.topic_name, req.pin, req.value, req.rate, self) 
         return SetupChannelResponse()
 
 
