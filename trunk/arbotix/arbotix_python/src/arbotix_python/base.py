@@ -75,6 +75,7 @@ class BaseController:
         # output for joint states
         self.names = ["base_l_wheel_joint","base_r_wheel_joint"]
         self.positions = [0,0]
+        self.velocities = [0,0]
 
         # subscriptions
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
@@ -92,7 +93,8 @@ class BaseController:
         # read encoders
         try:
             left, right = self.device.getEncoders()
-        except:
+        except Exception as e:
+            print e
             rospy.logerr("Could not update encoders")
             return
         rospy.logdebug("Encoders: " + str(left) +","+ str(right))
