@@ -81,7 +81,7 @@ int seqPos;                     // step in current sequence
 /* 
  * Setup Functions
  */
-#if defined(ARBOTIX_PLUS) || defined(SERVO_STIK)
+#if defined(AX_RX_SWITCHED)
 void scan(){
   // do a search for devices on the RX bus, default to AX if not found
   int i;
@@ -106,7 +106,7 @@ void setup(){
 #endif
 
 // note: ARBOTIX_PLUS and SERVO_STIK are defined in our Bioloid library.
-#if defined(ARBOTIX_PLUS) || defined(SERVO_STIK)
+#if defined(AX_RX_SWITCHED)
   delay(1000);
   scan();
 #endif
@@ -141,7 +141,7 @@ unsigned char handleWrite(){
       else
         pinMode(pin, INPUT);
     }else if(addr == REG_RESCAN){
-#if defined(ARBOTIX_PLUS) || defined(SERVO_STIK)
+#if defined(AX_RX_SWITCHED)
       scan();
 #endif
     }else if(addr == REG_RETURN_LEVEL){

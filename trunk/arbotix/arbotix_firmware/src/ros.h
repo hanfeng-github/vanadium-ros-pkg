@@ -9,7 +9,7 @@
       * Redistributions in binary form must reproduce the above copyright
         notice, this list of conditions and the following disclaimer in the
         documentation and/or other materials provided with the distribution.
-      * Neither the name of the Vanadium Labs LLC nor the names of its 
+      * Neither the name of Vanadium Labs LLC nor the names of its 
         contributors may be used to endorse or promote products derived 
         from this software without specific prior written permission.
   
@@ -72,10 +72,16 @@
 #define REG_ENC_R_L         61
 #define REG_ENC_Y_L         65
 
-#define REG_KP              69  // PID parameters ... not currently implemented
+#define REG_KP              69  // PID parameters
 #define REG_KD              70
 #define REG_KI              71
 #define REG_KO              72
+
+#define REG_ROLL            69  // OR Body parameters
+#define REG_PITCH           71
+#define REG_YAW             73
+#define REG_HEIGHT          75
+#define REG_GAIT            77
 
 #define REG_PML_SERVO       80  // ID for PML servo
 #define REG_PML_SENSOR      81  // ID for PML sensor
