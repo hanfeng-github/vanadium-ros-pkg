@@ -47,12 +47,10 @@ class ArbotiX:
         self.mutex = thread.allocate_lock()
         self.ser = serial.Serial()
         
-        self.mutex.acquire()
         self.ser.baudrate = baud
         self.ser.port = port
         self.ser.timeout = timeout
         self.ser.open()
-        self.mutex.release()
 
         self.error = 0
         self.hasInterpolation = interpolation
@@ -60,11 +58,13 @@ class ArbotiX:
 
     def getPacket(self, mode, id=-1, leng=-1, error=-1, params = None):
         """ Read a dynamixel return packet, iterative attempt. Returns error level. """ 
+        try:
+            d = self.ser.read()     
+        except Exception as e:
+            print e
+            return None
         # need a positive byte
-        d = self.ser.read()
-        #print ord(d),
-        if d == '': 
-            print "Fail Read"
+        if d == '':
             return None
 
         # now process our byte
@@ -101,8 +101,7 @@ class ArbotiX:
             checksum = id + leng + error + sum(params) + ord(d)
             #print checksum            
             if checksum % 256 != 255:
-                print "Checksum ERROR"
-                #return None
+                return None
             return params
         # fail
         return None
@@ -113,14 +112,26 @@ class ArbotiX:
         self.mutex.acquire()  
         try:      
             self.ser.flushInput()
-        except:
-            pass
+        except Exception as e:
+            print e
         length = 2 + len(params)
         checksum = 255 - ((index + length + ins + sum(params))%256)
-        self.ser.write(chr(0xFF)+chr(0xFF)+chr(index)+chr(length)+chr(ins))
+        try: 
+            self.ser.write(chr(0xFF)+chr(0xFF)+chr(index)+chr(length)+chr(ins))
+        except Exception as e:
+            print e
+            return None
         for val in params:
-            self.ser.write(chr(val))
-        self.ser.write(chr(checksum))
+            try:
+                self.ser.write(chr(val))
+            except Exception as e:
+                print e
+                return None
+        try:
+            self.ser.write(chr(checksum))
+        except Exception as e:
+            print e
+            return None
         if ret:
             values = self.getPacket(0)
         self.mutex.release()
@@ -130,7 +141,7 @@ class ArbotiX:
         """ Read values of _length_ registers, starting at addr _start_. """
         values = self.execute(index, AX_READ_DATA, [start, length])
         if values == None:
-            print "Read Failed: Servo ID = " + str(index)
+            #print "Read Failed: Servo ID = " + str(index)            
             return -1        
         else:
             return values
@@ -284,6 +295,12 @@ class ArbotiX:
     KD = 70
     KI = 71
     KO = 72
+  
+    ROLL = 69           # Body parameters
+    PITCH = 71
+    YAW = 73
+    HEIGHT = 75
+    GAIT = 77
 
     def rescan(self):
         self.write(253, self.REG_RESCAN, [1,])
@@ -391,4 +408,29 @@ class ArbotiX:
             return [x,y,th]
         except:
             return None    
+    
+    # NUKE body parameters
+    def setBodyRoll(self, roll):
+        k = int(roll*1000)&0xffff    # 1/1000 rad
+        self.write(253, self.ROLL, [k%256, k>>8])
+    def setBodyPitch(self, pitch):
+        k = int(pitch*1000)&0xffff
+        self.write(253, self.PITCH, [k%256, k>>8])
+    def setBodyYaw(self, yaw):
+        k = int(yaw*1000)&0xffff      
+        self.write(253, self.YAW, [k%256, k>>8])
+    def setBodyHeight(self, height):
+        k = int(height*1000)&0xffff   # mm
+        self.write(253, self.HEIGHT, [k%256, k>>8])
+    def getBodyHeight(self):
+        values = self.read(253, self.HEIGHT, 1)
+        return values[0]/1000.0 
+
+    RIPPLE = 0
+    RIPPLE_SMOOTH = 3
+    AMBLE = 4
+    AMBLE_SMOOTH = 5
+    TRIPOD = 6
+    def setGait(self, gait):
+        self.write(253, self.GAIT, [gait])
 
