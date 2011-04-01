@@ -379,7 +379,7 @@ class ArbotiX:
         values = self.read(253, addr, 4)
         values = "".join([chr(k) for k in values])
         try:
-            return unpack('l',values)[0]
+            return unpack('=l',values)[0]
         except:
             return None        
     def getLenc(self):
@@ -391,8 +391,8 @@ class ArbotiX:
         left_values = "".join([chr(k) for k in values[0:4] ])        
         right_values = "".join([chr(k) for k in values[4:] ])
         try:
-            left = unpack('l',left_values)[0]
-            right = unpack('l',right_values)[0]
+            left = unpack('=l',left_values)[0]
+            right = unpack('=l',right_values)[0]
             return [left, right]
         except:
             return None        
@@ -402,9 +402,9 @@ class ArbotiX:
         th_values = "".join([chr(k) for k in values[4:8] ])  
         y_values = "".join([chr(k) for k in values[8:] ])
         try:
-            x = unpack('l',x_values)[0]
-            y = unpack('l',y_values)[0]
-            th = unpack('l',th_values)[0]
+            x = unpack('=l',x_values)[0]
+            y = unpack('=l',y_values)[0]
+            th = unpack('=l',th_values)[0]
             return [x,y,th]
         except:
             return None    
