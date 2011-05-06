@@ -1,0 +1,16 @@
+---
+port: /dev/arbotix
+read_rate: 15
+dynamixels: {
+    shoulder_pan_joint: {id: 1, max_angle: 90, min_angle: -90},
+    shoulder_lift_joint: {id: 2, max_angle: 100, min_angle: -100},
+    elbow_flex_joint: {id: 3, max_angle: 120, min_angle: -120},
+    wrist_flex_joint: {id: 4, max_angle: 90, min_angle: -90},
+    gripper_joint: {id: 5},
+    head_pan_joint: {id: 6},
+    head_tilt_joint: {id: 7, max_angle: 100, min_angle: -100}
+}
+digital_sensors: { 
+    green_button: {pin: 1, value: 1, rate: 15},
+    yellow_button: {pin: 2, value: 1, rate: 15}
+}
