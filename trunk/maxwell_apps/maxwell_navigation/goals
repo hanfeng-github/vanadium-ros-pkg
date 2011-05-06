@@ -1,0 +1,34 @@
+goals
+
+Nick's Office: 
+[ INFO] [1300651870.301901711]: Setting goal: Frame:/map, Position(-1.271, 5.108, 0.000), Orientation(0.000, 0.000, 0.686, 0.728) = Angle: 1.512
+
+Lynn's Office:
+[ INFO] [1300651929.534945139]: Setting goal: Frame:/map, Position(-4.112, 5.416, 0.000), Orientation(0.000, 0.000, 0.639, 0.770) = Angle: 1.385
+
+Tomek's Office:
+[ INFO] [1300651949.236856511]: Setting goal: Frame:/map, Position(-5.792, 5.701, 0.000), Orientation(0.000, 0.000, 0.999, 0.046) = Angle: 3.049
+
+Mike's Desk:
+[ INFO] [1300651967.431020421]: Setting goal: Frame:/map, Position(0.668, 2.886, 0.000), Orientation(0.000, 0.000, -0.538, 0.843) = Angle: -1.136
+
+Ken's Desk:
+[ INFO] [1300651996.812199904]: Setting goal: Frame:/map, Position(3.148, 2.630, 0.000), Orientation(0.000, 0.000, -0.462, 0.887) = Angle: -0.959
+
+Samira's Office:
+[ INFO] [1300652046.249597207]: Setting goal: Frame:/map, Position(4.705, 4.592, 0.000), Orientation(0.000, 0.000, 0.625, 0.781) = Angle: 1.350
+
+Ting's Office:
+[ INFO] [1300652015.213676355]: Setting goal: Frame:/map, Position(0.124, 4.122, 0.000), Orientation(0.000, 0.000, 0.645, 0.764) = Angle: 1.401
+
+Sharon's Office:
+[ INFO] [1300652064.095697164]: Setting goal: Frame:/map, Position(6.010, 4.764, 0.000), Orientation(0.000, 0.000, 0.600, 0.800) = Angle: 1.288
+
+The Lab: 
+[ INFO] [1300652112.390772666]: Setting goal: Frame:/map, Position(3.027, -0.966, 0.000), Orientation(0.000, 0.000, 0.006, 1.000) = Angle: 0.011
+
+The Hallway: 
+[ INFO] [1300652147.539254388]: Setting goal: Frame:/map, Position(-0.785, -1.890, 0.000), Orientation(0.000, 0.000, -0.718, 0.696) = Angle: -1.601
+
+
+
