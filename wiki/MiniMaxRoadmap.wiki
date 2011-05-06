@@ -1,11 +1,11 @@
-#summary Roadmap for Mini Max software
+#summary Roadmap for Mini Max Platform
 
 = Introduction =
-Mini Max is a small version of Maxwell, based on an iRobot Create, Kinect, and AX-12 based arm. 
+Mini Max is a small version of Maxwell, based on an iRobot Create, Kinect, ArbotiX2 and AX-12 based arm. The platform is open source.
 
 <img src="https://vanadium-ros-pkg.googlecode.com/svn/wiki/mini-max.jpg" width="240">
 
-= Roadmap =
+= Software Roadmap =
 The following need to be addressed:
  * mini_max_core - modified version of turtlebot create/gryo drivers
  * mini_max_defs - create URDF. STL files for frame/create. ArbotiX YAML files. 
@@ -16,3 +16,13 @@ The following need to be addressed:
  * mini_max_nav - create launch files for navigation
  * mini_max_apps -
    * tuck_arm - 
+
+= Documentation Roadmap =
+ * How to build, wire robot
+ * How to setup laptop
+ * Basic tutorials:
+   * Reading the state of the switches
+   * Moving the base
+   * Pointing head
+   * Moving the arm
+   * Using the gripper
