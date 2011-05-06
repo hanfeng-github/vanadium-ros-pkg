@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot>
+  
+  <macro name="gripper_finger" params="prefix parent reflect">
+    <joint name="${prefix}_finger_joint" type="revolute">
+      <axis xyz="0 0 1" />
+      <origin xyz="-0.012 ${reflect*0.033/2} 0" rpy="0 0 0" />
+      <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />
+      <parent link="${parent}_link"/>
+      <child link="${prefix}_finger_link"/>
+    </joint>
+    <link name="${prefix}_finger_link">
+      <visual name="${prefix}_finger_visual">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry name="${prefix}_finger_visual_geom">
+          <box size="0.125 0.01 0.03"/>
+        </geometry>
+        <material name="Orange" />
+      </visual>
+      <!-- TODO: add collision -->
+    </link>
+  </macro>
+
+  <macro name="maxwell_gripper" params="name parent *origin">
+    <!-- Base of Gripper Pad -->
+    <joint name="${name}_joint" type="fixed">
+      <axis xyz="0 0 1" />
+      <insert_block name="origin" />
+      <parent link="${parent}_link"/>
+      <child link="${name}_link"/>
+    </joint>
+    <link name="${name}_link"/>
+    <gripper_finger prefix="l" parent="gripper" reflect="1"/>
+    <gripper_finger prefix="r" parent="gripper" reflect="-1" />
+  </macro>
+
+</robot>

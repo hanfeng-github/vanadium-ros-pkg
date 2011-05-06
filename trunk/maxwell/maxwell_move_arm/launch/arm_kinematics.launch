@@ -1,0 +1,9 @@
+<launch>
+
+  <!-- fk/ik solver -->
+  <node pkg="arm_kinematics" type="arm_kinematics" name="arm_kinematics" >
+    <param name="root_name" value="torso_link" />
+    <param name="tip_name" value="gripper_link" />
+  </node>
+
+</launch>

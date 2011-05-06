@@ -1,0 +1,17 @@
+<package>
+  <description brief="maxwell_move_arm"/>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/maxwell_move_arm</url>
+
+  <depend package="rospy"/>
+
+  <!-- messages -->
+  <depend package="trajectory_msgs"/>
+  <depend package="kinematics_msgs"/>
+  <depend package="std_srvs"/>
+
+  <!-- ik -->
+  <depend package="arm_kinematics"/>
+
+</package>

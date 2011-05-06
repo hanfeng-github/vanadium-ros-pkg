@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find maxwell_move_arm)/launch/arm_kinematics.launch"/>
+
+  <node name="traj_move_arm" pkg="maxwell_move_arm" type="move_arm.py" output="screen" />
+
+</launch>

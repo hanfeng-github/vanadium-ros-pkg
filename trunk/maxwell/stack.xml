@@ -1,0 +1,19 @@
+<stack>
+  <description brief="Software for my robot Maxwell">
+    Maxwell is a custom mobile manipulator. The Maxwell stack contains configuration, launch, and demo applications for the Maxwell robot.
+  </description>
+  <author>Maintained by Michael Ferguson</author>
+  <license>BSD,</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/maxwell</url>
+
+  <depend stack="arbotix" /> <!-- arbotix_python -->
+  <depend stack="common" /> <!-- xacro -->
+  <depend stack="common_msgs" /> <!-- trajectory_msgs, sensor_msgs, diagnostic_msgs -->
+  <depend stack="kinematics" /> <!-- kinematics_msgs -->
+  <depend stack="robot_model" /> <!-- ivcon, urdf, resource_retriever -->
+  <depend stack="ros" />
+  <depend stack="ros_comm" /> <!-- rospy, std_srvs, roscpp -->
+  <depend stack="urdf_tools" /> <!-- arm_kinematics -->
+
+</stack>

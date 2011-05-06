@@ -1,0 +1,25 @@
+<launch>
+  <!-- Maxwell is an awesome mobile manipulator. This launch file 
+       brings a slightly less awesome simulated version of him to life. -->
+
+  <include file="$(find maxwell_defs)/launch/upload_maxwell.launch" />
+
+  <!-- ArbotiX -->
+  <node name="arbotix" pkg="maxwell_defs" type="fake-driver.py" output="screen">
+      <rosparam file="$(find maxwell_defs)/params/maxwell.yaml" command="load" />
+  </node>
+  <node name="head_traj_controller" pkg="arbotix_controllers" type="traj_controller.py">
+      <rosparam param="joints">[head_pan_joint, head_tilt_joint]</rosparam>
+  </node>
+  <node name="arm_controller" pkg="arbotix_controllers" type="traj_controller.py">
+      <rosparam param="joints">[arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint, arm_wrist_roll_joint]</rosparam>
+  </node>
+  <node name="gripper" pkg="arbotix_controllers" type="parallel_gripper_controller.py">
+      <param name="pad_width" value="0.0381" />
+      <param name="finger_length" value="0.08255" />
+      <param name="center_left" value="-0.18" />
+      <param name="center_right" value="0.18" />
+  </node>
+  <node name="statepub" pkg="robot_state_publisher" type="state_publisher" />
+
+</launch>

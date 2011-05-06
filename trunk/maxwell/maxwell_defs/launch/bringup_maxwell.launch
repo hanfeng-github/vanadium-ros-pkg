@@ -1,0 +1,49 @@
+<launch>
+  <!-- Maxwell is an awesome mobile manipulator. 
+       This launch file brings him to life. -->
+
+  <param name="/use_sim_time" value="false"/>
+  <include file="$(find maxwell_defs)/launch/upload_maxwell.launch" />
+
+  <!-- ArbotiX and Controllers -->
+  <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
+      <rosparam file="$(find maxwell_defs)/params/maxwell.yaml" command="load" />
+  </node>
+  <node name="head_traj_controller" pkg="arbotix_controllers" type="traj_controller.py">
+      <rosparam param="joints">[head_pan_joint, head_tilt_joint]</rosparam>
+  </node>
+  <node name="arm_controller" pkg="arbotix_controllers" type="traj_controller.py">
+      <rosparam param="joints">[arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint, arm_wrist_roll_joint]</rosparam>
+  </node>
+  <node name="gripper" pkg="arbotix_controllers" type="parallel_gripper_controller.py">
+      <param name="pad_width" value="0.0381" />
+      <param name="finger_length" value="0.08255" />
+      <param name="center_left" value="-0.18" />
+      <param name="center_right" value="0.18" />
+  </node>
+  <node name="statepub" pkg="robot_state_publisher" type="state_publisher" />
+
+  <!-- Monitoring and Diagnostics -->
+  <node pkg="maxwell_defs" type="laptop_battery.py" name="laptop_battery" />
+  <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+    <rosparam command="load" file="$(find maxwell_defs)/params/diagnostics.yaml" />
+  </node>
+
+  <!-- Base Laser 
+  <node pkg="hokuyo_node" type="hokuyo_node" name="base_hokuyo_node" args="scan:=base_scan">
+    <param name="frame_id" type="string" value="base_laser_link" />
+    <param name="min_ang" type="double" value="-2.2689" />
+    <param name="max_ang" type="double" value="2.2689" />
+  </node>-->
+
+  <!-- Kinect (as nodelet, for perception pipeline) with QVGA cloud -->
+  <node pkg="openni_camera" type="openni_node" name="openni_camera"  output="screen" >
+    <param name="registration_type" value="2" />
+    <param name="image_input_format" value="6" />
+    <param name="point_cloud_resolution" value="1" />
+    <rosparam command="load" file="$(find openni_camera)/info/openni_params.yaml" />
+  </node>
+  <include file="$(find openni_camera)/launch/kinect_frames.launch"/>
+  <node pkg="tf" type="static_transform_publisher" name="kinect_link" args="0 0 0 0 0 0 /head_sensor_frame /openni_camera 100" /> 
+
+</launch>

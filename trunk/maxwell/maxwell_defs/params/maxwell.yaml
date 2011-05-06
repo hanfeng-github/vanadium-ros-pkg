@@ -1,0 +1,18 @@
+---
+port: /dev/ttyUSB0
+rate: 100
+write_rate: 20
+# REX motors: 31750 cpr = 0.3888105m travel
+base: {base_width: 0.381, ticks_meter: 81807, Kp: 15, Kd: 15, Ki: 0, Ko: 200, accel_limit: 1.0 }
+dynamixels: {
+  head_pan_joint: {id: 1},
+  head_tilt_joint: {id: 2, invert: true},
+  arm_shoulder_pan_joint: {id: 3, max_speed: 25},
+  arm_shoulder_lift_joint: {id: 4, invert: 1, ticks: 4096, neutral: 2416, range: 250, max_speed: 15},
+  arm_elbow_flex_joint: {id: 5, invert: 1, ticks: 4096, neutral: 2416, range: 250, max_speed: 25},
+  arm_wrist_flex_joint: {id: 6, invert: 1, max_speed: 45},
+  arm_wrist_roll_joint: {id: 7, max_speed: 45},
+  l_finger_joint: {id: 8, max_speed: 90},
+  r_finger_joint: {id: 9, max_speed: 90}
+}
+
