@@ -3,6 +3,8 @@
 = Introduction =
 Mini Max is a small version of Maxwell, based on an iRobot Create, Kinect, and AX-12 based arm. 
 
+<img src="https://vanadium-ros-pkg.googlecode.com/svn/wiki/mini-max.jpg" width="240">
+
 = Roadmap =
 The following need to be addressed:
  * mini_max_core - modified version of turtlebot create/gryo drivers
