@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+<robot name="mini_max">
+
+  <!-- size properties -->
+  <property name="material_thickness" value="0.00476" />
+  <property name="standoff_height" value="0.04445" />
+  <property name="body_height" value="0.3302" />
+  <property name="neck_height" value="0.0857" />
+
+  <property name="ax12_height" value="0.04762" />
+  <property name="ax12_width" value="0.0381" />
+  <property name="ax12_depth" value="0.0318" />
+  <property name="ax12_center" value="0.0385" />
+
+  <include filename="$(find mini_max_defs)/urdf/arm.urdf.xacro" />
+  <include filename="$(find mini_max_defs)/urdf/gripper.urdf.xacro" />
+
+  <!-- colors -->
+  <material name="Black">
+    <color rgba="0.2 0.2 0.2 1.0"/>
+  </material>
+  <material name="Orange">
+    <color rgba="1.0  0.55 0.0 1.0"/>
+  </material>
+  <material name="Grey">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
+
+  <!-- create base -->
+  <property name="create_radius" value="0.1778" />
+  <property name="create_height" value="0.0762" />
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${create_height/2}" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${create_radius}" length="${create_height}" />
+      </geometry>
+      <material name="Grey" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${create_height/2}" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${create_radius}" length="${create_height}" />
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- head w/ kinect, pan/tilt -->
+  <joint name="column_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="column_link" />
+    <origin xyz="0.0349 0 ${create_height+standoff_height+material_thickness+body_height+material_thickness}"/>
+  </joint>
+  <link name="column_link" >
+    <visual>
+      <origin xyz="0 0 0" rpy="3.14 0 -1.57" />
+      <geometry>
+        <mesh filename="package://mini_max_defs/meshes/body.stl"  />
+      </geometry>
+      <material name="Black" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="3.14 0 -1.57" />
+      <geometry>
+        <mesh filename="package://mini_max_defs/meshes/body.stl"  />
+      </geometry>
+    </collision>
+  </link>
+  
+  <joint name="head_pan_joint" type="revolute">
+     <parent link="column_link" />
+     <child link="head_pan_link" />
+     <origin xyz="0 0 0"/>
+     <axis xyz="0 0 1.0"/>
+     <limit effort="30" velocity="1.0" lower="-1.57" upper="1.57" />
+  </joint>
+  <link name="head_pan_link">
+    <visual>
+      <origin xyz="0 0 ${(ax12_height+0.00635)/2}"/>
+      <geometry>
+        <box size="${ax12_depth} ${ax12_width} ${ax12_height+0.00635}"/>
+      </geometry>
+      <material name="Orange"/>
+    </visual>
+  </link>
+
+  <joint name="head_tilt_joint" type="revolute">
+     <parent link="head_pan_link" />
+     <child link="head_tilt_link" />
+     <origin xyz="0 0 ${ax12_height+0.00635}" />
+     <axis xyz="0 1.0 0"/>
+     <limit effort="30" velocity="1.0" lower="-1.57" upper="1.57" />
+  </joint>
+  <link name="head_tilt_link">
+    <visual>
+      <origin xyz="0 0 ${neck_height/2}"/>
+      <geometry>
+        <box size=".0381 .0381 ${neck_height}"/>
+      </geometry>
+      <material name="Black"/>
+    </visual>
+    <!-- TODO: add collision -->
+  </link>
+
+  <!-- Head sensor frame -->
+  <joint name="head_sensor_frame_joint" type="fixed">
+    <origin xyz="0 0 ${neck_height}" rpy="0 0 0" />     
+    <parent link="head_tilt_link"/>
+    <child link="head_sensor_frame"/>
+  </joint>
+  <link name="head_sensor_frame">
+    <visual>
+      <origin xyz="-0.0254 0 0" rpy="0 0 -1.57" />
+      <geometry>
+        <mesh filename="package://mini_max_defs/meshes/kinect.stl" />
+      </geometry>
+      <material name="Black" />
+    </visual>
+    <!-- TODO: add collision -->
+  </link>
+
+  <!-- add arm and gripper -->
+  <mini_arm name="arm" parent="base">
+    <origin xyz="0.104775 -0.0381 ${create_height+standoff_height+material_thickness}"/>
+  </mini_arm>
+  <!--<mini_gripper name="gripper" parent="arm_wrist_flex">
+    <origin xyz="0.100 0 0" /> 
+  </mini_gripper>-->
+
+</robot>

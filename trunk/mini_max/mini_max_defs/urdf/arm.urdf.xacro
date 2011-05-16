@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<robot>
+   
+  <!-- size properties -->
+  <property name="arm_pan_height" value="0.00635" />
+  <property name="arm_major_length" value="0.09208" />
+
+  <macro name="mini_arm" params="name parent *origin">
+    <!-- Shoulder pan -->
+    <joint name="${name}_shoulder_pan_joint" type="revolute">
+      <axis xyz="0 0 1" />
+      <insert_block name="origin" />
+      <parent link="${parent}_link"/>
+      <child link="${name}_shoulder_pan_link"/>
+      <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />
+    </joint>
+    <link name="${name}_shoulder_pan_link">
+      <visual name="${name}_shoulder_pan_visual">
+        <origin xyz="0 0 ${(ax12_height+arm_pan_height)/2}" rpy="0 0 0" />
+        <geometry name="${name}_shoulder_pan_visual_geom">
+          <box size="${ax12_depth} ${ax12_width} ${ax12_height+arm_pan_height}"/>
+        </geometry>
+        <material name="Black" />
+      </visual>
+      <!-- TODO: add collision -->
+    </link>
+    <!-- Shoulder lift -->
+    <joint name="${name}_shoulder_lift_joint" type="revolute">
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.2" upper="2.617" effort="5.0" velocity="5" />
+      <origin xyz="0 0 ${ax12_center+arm_pan_height}" rpy="0 -1.57 0" />
+      <parent link="${name}_shoulder_pan_link"/>
+      <child link="${name}_shoulder_lift_link"/>
+    </joint>
+    <link name="${name}_shoulder_lift_link">
+      <visual name="${name}_shoulder_lift_visual">
+        <origin xyz="${(ax12_height+arm_major_length)/2} 0 0" rpy="0 0 0" />
+        <geometry name="${name}_shoulder_lift_visual_geom">
+          <box size="${ax12_height+arm_major_length} ${ax12_width} ${ax12_depth}"/>
+        </geometry>
+        <material name="Orange" />
+      </visual>
+      <!-- TODO: add collision -->
+    </link>
+    <!-- Elbow -->
+    <joint name="${name}_elbow_flex_joint" type="revolute">
+      <axis xyz="0 1 0" />
+      <limit lower="-1.57" upper="2.617" effort="5.0" velocity="5" />
+      <origin xyz="${ax12_center+arm_major_length} 0 0" rpy="0 0 0" />
+      <parent link="${name}_shoulder_lift_link"/>
+      <child link="${name}_elbow_flex_link"/>
+    </joint>
+    <link name="${name}_elbow_flex_link">
+      <visual name="${name}_elbow_flex_visual">
+        <origin xyz="${(ax12_height+arm_major_length)/2} 0 0" rpy="0 0 0" />
+        <geometry name="${name}_elbow_flex_visual_geom">
+          <box size="${ax12_height+arm_major_length} ${ax12_width} ${ax12_depth}"/>
+        </geometry>
+        <material name="Black" />
+      </visual>
+      <!-- TODO: add collision -->
+    </link>
+    <!-- Wrist flex -->
+    <joint name="${name}_wrist_flex_joint" type="revolute">
+      <axis xyz="0 1 0" />
+      <limit lower="-1.57" upper="1.57" effort="5.0" velocity="5" />
+      <origin xyz="0.125 0 0" rpy="0 0 0" />
+      <parent link="${name}_elbow_flex_link"/>
+      <child link="${name}_wrist_flex_link"/>
+    </joint>
+    <link name="${name}_wrist_flex_link">
+      <visual name="${name}_wrist_flex_visual">
+        <origin xyz="${0.030/2} 0 0" rpy="0 0 0" />
+        <geometry name="${name}_wrist_flex_visual_geom">
+          <!--<mesh filename="package://pr2_defs/meshes/wrist_flex.stl" />-->
+          <box size="0.030 0.057 0.040"/>
+        </geometry>
+        <material name="Orange" />
+      </visual>
+      <!-- TODO: add collision -->
+    </link>
+  </macro>
+
+</robot>

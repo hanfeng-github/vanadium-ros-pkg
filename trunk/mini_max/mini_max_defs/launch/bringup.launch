@@ -1,6 +1,6 @@
 <launch
   <param name="use_sim_time" value="false"/>>
-  <param name="robot_description" command="cat $(find mini_max_defs)/urdf/mini-max.urdf" />
+  <include file="$(find mini_max_defs)/launch/upload.launch" />
 
   <!-- bring up a create, arbotix --> 
   <node name="create" pkg="irobot_create_2_1" type="driver.py" />
