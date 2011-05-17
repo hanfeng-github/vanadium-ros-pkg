@@ -1,6 +1,6 @@
 /* 
   ArbotiX Firmware for ROS driver
-  Copyright (c) 2008-2010 Vanadium Labs LLC.  All right reserved.
+  Copyright (c) 2008-2011 Vanadium Labs LLC.  All right reserved.
  
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@
       * Redistributions in binary form must reproduce the above copyright
         notice, this list of conditions and the following disclaimer in the
         documentation and/or other materials provided with the distribution.
-      * Neither the name of the Vanadium Labs LLC nor the names of its 
+      * Neither the name of Vanadium Labs LLC nor the names of its 
         contributors may be used to endorse or promote products derived 
         from this software without specific prior written permission.
   
@@ -26,10 +26,9 @@
 */ 
 
 /* Build Configuration */
-#define USE_PML             // Enable support for a PML (All)
-//#define USE_BASE            // Enable support for a mobile base (ArbotiX/ArbotiX+)
-//#define USE_BIG_MOTORS      // Enable Pololu 30A support (ArbotiX+)
-#define USE_HW_SERVOS       // Enable only 2/8 servos, but using hardware control (All)
+#define USE_BASE            // Enable support for a mobile base
+#define USE_BIG_MOTORS      // Enable Pololu 30A support
+#define USE_HW_SERVOS       // Enable only 2/8 servos, but using hardware control
 
 /* Hardware Constructs */
 #include <ax12.h>
@@ -37,11 +36,6 @@
 BioloidController bioloid = BioloidController(1000000);
 
 #include "ros.h"
-
-#ifdef USE_PML
-  #include <pml.h>
-  PML pml = PML();
-#endif
 
 #ifdef USE_HW_SERVOS
   #include <HServo.h>
@@ -71,10 +65,10 @@ int servo_vals[10];             // in millis
 
 /* Pose & Sequence Structures */
 typedef struct{
-  unsigned char pose;         // index of pose to transition to 
-  int time;                   // time for transition
+  unsigned char pose;           // index of pose to transition to 
+  int time;                     // time for transition
 } sp_trans_t;
-int poses[30][30];              // poses [index][servo_id-1]
+int poses[30][AX12_MAX_SERVOS]; // poses [index][servo_id-1]
 sp_trans_t sequence[50];        // sequence
 int seqPos;                     // step in current sequence
 
@@ -99,10 +93,6 @@ void setup(){
 #ifdef USE_BASE  
   Encoders.Begin();
   setupPID();
-#endif
-
-#ifdef USE_PML
-  pml.init();
 #endif
 
 // note: ARBOTIX_PLUS and SERVO_STIK are defined in our Bioloid library.
@@ -233,25 +223,6 @@ unsigned char handleWrite(){
       Ko = params[k];  
 #endif
 
-#ifdef USE_PML
-    }else if(addr == REG_PML_SERVO){
-      //set_pml_servo(params[k]);
-      pml.setServo(params[k]);
-    }else if(addr == REG_PML_SENSOR){
-      pml.setSensor(params[k]);
-    }else if(addr == REG_STEP_START_L){
-      step_start = params[k];
-    }else if(addr == REG_STEP_START_H){
-      step_start += params[k]<<8;
-    }else if(addr == REG_STEP_VALUE){
-      step_value = params[k];
-    }else if(addr == REG_STEP_COUNT){
-      pml.setupStep(step_start,step_value,params[k]);
-    }else if(addr == REG_PML_ENABLE){
-      if(params[k] > 0) pml.enable();
-      else pml.disable();
-#endif
-
     }else{
       return INSTRUCTION_ERROR;
     }
@@ -331,23 +302,6 @@ int handleRead(){
       v = Ko;
 #endif
       
-#ifdef USE_PML
-    }else if(addr < REG_PML_DIR){
-      v = 0;
-    }else if(addr == REG_PML_DIR){
-      scan_dir = pml.getScanID(); //pml_buffer, pml_time);
-      v = scan_dir;
-    }else if(addr == REG_PML_TIME_L){
-      v = pml.scan_time & 0xff;
-    }else if(addr == REG_PML_TIME_H){
-      v = (pml.scan_time>>8) & 0xff;
-    }else if(addr < REG_PML_BASE+60){
-      if(scan_dir == UP_SCAN){
-        v = pml.data_up[addr-REG_PML_BASE];
-      }else{
-        v = pml.data_dn[addr-REG_PML_BASE];
-      }
-#endif
     }else{
       v = 0;        
     }
@@ -587,8 +541,5 @@ void loop(){
   // update pid
   updatePID();
 #endif
- 
-#ifdef USE_PML
-  pml.step();
-#endif
+
 }

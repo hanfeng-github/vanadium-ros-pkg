@@ -1,6 +1,6 @@
 /* 
   Common Definitions for ROS driver ArbotiX Firmware
-  Copyright (c) 2008-2010 Vanadium Labs LLC.  All right reserved.
+  Copyright (c) 2008-2011 Vanadium Labs LLC.  All right reserved.
  
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -83,19 +83,6 @@
 #define REG_HEIGHT          75
 #define REG_GAIT            77
 
-#define REG_PML_SERVO       80  // ID for PML servo
-#define REG_PML_SENSOR      81  // ID for PML sensor
-#define REG_STEP_START_L    82  // minimum ticks, low byte
-#define REG_STEP_START_H    83
-#define REG_STEP_VALUE      84  // ticks per step
-#define REG_STEP_COUNT      85  // number of steps
-#define REG_PML_ENABLE      86  // scan or no?
-
-#define REG_PML_DIR         88  // direction of scan last taken
-#define REG_PML_TIME_L      89  // low byte of time offset from first read on this scan
-#define REG_PML_TIME_H      90  // high byte of time offset from first read on this scan
-#define REG_PML_BASE        91  // start of data bytes for this scan
-
 /* Packet Decoding */
 int mode = 0;                   // where we are in the frame
 
@@ -105,12 +92,6 @@ unsigned char ins = 0;          // instruction of this frame
 
 unsigned char params[143];      // parameters (match RX-64 buffer size)
 unsigned char index = 0;        // index in param buffer
-
-#ifdef USE_PML
-int scan_dir;
-int step_start;
-int step_value;
-#endif
 
 int checksum;                   // checksum
 
