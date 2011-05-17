@@ -7,15 +7,21 @@ Mini Max is a small version of Maxwell, based on an iRobot Create, Kinect, Arbot
 
 = Software Roadmap =
 The following need to be addressed:
- * mini_max_core - modified version of turtlebot create/gryo drivers
- * mini_max_defs - create URDF. STL files for frame/create. ArbotiX YAML files. 
-   * base_link->(arm_link/head_link)
-   * arm_link -> shoulder_pan_joint -> shoulder_pan_link -> shoulder_lift_joint -> shoulder_lift_link -> elbow_flex_joint -> elbow_flex_link -> wrist_flex_joint -> gripper_link 
-   * head_link -> head_pan_joint -> head_pan_link -> head_tilt_joint -> head_tilt_link -> head_sensor_frame
- * mini_max_arm - create arm kinematics server
- * mini_max_nav - create launch files for navigation
- * mini_max_apps -
-   * tuck_arm - 
+ * mini_max_core
+   * modified version of turtlebot create/gryo drivers
+ * mini_max_defs 
+   * ~~create URDF~~
+     * ~~base~~
+     * ~~arm~~
+     * ~~head~~
+     * gripper
+   * ~~STL files: body, kinect~~
+ * mini_max_arm
+   * arm kinematics server
+ * mini_max_nav
+   * launch files for navigation
+ * mini_max_apps
+   * tuck_arm
 
 = Documentation Roadmap =
  * How to build, wire robot
