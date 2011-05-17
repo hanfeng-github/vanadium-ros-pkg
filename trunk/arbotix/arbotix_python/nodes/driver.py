@@ -39,7 +39,6 @@ from arbotix_msgs.srv import *
 from arbotix_python.arbotix import ArbotiX # does this look ridiculous to anyone else?
 from arbotix_python.ax12 import *
 from arbotix_python.base import *
-from arbotix_python.pml import *
 
 from math import radians
 
@@ -298,13 +297,6 @@ class ArbotixROS(ArbotiX):
             self.base = BaseController(self)
             self.base.startup()
 
-        # setup a pml  
-        self.use_pml = False
-        if rospy.has_param("~pml"):
-            self.use_pml = True
-            self.pml = pml(self)
-            self.pml.startup()
-
         r = rospy.Rate(self.rate)
         f = 0  # frame ID
         d = 0  # diagnostic count
@@ -398,10 +390,6 @@ class ArbotixROS(ArbotiX):
             if self.use_base and f%self.base.throttle == 0:
                 self.base.update()
 
-            # update pml
-            if self.use_pml and f%self.pml.throttle == 0:
-                self.pml.update()
-
             # update io
             for s in self.io.values():
                 if f%s.throttle == 0:
@@ -458,8 +446,6 @@ class ArbotixROS(ArbotiX):
         # do shutdown
         if self.use_base:
             self.base.shutdown()
-        if self.use_pml:
-            self.pml.shutdown()
 
     # IO Callbacks
     def analogInCb(self, req):
