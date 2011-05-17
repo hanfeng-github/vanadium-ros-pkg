@@ -256,8 +256,14 @@ class ArbotixROS(ArbotiX):
         # start an arbotix driver
         ArbotiX.__init__(self, port, baud)        
         rospy.sleep(1.0)
-        rospy.loginfo("Started ArbotiX connection on port " + port)
+        rospy.loginfo("Started ArbotiX connection on port " + port + ".")
         
+        # wait for arbotix to start up (especially after reset)
+        while self.getDigital(1) == -1:
+            rospy.loginfo("Waiting for response...")
+            rospy.sleep(0.25)    
+        rospy.loginfo("ArbotiX connected.")
+
         # initialize dynamixel & hobby servos
         dynamixels = rospy.get_param("~dynamixels", dict())
         self.dynamixels = dict()
