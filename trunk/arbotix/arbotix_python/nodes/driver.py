@@ -88,7 +88,7 @@ class Servo():
         return RelaxResponse()
 
     def commandCb(self, req):
-        if self.desired != req.data:
+        if self.desired != req.data or self.relaxed:
             self.dirty = True   
             self.relaxed = False
             self.desired = req.data
