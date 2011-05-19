@@ -39,6 +39,7 @@ from arbotix_msgs.srv import *
 from arbotix_python.arbotix import ArbotiX # does this look ridiculous to anyone else?
 from arbotix_python.ax12 import *
 from arbotix_python.base import *
+from arbotix_python.nuke import *
 
 from math import radians
 
@@ -258,10 +259,11 @@ class ArbotixROS(ArbotiX):
         rospy.loginfo("Started ArbotiX connection on port " + port + ".")
         
         # wait for arbotix to start up (especially after reset)
-        while self.getDigital(1) == -1:
-            rospy.loginfo("Waiting for response...")
-            rospy.sleep(0.25)    
-        rospy.loginfo("ArbotiX connected.")
+        if rospy.has_param("~base") or rospy.has_param("~nuke") or rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
+            while self.getDigital(1) == -1:
+                rospy.loginfo("Waiting for response...")
+                rospy.sleep(0.25)    
+            rospy.loginfo("ArbotiX connected.")
 
         # initialize dynamixel & hobby servos
         dynamixels = rospy.get_param("~dynamixels", dict())
@@ -296,6 +298,13 @@ class ArbotixROS(ArbotiX):
             self.use_base = True
             self.base = BaseController(self)
             self.base.startup()
+
+        # setup a nuke controller
+        self.use_nuke = False
+        if rospy.has_param("~nuke"):
+            self.use_nuke = True
+            self.nuke = NukeController(self)
+            self.nuke.startup()
 
         r = rospy.Rate(self.rate)
         f = 0  # frame ID
@@ -390,6 +399,10 @@ class ArbotixROS(ArbotiX):
             if self.use_base and f%self.base.throttle == 0:
                 self.base.update()
 
+            # update nuke
+            if self.use_nuke and f%self.nuke.throttle == 0:
+                self.nuke.update()
+
             # update io
             for s in self.io.values():
                 if f%s.throttle == 0:
@@ -446,6 +459,8 @@ class ArbotixROS(ArbotiX):
         # do shutdown
         if self.use_base:
             self.base.shutdown()
+        if self.use_nuke:
+            self.nuke.shutdown()
 
     # IO Callbacks
     def analogInCb(self, req):
