@@ -34,7 +34,7 @@
 
 # this was stolen from the turtlebot!
 import roslib
-roslib.load_manifest('maxwell_defs')
+roslib.load_manifest('mini_max_core')
 import rospy
 import diagnostic_msgs.msg
 import subprocess
