@@ -23,7 +23,7 @@
     <rosparam command="load" file="$(find openni_camera)/info/openni_params.yaml" />
   </node>
   <include file="$(find openni_camera)/launch/kinect_frames.launch"/>
-  <node pkg="tf" type="static_transform_publisher" name="kinect_link" args="0 0 0 0 0 0 /head_sensor_frame /openni_rgb_optical_frame 100" /> 
+  <node pkg="tf" type="static_transform_publisher" name="kinect_link" args="0 0 0 0 0 0 /head_sensor_frame /openni_camera 100" />
 
   <node pkg="robot_state_publisher" type="state_publisher" name="rob_st_pub" />
 </launch>

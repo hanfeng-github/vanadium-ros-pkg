@@ -123,8 +123,8 @@
   <mini_arm name="arm" parent="base">
     <origin xyz="0.104775 -0.0381 ${create_height+standoff_height+material_thickness}"/>
   </mini_arm>
-  <!--<mini_gripper name="gripper" parent="arm_wrist_flex">
+  <mini_gripper name="gripper" parent="arm_wrist_flex">
     <origin xyz="0.100 0 0" /> 
-  </mini_gripper>-->
+  </mini_gripper>
 
 </robot>
