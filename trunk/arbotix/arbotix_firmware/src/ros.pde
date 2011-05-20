@@ -95,7 +95,6 @@ void setup(){
   setupPID();
 #endif
 
-// note: ARBOTIX_PLUS and SERVO_STIK are defined in our Bioloid library.
 #if defined(AX_RX_SWITCHED)
   delay(1000);
   scan();
