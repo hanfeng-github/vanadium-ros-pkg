@@ -1,8 +1,11 @@
 #summary Various info on Mini Maxwell
 
 = Introduction =
-Mini Max is a custom mobile manipulator, built atop an iRobot Create. 
+Mini Max is a custom mobile manipulator, leveraging the ArbotiX2, Dynamixel Servos, ROS, and an iRobot Create. 
 
+<img src="https://vanadium-ros-pkg.googlecode.com/svn/wiki/watercolor.png" width="300">
+
+== Parts List == 
 Parts List Coming Soon
 
 == Arm Details ==
