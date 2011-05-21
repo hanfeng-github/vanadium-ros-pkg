@@ -16,8 +16,7 @@ The following need to be addressed:
      * ~~head~~
      * gripper
    * ~~STL files: body, kinect~~
- * mini_max_arm
-   * arm kinematics server
+   * ~~arm kinematics launch file~~
  * mini_max_nav
    * launch files for navigation
  * mini_max_apps
