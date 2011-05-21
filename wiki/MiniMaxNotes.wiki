@@ -1,0 +1,31 @@
+#summary Various info on Mini Maxwell
+
+= Introduction =
+Mini Max is a custom mobile manipulator, built atop an iRobot Create. 
+
+Parts List Coming Soon
+
+== Arm Details ==
+{{{
+arm_shoulder_pan_joint id = 1
+arm_shoulder_lift_joint id = 2
+arm_elbow_flex_joint id = 3
+arm_wrist_flex_joint id = 4
+gripper_joint id = 5
+}}}
+
+== Head details ==
+{{{
+pan servo id = 6
+tilt servo id = 7
+}}}
+
+
+= ROS Setup =
+Mini Maxwell has been developed against diamondback-desktop-full variant of ROS. Additionally, you'll need to install the following stacks:
+{{{
+openni_kinect
+urdf_tools (not in debs)
+mini_max (not in debs)
+arbotix (not in debs)
+}}}
