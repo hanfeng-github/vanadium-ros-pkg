@@ -16,7 +16,7 @@
     <!-- Shoulder pan -->
     <joint name="${name}_shoulder_pan_joint" type="revolute">
       <axis xyz="0 0 1" />
-      <insert_block name="origin" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <parent link="${name}_base_link"/>
       <child link="${name}_shoulder_pan_link"/>
       <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />

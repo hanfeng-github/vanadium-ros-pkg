@@ -1,5 +1,5 @@
 ---
-port: /dev/arbotix
+port: /dev/ttyUSB1
 read_rate: 15
 write_rate: 50
 dynamixels: {
