@@ -3,7 +3,7 @@
 = Introduction =
 Maxwell is a custom mobile manipulator. 
 
-[https://spreadsheets.google.com/pub?key=0AoEGbFgI5kOhdG9fRkFTVnc5VXkyZ0JYcW5laDE3NkE&hl=en&output=html Parts List]
+[https://spreadsheets.google.com/spreadsheet/pub?hl=en_US&hl=en_US&key=0AoEGbFgI5kOhdG9fRkFTVnc5VXkyZ0JYcW5laDE3NkE&single=true&gid=0&output=html Parts List]
 
 == Head details ==
 {{{
