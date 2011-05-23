@@ -57,4 +57,23 @@ make
 }}} 
 
 = Using Mini Maxwell =
-Coming Soon
+To setup a mini Max: 
+ * Power on the laptop
+ * Plug in the Create
+ * Plug in the ArbotiX
+ * Push the power button on the Create, you should hear a single beep. 
+ * Start a terminal, and start _roscore_ within it:
+ {{{
+ roscore
+ }}}
+ * CTRL-SHIFT-TAB will get you another tab within the terminal program. Do this, and then: 
+ {{{
+ roslaunch mini_max_defs bringup.launch
+ }}}
+
+== Driving the Robot Around ==
+The easiest way to move the robot around is using the teleop_twist_keyboard program. CTRL-SHIFT-TAB will again open another tab in your terminal, in which you can type: 
+{{{
+rosrun teleop_twist_keyboard teleop_twist_keyboard
+}}}
+You will then be able to drive the robot around using the keyboard. 
