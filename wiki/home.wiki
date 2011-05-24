@@ -1,0 +1,6 @@
+= Introduction =
+
+This repository is home to a number of software packages for interacting with ROS-based robots powered by products and technologies from Vanadium Labs. 
+
+= Mini Max =
+Mini Max is a minature version of Maxwell, a human-scale mobile manipulator developed here in our lab. Mini is aimed at hobby and educational uses, designed to be low-cost yet highly robust. The MiniMaxNotes page has more information. 
