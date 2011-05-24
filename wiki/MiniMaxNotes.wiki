@@ -6,7 +6,7 @@ Mini Max is a custom mobile manipulator, leveraging the !ArbotiX2, Dynamixel Ser
 <img src="https://vanadium-ros-pkg.googlecode.com/svn/wiki/watercolor.png" width="300">
 
 == Parts List == 
-[https://spreadsheets.google.com/spreadsheet/pub?hl=en_US&hl=en_US&key=0AoEGbFgI5kOhdG9fRkFTVnc5VXkyZ0JYcW5laDE3NkE&single=true&gid=3&output=html Parts List] _(DRAFT)_
+[https://spreadsheets.google.com/spreadsheet/pub?hl=en_US&hl=en_US&key=0AoEGbFgI5kOhdG9fRkFTVnc5VXkyZ0JYcW5laDE3NkE&single=true&gid=5&output=html Parts List] _(DRAFT)_
 
 == Arm Details ==
 {{{
