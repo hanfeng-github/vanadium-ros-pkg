@@ -5,6 +5,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mini_max_core</url>
   <depend package="rospy"/>
+  <depend package="diagnostic_msgs"/>
 </package>
 
 
