@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  traj_controller.py - controls joints using trajectory msgs
+  traj_controller.py - position control of joints using trajectory msgs
   Copyright (c) 2010-2011 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -35,14 +35,16 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
 
 class Trajectory:
-    def __init__(self, names, positions, velocities, time):
+    def __init__(self, names, positions, velocities, accelerations, stime, etime):
         self.names = names
         self.positions = positions
         self.velocities = velocities
-        self.time = time
+        self.accelerations = accelerations
+        self.stime = stime
+        self.etime = etime
 
-class TrajController:
-    """ Controller to handle trajectory-based servo control. """
+class TrajControllerP:
+    """ Position-Based Trajectory Controller to handle trajectory-based servo control. """
 
     def __init__(self):
         rospy.init_node("traj_controller")
@@ -56,8 +58,9 @@ class TrajController:
         self.dirty = False
         self.current = [0.0 for i in self.joints]
         self.desired = [0.0 for i in self.joints]   
-        self.velocity = [0.0 for i in self.joints]   
-        self.trajectories = list()      
+        self.velocity = [0.0 for i in self.joints]   # velocity to make next position setpoint
+        self.trajectories = list()  
+        self.endtime = rospy.Time.now()   
 
         # subscriptions
         rospy.Subscriber('~command', JointTrajectory, self.cmdTrajCb)
@@ -70,39 +73,40 @@ class TrajController:
         while not rospy.is_shutdown():
             # grab mutex
             self.mutex.acquire()  
+
             # remove missed frames
             now = rospy.Time.now()
-            while len(self.trajectories) > 1 and self.trajectories[0].time < now:
+            while len(self.trajectories) > 1 and self.trajectories[0].etime < now:
                 print "loop: deleting trajectory"
                 del self.trajectories[0]
+
             # update desired/velocity
-            if self.trajectories:
-                if not self.trajectories[0].time > now + rospy.Duration(1/self.rate):
-                    # copy trajectory to desired/velocity arrays
-                    traj = self.trajectories[0]
-                    try:
-                        indexes = [traj.names.index(name) for name in self.joints]
-                    except ValueError as val:
-                        rospy.logerr('Invalid joint state message.')
-                        return           
-                    self.desired = [ traj.positions[k] for k in indexes ]
-                    self.velocity = [ traj.velocities[k] for k in indexes ]
-                    del self.trajectories[0]                 
-                    self.dirty = True
+            if self.trajectories and now >= self.trajectories[0].stime: 
+                # copy trajectory to desired/velocity arrays
+                traj = self.trajectories[0]
+                self.endtime = traj.etime
+                try:
+                    indexes = [traj.names.index(name) for name in self.joints]
+                except ValueError as val:
+                    rospy.logerr('Invalid trajectory. Aborting.')
+                    return           
+                self.desired = [ traj.positions[k] for k in indexes ]
+                del self.trajectories[0]                      
+                self.dirty = True
+
             if self.dirty and self.valid:
                 # interpolate and update outputs
                 cumulative = 0.0
-                err = [ (d-c) for d,c in zip(self.desired,self.current)]
+                err = [ (d-c) for d,c in zip(self.desired,self.current) ]
+                rospy.loginfo(err)
                 for i in range(len(self.joints)):
-                    cmd = err[i]
-                    cumulative += cmd
-                    if self.velocity[i] != 0:
-                        top = self.velocity[i]/self.rate
-                        if cmd > top:
-                            cmd = top
-                        elif cmd < -top:
-                            cmd = -top
-                    self.current[i] += cmd
+                    cumulative += err[i]
+                    time = (self.endtime - now).to_sec()
+                    if time > 0:
+                        velocity = err[i] / (self.rate * time)
+                    else:
+                        velocity = err[i]
+                    self.current[i] += velocity
                     self.publishers[self.joints[i]].publish(Float64(self.current[i]))
                 # are we done?
                 if cumulative == 0.0:
@@ -124,25 +128,26 @@ class TrajController:
         # Stop?
         if len(msg.points) == 0:
             self.restart()
-        else:
-            # find start time of this trajectory set
-            start = msg.header.stamp + msg.points[0].time_from_start
-            # remove trajectories after start
-            while self.trajectories and self.trajectories[-1].time > start:
-                rospy.loginfo("Delete trajectory at "+str(self.trajectories[-1].time))
+        else:       
+            start = msg.header.stamp
+            rospy.loginfo(start.to_sec())
+            # remove trajectories after start of this trajectory
+            while self.trajectories and self.trajectories[-1].etime > start:
+                rospy.loginfo("Delete trajectory that ends at "+str(self.trajectories[-1].etime))
                 del self.trajectories[-1]
             # fo' each point in trajectory
             for point in msg.points:
                 # find start time of point
                 t = msg.header.stamp + point.time_from_start
-                self.trajectories.append(Trajectory(msg.joint_names, point.positions, point.velocities, t))
+                self.trajectories.append(Trajectory(msg.joint_names, point.positions, point.velocities, point.accelerations, start, t))
+                start = t
         # release mutex
         self.mutex.release()
 
     def stateCb(self, msg):
         """ The callback that converts JointState into servo position for interpolation. """
-        if self.dirty and self.valid:
-            return
+        # grab mutex
+        self.mutex.acquire()  
         try:
             indexes = [msg.name.index(name) for name in self.joints]
         except ValueError as val:
@@ -151,6 +156,9 @@ class TrajController:
             return
         self.current = [ msg.position[k] for k in indexes ]
         self.valid = True
+        # release mutex
+        self.mutex.release()
 
 if __name__=="__main__":
-    tc = TrajController()
+    tc = TrajControllerP()
+
