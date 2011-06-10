@@ -120,17 +120,20 @@ class ArbotiX:
             self.ser.write(chr(0xFF)+chr(0xFF)+chr(index)+chr(length)+chr(ins))
         except Exception as e:
             print e
+            self.mutex.release()
             return None
         for val in params:
             try:
                 self.ser.write(chr(val))
             except Exception as e:
                 print e
+                self.mutex.release()
                 return None
         try:
             self.ser.write(chr(checksum))
         except Exception as e:
             print e
+            self.mutex.release()
             return None
         if ret:
             values = self.getPacket(0)
