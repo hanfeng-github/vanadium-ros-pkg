@@ -14,7 +14,7 @@ The following need to be addressed:
      * ~~base~~
      * ~~arm~~
      * ~~head~~
-     * gripper
+     * ~~gripper~~
    * ~~STL files: body, kinect~~
    * ~~arm kinematics launch file~~
  * mini_max_nav
@@ -24,7 +24,7 @@ The following need to be addressed:
 
 = Documentation Roadmap =
  * How to build, wire robot
- * How to setup laptop
+ * ~~How to setup laptop~~
  * Basic tutorials:
    * Reading the state of the switches
    * Moving the base
