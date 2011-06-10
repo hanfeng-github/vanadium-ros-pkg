@@ -48,6 +48,7 @@ mkdir brown-ros-pkg
 cd brown-ros-pkg
 svn co https://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/teleop_twist_keyboard teleop_twist_keyboard
 svn co https://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/irobot_create_2_1 irobot_create_2_1
+roscd irobot_create_2_1; make
 }}}
  * Open a new terminal, to be sure that your ROS package path is updated, and then compile the necessary packages:
 {{{
@@ -66,14 +67,14 @@ To setup a mini Max:
  {{{
  roscore
  }}}
- * CTRL-SHIFT-TAB will get you another tab within the terminal program. Do this, and then: 
+ * CTRL-SHIFT-T will get you another tab within the terminal program. Do this, and then: 
  {{{
  roslaunch mini_max_defs bringup.launch
  }}}
 
 == Driving the Robot Around ==
-The easiest way to move the robot around is using the teleop_twist_keyboard program. CTRL-SHIFT-TAB will again open another tab in your terminal, in which you can type: 
+The easiest way to move the robot around is using the teleop_twist_keyboard program. CTRL-SHIFT-T will again open another tab in your terminal, in which you can type: 
 {{{
-rosrun teleop_twist_keyboard teleop_twist_keyboard
+rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 }}}
 You will then be able to drive the robot around using the keyboard. 
