@@ -78,3 +78,5 @@ The easiest way to move the robot around is using the teleop_twist_keyboard prog
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 }}}
 You will then be able to drive the robot around using the keyboard. 
+
+When you are done, you can type CTRL-C into each of your terminal windows. The ''roscore'' should be the last one shut down. After the bringup launch has finished, it is safe to unplug the USB adapters.
