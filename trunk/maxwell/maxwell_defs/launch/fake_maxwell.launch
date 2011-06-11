@@ -5,7 +5,7 @@
   <include file="$(find maxwell_defs)/launch/upload_maxwell.launch" />
 
   <!-- ArbotiX -->
-  <node name="arbotix" pkg="maxwell_defs" type="fake-driver.py" output="screen">
+  <node name="arbotix" pkg="arbotix_python" type="fake-driver.py" output="screen">
       <rosparam file="$(find maxwell_defs)/params/maxwell.yaml" command="load" />
   </node>
   <node name="head_traj_controller" pkg="arbotix_controllers" type="traj_controller.py">

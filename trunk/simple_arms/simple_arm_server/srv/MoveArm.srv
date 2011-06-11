@@ -1,3 +1,4 @@
 geometry_msgs/PoseStamped pose_stamped
+duration move_time
 ---
 bool success

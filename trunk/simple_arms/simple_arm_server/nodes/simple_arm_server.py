@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  move_arm.py - this is a simple move_arm alternative with no trajectory checking
+  simple_arm_server.py - this is a simple way to move an arm
   Copyright (c) 2011 Michael Ferguson.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import roslib; roslib.load_manifest('maxwell_move_arm')
+import roslib; roslib.load_manifest('simple_arm_server')
 import rospy
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -38,26 +38,25 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 from kinematics_msgs.msg import KinematicSolverInfo, PositionIKRequest
 from kinematics_msgs.srv import GetKinematicSolverInfo, GetPositionIK, GetPositionIKRequest
-from maxwell_move_arm.srv import *
+from simple_arm_server.srv import *
 
 from math import *
 
-class MoveArmServer:
-    """ A class to move Maxwell's 5DOF arm to a designated location (x,y,z), 
-        respecting wrist rotation (roll) and gripper rotation (pitch). As the 
-        arm is 5DOF, we ignore the yaw input.
-
-        Additional measures to improve IK abilities (increase search space):
-         1) Iteratively adjust gripper pitch to try to find solutions.
-         2) If gripper pitch is not enough, move base!
-
-        To accomplish this, we might want to find an approximation of the current
-        search space limitations for the arm. 
+class SimpleArmServer:
+    """ 
+        A class to move a 4/5/6DOF arm to a designated location (x,y,z), 
+        respecting wrist rotation (roll) and gripper rotation (pitch). 
     """
 
     def __init__(self):
-        rospy.init_node("simple_move_arm")        
+        rospy.init_node("simple_arm_server")        
         
+        # configuration
+        self.dof = rospy.get_param("~arm_dof", 5)
+        self.root = rospy.get_param("~root_name","base_link")
+        self.tip = rospy.get_param("~tip_name","gripper_link")
+        self.timeout = rospy.get_param("~timeout",5.0)
+
         # connect to arm kinematics
         rospy.wait_for_service('arm_kinematics/get_ik')
         rospy.wait_for_service('arm_kinematics/get_ik_solver_info')
@@ -75,13 +74,14 @@ class MoveArmServer:
         rospy.Subscriber('joint_states', JointState, self.stateCb)
 
         # load service for moving arm
-        rospy.Service('move_arm/move', MoveArm, self.moveCb)
-        rospy.Service('move_arm/halt', HaltArm, self.haltCb)
+        rospy.Service('~move', MoveArm, self.moveCb)
+        rospy.Service('~halt', HaltArm, self.haltCb)
 
-        rospy.loginfo('Simple move_arm service started')
+        rospy.loginfo('simple_arm_server node started')
         rospy.spin()
 
     def stateCb(self, msg):
+        """ Update our known location of joints, for interpolation. """
         for i in range(len(msg.name)):
             joint = msg.name[i]
             self.servos[joint] = msg.position[i]
@@ -91,22 +91,27 @@ class MoveArmServer:
         arm_solver_info = self._get_ik_solver_info_proxy()     
   
         # goal of this service call    
-        pose = self._listener.transformPose("torso_link", req.pose_stamped)
+        pose = self._listener.transformPose(self.root, req.pose_stamped)
         
         # create IK request
         request = GetPositionIKRequest()
-        request.timeout = rospy.Duration(5.0)
+        request.timeout = rospy.Duration(self.timeout)
 
-        request.ik_request.pose_stamped.header.frame_id = "torso_link";
-        request.ik_request.ik_link_name = "gripper_link";
+        request.ik_request.pose_stamped.header.frame_id = self.root;
+        request.ik_request.ik_link_name = self.tip;
         request.ik_request.pose_stamped.pose.position.x = pose.pose.position.x
         request.ik_request.pose_stamped.pose.position.y = pose.pose.position.y
         request.ik_request.pose_stamped.pose.position.z = pose.pose.position.z
 
-        # 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
         e = euler_from_quaternion([pose.pose.orientation.x,pose.pose.orientation.y,pose.pose.orientation.z,pose.pose.orientation.w])
-        q =  quaternion_from_euler(e[0], e[1], atan2(pose.pose.position.y, pose.pose.position.x - 0.061))
-        
+        q =  quaternion_from_euler(e[0], e[1], e[2])
+        if self.dof < 6:
+            # 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
+            q = quaternion_from_euler(e[0], e[1], atan2(pose.pose.position.y, pose.pose.position.x))
+        if self.dof < 5:
+            # 4 DOF, so yaw as above AND no roll
+            q = quaternion_from_euler(0, e[1], atan2(pose.pose.position.y, pose.pose.position.x))
+
         request.ik_request.pose_stamped.pose.orientation.x = q[0]
         request.ik_request.pose_stamped.pose.orientation.y = q[1]
         request.ik_request.pose_stamped.pose.orientation.z = q[2]
@@ -119,8 +124,8 @@ class MoveArmServer:
         response = self._get_ik_proxy(request)
         rospy.loginfo(response)
 
-        # move the arm -- basically no interpolation right now
-        # TODO: linear interpolation
+        # move the arm
+        # TODO: we need correct trajectories
         if response.error_code.val == response.error_code.SUCCESS:
             arm_solver_info = self._get_ik_solver_info_proxy()     
             msg = JointTrajectory()
@@ -129,21 +134,21 @@ class MoveArmServer:
             point = JointTrajectoryPoint()
             point.positions = [ 0.0 for servo in msg.joint_names ]
             point.velocities = [ 0.0 for servo in msg.joint_names ]
-            dists = [0.0 for servo in msg.joint_names]
+            #dists = [0.0 for servo in msg.joint_names]
             for joint in request.ik_request.ik_seed_state.joint_state.name:
                 i = msg.joint_names.index(joint)
                 point.positions[i] = response.solution.joint_state.position[response.solution.joint_state.name.index(joint)] 
-                point.velocities[i] = 0.2
+                #point.velocities[i] = 0.2
                 # find total travel distance right now
-                try:
-                    dists[i] = abs(point.positions[i] - self.servos[joint])
-                except:
-                    pass
-            max_dist = max(dists)
-            for i in range(len(dists)): #request.ik_request.ik_seed_state.joint_state.name:
-                if dists[i] > 0:
-                    point.velocities[i] = dists[i]/max_dist * 0.2
-
+                #try:
+                #    dists[i] = abs(point.positions[i] - self.servos[joint])
+                #except:
+                #    pass
+            #max_dist = max(dists)
+            #for i in range(len(dists)): #request.ik_request.ik_seed_state.joint_state.name:
+            #    if dists[i] > 0:
+            #        point.velocities[i] = dists[i]/max_dist * 0.2
+            point.time_from_start = rospy.Duration(2.0)
             msg.points.append(point)
             msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
             self._pub.publish(msg)
@@ -158,7 +163,7 @@ class MoveArmServer:
 
 if __name__ == '__main__':
     try:
-        MoveArmServer()
+        SimpleArmServer()
     except rospy.ROSInterruptException:
         rospy.loginfo("And that's all folks...")
 
