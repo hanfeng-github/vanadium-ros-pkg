@@ -25,3 +25,53 @@ tilt servo id = 7
 
 == Using Mini Maxwell ==
 Has been moved to [http://www.ros.org/wiki/mini_max/Tutorials Mini Maxwell Tutorials] on the ROS wiki. 
+
+= Introduction =
+Mini Max is a small version of Maxwell, based on an iRobot Create, Kinect, ArbotiX2 and AX-12 based arm. The platform is open source.
+
+<img src="https://vanadium-ros-pkg.googlecode.com/svn/wiki/mini-max.jpg" width="240">
+
+== Software Roadmap ==
+The following need to be addressed:
+ * mini_max_core
+   * modified version of turtlebot create/gryo drivers (Note: turtlebot drivers are currently not playing well with arbotix drivers, causes both to lock up)
+ * mini_max_defs 
+   * ~~create URDF -- base, arm, head, gripper. STL files: body, kinect~~
+   * ~~arm kinematics launch file~~
+ * mini_max_nav
+   * launch files for navigation
+ * mini_max_apps
+   * tuck_arm
+
+= Documentation Roadmap =
+ * How to build, wire robot
+   * Installing Power Board
+   * Setting servo IDs
+   * Assembling the Frame
+   * Assembling, Wiring the Arm
+   * Attaching the Kinect
+   
+ * Basic tutorials (on ROS.org):
+   * ~~How to setup laptop~~
+   * ~~Starting up Mini Maxwell~~
+   * ~~Reading the state of the switches~~
+   * Moving the base
+   * Pointing head
+   * Moving the arm
+   * Using the gripper
+
+= Hardware Revision History =
+Future Work: 
+Laser cut, parallel jaw gripper
+
+Revision History:
+ * V0.2 Revisions (Siena batch)
+   * Add holes for ArbotiX mounting
+   * Add right angle connectors on front upright, adjoining side
+   * New Kinect mounting pieces
+   * Add holes in base for wire pass through
+ * V0.3 Revisions (Fergy's)
+   * Add base ridge for increased stability of arm
+   * Holes in base are now rounded squares (better USB cable access)
+ * V0.4 Revisions (HMC?)
+   * Move left-most Kinect mount just a bit for better alignment. 
