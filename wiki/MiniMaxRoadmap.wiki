@@ -8,7 +8,7 @@ Mini Max is a small version of Maxwell, based on an iRobot Create, Kinect, Arbot
 = Software Roadmap =
 The following need to be addressed:
  * mini_max_core
-   * modified version of turtlebot create/gryo drivers
+   * modified version of turtlebot create/gryo drivers (Note: turtlebot drivers are currently not playing well with arbotix drivers, causes both to lock up)
  * mini_max_defs 
    * ~~create URDF~~
      * ~~base~~
@@ -24,8 +24,9 @@ The following need to be addressed:
 
 = Documentation Roadmap =
  * How to build, wire robot
- * ~~How to setup laptop~~
- * Basic tutorials:
+ * ~~How to setup laptop~~ -- move to ROS.org
+ * Basic tutorials (on ROS.org):
+   * Starting up Mini Maxwell
    * Reading the state of the switches
    * Moving the base
    * Pointing head
