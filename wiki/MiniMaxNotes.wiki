@@ -38,7 +38,7 @@ The following need to be addressed:
  * mini_max_apps
    * tuck_arm
 
-= Documentation Roadmap =
+== Documentation Roadmap ==
  * How to build, wire robot
    * Installing Power Board
    * Setting servo IDs
@@ -55,7 +55,7 @@ The following need to be addressed:
    * Moving the arm
    * Using the gripper
 
-= Hardware Revision History =
+== Hardware Revision History ==
 Future Work: 
 Laser cut, parallel jaw gripper
 
