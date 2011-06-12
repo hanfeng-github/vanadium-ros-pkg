@@ -24,11 +24,33 @@ The following need to be addressed:
 
 = Documentation Roadmap =
  * How to build, wire robot
- * ~~How to setup laptop~~ -- move to ROS.org
+   * Installing Power Board
+   * Setting servo IDs
+   * Assembling the Frame
+   * Assembling, Wiring the Arm
+   * Attaching the Kinect
+   
  * Basic tutorials (on ROS.org):
-   * Starting up Mini Maxwell
-   * Reading the state of the switches
+   * ~~How to setup laptop~~
+   * ~~Starting up Mini Maxwell~~
+   * ~~Reading the state of the switches~~
    * Moving the base
    * Pointing head
    * Moving the arm
    * Using the gripper
+
+= Hardware Revision History =
+Future Work: 
+Laser cut, parallel jaw gripper
+
+Revision History:
+ * V0.2 Revisions (Siena batch)
+   * Add holes for ArbotiX mounting
+   * Add right angle connectors on front upright, adjoining side
+   * New Kinect mounting pieces
+   * Add holes in base for wire pass through
+ * V0.3 Revisions (Fergy's)
+   * Add base ridge for increased stability of arm
+   * Holes in base are now rounded squares (better USB cable access)
+ * V0.4 Revisions (HMC?)
+   * Move left-most Kinect mount just a bit for better alignment. 
