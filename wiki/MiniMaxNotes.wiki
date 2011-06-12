@@ -1,7 +1,7 @@
 #summary Build, Installation, and Usage info on Mini Maxwell
 
 = Introduction =
-Mini Max is a custom mobile manipulator, leveraging the !ArbotiX2, Dynamixel Servos, ROS, and an iRobot Create. 
+Mini Max is a custom mobile manipulator, leveraging the !ArbotiX2, Dynamixel Servos, ROS, and an iRobot Create. The platform is open source.
 
 <img src="https://vanadium-ros-pkg.googlecode.com/svn/wiki/watercolor.png" width="300">
 
@@ -25,11 +25,6 @@ tilt servo id = 7
 
 == Using Mini Maxwell ==
 Has been moved to [http://www.ros.org/wiki/mini_max/Tutorials Mini Maxwell Tutorials] on the ROS wiki. 
-
-= Introduction =
-Mini Max is a small version of Maxwell, based on an iRobot Create, Kinect, ArbotiX2 and AX-12 based arm. The platform is open source.
-
-<img src="https://vanadium-ros-pkg.googlecode.com/svn/wiki/mini-max.jpg" width="240">
 
 == Software Roadmap ==
 The following need to be addressed:
