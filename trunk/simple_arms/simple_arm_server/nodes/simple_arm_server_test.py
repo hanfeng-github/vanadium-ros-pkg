@@ -27,7 +27,7 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-usage_= "usage: simple_arm_server_test.py x y z wrist_pitch [wrist_roll=0.0 frame_id='base_link' duration='2.5']"
+usage_= "usage: simple_arm_server_test.py x y z wrist_pitch [wrist_roll=0.0 frame_id='base_link' duration=5.0]"
 
 import roslib; roslib.load_manifest('simple_arm_server')
 import rospy

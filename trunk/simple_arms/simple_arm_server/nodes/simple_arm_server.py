@@ -152,7 +152,7 @@ class SimpleArmServer:
             if req.move_time > rospy.Duration(0.0):
                 point.time_from_start = req.move_time
             else:
-                point.time_from_start = rospy.Duration(2.0)
+                point.time_from_start = rospy.Duration(5.0)
             msg.points.append(point)
             msg.header.stamp = rospy.Time.now() + rospy.Duration(0.01)
             self._pub.publish(msg)
