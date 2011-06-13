@@ -27,7 +27,7 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-usage_= "simple_arm_server_test.py x y z wrist_pitch [wrist_roll frame_id]"
+usage_= "usage: simple_arm_server_test.py x y z wrist_pitch [wrist_roll=0.0 frame_id='base_link' duration='2.5']"
 
 import roslib; roslib.load_manifest('simple_arm_server')
 import rospy
@@ -61,6 +61,9 @@ if __name__ == '__main__':
         req.pose_stamped.pose.orientation.y = q[1]
         req.pose_stamped.pose.orientation.z = q[2]
         req.pose_stamped.pose.orientation.w = q[3]
+
+        if len(sys.argv) > 7:
+            req.move_time = rospy.Duration(float(sys.argv[7]))
 
         try:
             r = move_srv(req)
