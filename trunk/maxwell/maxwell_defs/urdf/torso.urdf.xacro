@@ -8,7 +8,9 @@
       <parent link="${parent}_link"/>
       <child link="${name}_link"/>
     </joint>
+
     <link name="${name}_link">
+
       <visual>
         <origin xyz="0 0 ${column_height/2-torso_height}" rpy="0 0 0 " />
         <geometry>
@@ -16,13 +18,16 @@
         </geometry>
         <material name="Grey" />
       </visual>
+
       <collision>
         <origin xyz="0 0 ${column_height/2-torso_height}" rpy="0 0 0 " />
         <geometry>
           <box size="0.0254 0.0254 ${column_height}"/>
         </geometry>
       </collision>
+
     </link>
+
   </macro>
 
 </robot>

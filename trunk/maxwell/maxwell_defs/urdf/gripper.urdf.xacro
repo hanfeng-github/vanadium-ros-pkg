@@ -10,6 +10,7 @@
       <child link="${prefix}_finger_link"/>
     </joint>
     <link name="${prefix}_finger_link">
+
       <visual name="${prefix}_finger_visual">
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry name="${prefix}_finger_visual_geom">
@@ -17,7 +18,14 @@
         </geometry>
         <material name="Orange" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.125 0.01 0.03"/>
+        </geometry>
+      </collision>
+
     </link>
   </macro>
 

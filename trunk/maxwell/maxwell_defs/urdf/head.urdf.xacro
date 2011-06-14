@@ -10,6 +10,7 @@
       <child link="${name}_base_link"/>
     </joint>
     <link name="${name}_base_link">
+
       <visual>
         <origin xyz="${-0.0635/4} 0 ${0.0381/2}" rpy="0 0 0" />
         <geometry>
@@ -17,7 +18,14 @@
         </geometry>
         <material name="Black" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="${-0.0635/4} 0 ${0.0381/2}" rpy="0 0 0" />
+        <geometry>
+          <box size=".0635 .0381 .0381"/>
+        </geometry>
+      </collision>
+
     </link>
 
     <!-- Head pan -->
@@ -29,6 +37,7 @@
       <child link="${name}_pan_link"/>
     </joint>
     <link name="${name}_pan_link">
+
       <visual>
         <origin xyz="0 0 ${0.0635/2}" rpy="0 0 0 " />
         <geometry>
@@ -36,7 +45,14 @@
         </geometry>
         <material name="Black" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="0 0 ${0.0635/2}" rpy="0 0 0 " />
+        <geometry>
+          <box size=".0381 .0381 .0635"/>
+        </geometry>
+      </collision>
+
     </link>
 
     <!-- Head tilt -->
@@ -48,6 +64,7 @@
       <child link="${name}_tilt_link"/>
     </joint>
     <link name="${name}_tilt_link">
+
       <visual>
         <origin xyz="0 0 ${0.0381/2}" rpy="0.0 0.0 0.0" />
         <geometry>
@@ -55,7 +72,14 @@
         </geometry>
         <material name="Orange" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="0 0 ${0.0381/2}" rpy="0.0 0.0 0.0" />
+        <geometry>
+          <box size=".0381 .0381 .0381"/>
+        </geometry>
+      </collision>
+
     </link>
 
     <!-- Head sensor frame -->

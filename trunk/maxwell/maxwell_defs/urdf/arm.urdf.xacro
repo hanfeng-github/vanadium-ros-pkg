@@ -2,6 +2,7 @@
 <robot>
   
   <macro name="maxwell_arm" params="name parent *origin">
+
     <!-- Shoulder pan -->
     <joint name="${name}_shoulder_pan_joint" type="revolute">
       <axis xyz="0 0 1" />
@@ -10,7 +11,9 @@
       <child link="${name}_shoulder_pan_link"/>
       <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />
     </joint>
+
     <link name="${name}_shoulder_pan_link">
+
       <visual name="${name}_shoulder_pan_visual">
         <origin xyz="${-0.065/2+0.0127} 0 0.040" rpy="0 0 0" />
         <geometry name="${name}_shoulder_pan_visual_geom">
@@ -18,8 +21,16 @@
         </geometry>
         <material name="Black" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="${-0.065/2+0.0127} 0 0.040" rpy="0 0 0" />
+        <geometry>
+          <box size="0.065 0.057 0.120"/>
+        </geometry>
+      </collision>
+
     </link>
+
     <!-- Shoulder lift -->
     <joint name="${name}_shoulder_lift_joint" type="revolute">
       <axis xyz="0 1 0"/>
@@ -28,7 +39,9 @@
       <parent link="${name}_shoulder_pan_link"/>
       <child link="${name}_shoulder_lift_link"/>
     </joint>
+
     <link name="${name}_shoulder_lift_link">
+
       <visual name="${name}_shoulder_lift_visual">
         <origin xyz="${0.165/2} 0 0" rpy="0 0 0" />
         <geometry name="${name}_shoulder_lift_visual_geom">
@@ -36,8 +49,16 @@
         </geometry>
         <material name="Grey" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="${0.165/2} 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.165 0.057 0.040"/>
+        </geometry>
+      </collision>
+
     </link>
+
     <!-- Elbow -->
     <joint name="${name}_elbow_flex_joint" type="revolute">
       <axis xyz="0 1 0" />
@@ -46,17 +67,27 @@
       <parent link="${name}_shoulder_lift_link"/>
       <child link="${name}_elbow_flex_link"/>
     </joint>
+
     <link name="${name}_elbow_flex_link">
+
       <visual name="${name}_elbow_flex_visual">
         <origin xyz="${0.125/2} 0 0" rpy="0 0 0" />
-        <geometry name="${name}_elbow_flex_visual_geom">
+        <geometry>
           <!--<mesh filename="package://pr2_defs/meshes/shoulder_yaw.stl" />-->
           <box size="0.125 0.057 0.040"/>
         </geometry>
         <material name="Black" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="${0.125/2} 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.125 0.057 0.040"/>
+        </geometry>
+      </collision>
+
     </link>
+
     <!-- Wrist flex -->
     <joint name="${name}_wrist_flex_joint" type="revolute">
       <axis xyz="0 1 0" />
@@ -65,7 +96,9 @@
       <parent link="${name}_elbow_flex_link"/>
       <child link="${name}_wrist_flex_link"/>
     </joint>
+
     <link name="${name}_wrist_flex_link">
+
       <visual name="${name}_wrist_flex_visual">
         <origin xyz="${0.030/2} 0 0" rpy="0 0 0" />
         <geometry name="${name}_wrist_flex_visual_geom">
@@ -74,8 +107,16 @@
         </geometry>
         <material name="Grey" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="${0.030/2} 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.030 0.057 0.040"/>
+        </geometry>
+      </collision>
+
     </link>
+
     <!-- Wrist roll -->
     <joint name="${name}_wrist_roll_joint" type="revolute">
       <axis xyz="1 0 0" />
@@ -84,7 +125,9 @@
       <parent link="${name}_wrist_flex_link"/>
       <child link="${name}_wrist_roll_link"/>
     </joint>
+
     <link name="${name}_wrist_roll_link">
+
       <visual name="${name}_wrist_roll_visual">
         <origin xyz="0.05 0 0" rpy="0 0 0" />
         <geometry name="${name}_wrist_roll_visual_geom">
@@ -93,8 +136,16 @@
         </geometry>
         <material name="Black" />
       </visual>
-      <!-- TODO: add collision -->
+
+      <collision>
+        <origin xyz="0.05 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.100 0.065 0.050"/>
+        </geometry>
+      </collision>
+
     </link>
+
   </macro>
 
 </robot>
