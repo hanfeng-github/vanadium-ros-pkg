@@ -2,6 +2,24 @@
 <robot>
 
   <macro name="mini_gripper" params="name parent">
+    <!-- Palm -->
+    <joint name="${name}_palm_joint" type="fixed">
+      <axis xyz="0 0 1" />
+      <origin xyz="0.04 0 0" rpy="0 0 0" />
+      <parent link="${parent}_link"/>
+      <child link="${name}_palm_link"/>
+    </joint>
+    <link name="${name}_palm_link">
+      <visual name="${name}_palm_visual">
+        <origin xyz="0 0.005 0" rpy="0 0 0"/>
+        <geometry name="${name}_palm_visual_geom">
+          <box size="0.03 ${0.0375+0.0275} ${ax12_depth*1.1}"/>
+        </geometry>
+        <material name="Black" />
+      </visual>
+      <!-- TODO: add collision -->
+    </link>
+
     <!-- Static Side -->
     <joint name="${name}_static_joint" type="fixed">
       <axis xyz="0 0 1" />
@@ -11,7 +29,7 @@
     </joint>
     <link name="${name}_link">
       <visual name="${name}_static_visual">
-        <origin xyz="-0.05 0.025 0" rpy="-1.57 0 0"/>
+        <origin xyz="-0.06 0.0375 0" rpy="-1.57 0 0"/>
         <geometry name="${name}_static_visual_geom">
           <mesh filename="package://mini_max_defs/meshes/gripper.stl" />
         </geometry>
@@ -22,7 +40,7 @@
     <!-- Actuated Side -->
     <joint name="${name}_joint" type="revolute">
       <axis xyz="0 0 1" />
-      <origin xyz="0.05 -0.025 0" rpy="0 0 0" />
+      <origin xyz="0.04 -0.0275 0" rpy="0 0 0" />
       <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />
       <parent link="${parent}_link"/>
       <child link="finger_link"/>

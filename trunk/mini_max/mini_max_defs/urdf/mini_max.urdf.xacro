@@ -12,6 +12,13 @@
   <property name="ax12_depth" value="0.0318" />
   <property name="ax12_center" value="0.0385" />
 
+  <property name="calib_cam_x" value="0.010" />
+  <property name="calib_cam_y" value="0.000" />
+  <property name="calib_cam_z" value="0.025" />
+  <property name="calib_cam_rr" value="0.000" />
+  <property name="calib_cam_rp" value="0.080" />
+  <property name="calib_cam_ry" value="0.000" />
+
   <include filename="$(find mini_max_defs)/urdf/arm.urdf.xacro" />
   <include filename="$(find mini_max_defs)/urdf/gripper.urdf.xacro" />
 
@@ -87,7 +94,7 @@
   <joint name="head_tilt_joint" type="revolute">
      <parent link="head_pan_link" />
      <child link="head_tilt_link" />
-     <origin xyz="0 0 ${ax12_height+0.00635}" />
+     <origin xyz="0 0 ${ax12_center}" />
      <axis xyz="0 1.0 0"/>
      <limit effort="30" velocity="1.0" lower="-1.57" upper="1.57" />
   </joint>
@@ -104,13 +111,13 @@
 
   <!-- Head sensor frame -->
   <joint name="head_sensor_frame_joint" type="fixed">
-    <origin xyz="0 0 ${neck_height}" rpy="0 0 0" />     
+    <origin xyz="${calib_cam_z} ${calib_cam_y} ${neck_height+calib_cam_x}" rpy="${calib_cam_rr} ${calib_cam_rp} ${calib_cam_ry}" />     
     <parent link="head_tilt_link"/>
     <child link="head_sensor_frame"/>
   </joint>
   <link name="head_sensor_frame">
     <visual>
-      <origin xyz="-0.0254 0 0" rpy="0 0 -1.57" />
+      <origin xyz="${-calib_cam_z-0.0254} 0 0" rpy="0.0 0 -1.57" />
       <geometry>
         <mesh filename="package://mini_max_defs/meshes/kinect.stl" />
       </geometry>
