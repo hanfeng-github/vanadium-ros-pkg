@@ -27,7 +27,7 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-usage_= "usage: simple_arm_server_test.py x y z wrist_pitch [wrist_roll=0.0 frame_id='base_link' duration=5.0]"
+usage_= "usage: simple_arm_server_test.py x y z wrist_pitch [wrist_roll=0.0 wrist_yaw=0.0 frame_id='base_link' duration=5.0]"
 
 import roslib; roslib.load_manifest('simple_arm_server')
 import rospy
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
         req = MoveArmRequest()  
         req.header.frame_id = "base_link"
-        if len(sys.argv) > 6:
+        if len(sys.argv) > 7:
             req.header.frame_id = sys.argv[6]
 
         action = ArmAction()
@@ -59,7 +59,10 @@ if __name__ == '__main__':
         roll = 0.0
         if len(sys.argv) > 5:
             roll = float(sys.argv[5])
-        q = quaternion_from_euler(roll, float(sys.argv[4]), 0.0, 'sxyz')
+        yaw = 0.0
+        if len(sys.argv) > 6:
+            yaw = float(sys.argv[6])
+        q = quaternion_from_euler(roll, float(sys.argv[4]), yaw, 'sxyz')
         action.goal.orientation.x = q[0]
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
