@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" Example code of how to move a robot back and forth. """
+""" Example code of how to move a robot forward for 3 seconds. """
 
 # We always import roslib, and load the manifest to handle dependencies
 import roslib; roslib.load_manifest('mini_max_tutorials')
