@@ -47,13 +47,17 @@ The following need to be addressed:
    * Attaching the Kinect
    
  * Basic tutorials (on ROS.org):
-   * ~~How to setup laptop~~
-   * ~~Starting up Mini Maxwell~~
-   * ~~Reading the state of the switches~~
-   * Moving the base
-   * Pointing head
-   * Moving the arm
-   * Using the gripper
+   * (DONE) How to setup laptop -- covers installation of packages. 
+   * (DONE) Starting up Mini Maxwell -- covers bringup.
+   * (DONE) Using the Buttons -- covers reading the state of the switches.
+   * Moving the base -- shows how to move the base by publishing cmd_vel. Students draw a square on the ground. Advanced: using TF to make it a nice square. 
+   * Pointing the Head -- shows how to compute joint angles to look at a point in space.
+   * Moving the Arm -- shows how to use the simple_arm_server, move the arm, open/close the gripper.
+   * Using the Camera -- shows how to capture image, do cv_bridge, and then blur the image. 
+
+  * Advanced tutorials (on ROS.org): 
+   * Working with Point Clouds (C++) -- shows how to capture point clouds with the Kinect. Shows perception aspects of block_manipulation. 
+   * Picking up Objects (C++) -- builds on perception of block_manipulation, picks up a recognized block. 
 
 == Hardware Revision History ==
 Future Work: 
