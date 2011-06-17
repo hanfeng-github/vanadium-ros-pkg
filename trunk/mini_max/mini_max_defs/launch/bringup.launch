@@ -14,6 +14,10 @@
   <node name="arm_controller" pkg="arbotix_controllers" type="traj_controller.py">
       <rosparam param="joints">[arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint]</rosparam>
   </node>
+  <node name="gripper_controller" pkg="arbotix_controllers" type="one_side_gripper_controller.py">
+      <param name="invert" value="true"/>
+      <param name="pad_width" value="0.0254"/>
+  </node>
 
   <!-- Monitoring and Diagnostics -->
   <node pkg="mini_max_core" type="laptop_battery.py" name="laptop_battery" />
