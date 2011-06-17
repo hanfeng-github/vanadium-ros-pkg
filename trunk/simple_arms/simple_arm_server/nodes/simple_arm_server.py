@@ -38,6 +38,9 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 from kinematics_msgs.msg import KinematicSolverInfo, PositionIKRequest
 from kinematics_msgs.srv import GetKinematicSolverInfo, GetPositionIK, GetPositionIKRequest
+from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import Float64
+from simple_arm_server.msg import *
 from simple_arm_server.srv import *
 
 from math import *
@@ -62,12 +65,13 @@ class SimpleArmServer:
         rospy.wait_for_service('arm_kinematics/get_ik_solver_info')
         self._get_ik_proxy = rospy.ServiceProxy('arm_kinematics/get_ik', GetPositionIK, persistent=True)
         self._get_ik_solver_info_proxy = rospy.ServiceProxy('arm_kinematics/get_ik_solver_info', GetKinematicSolverInfo)
-
+    
         # setup tf for translating poses
         self._listener = tf.TransformListener()
 
         # a publisher for arm movement
         self._pub = rospy.Publisher('arm_controller/command', JointTrajectory)
+        self._gripper = rospy.Publisher('gripper_controller/command', Float64)
 
         # listen to joint states
         self.servos = dict()
@@ -90,75 +94,103 @@ class SimpleArmServer:
         """ Given pose to move gripper to, do it. """ 
         arm_solver_info = self._get_ik_solver_info_proxy()     
   
-        # goal of this service call    
-        pose = self._listener.transformPose(self.root, req.pose_stamped)
+        for action in req.goals:
+            if action.type == ArmAction.MOVE_ARM:
+                rospy.loginfo("Move arm to " + str(action.goal))
+                # arm movement    
+                ps = PoseStamped()
+                ps.header.frame_id = req.header.frame_id
+                ps.pose = action.goal
+                pose = self._listener.transformPose(self.root, ps)
         
-        # create IK request
-        request = GetPositionIKRequest()
-        request.timeout = rospy.Duration(self.timeout)
+                # create IK request
+                request = GetPositionIKRequest()
+                request.timeout = rospy.Duration(self.timeout)
 
-        request.ik_request.pose_stamped.header.frame_id = self.root;
-        request.ik_request.ik_link_name = self.tip;
-        request.ik_request.pose_stamped.pose.position.x = pose.pose.position.x
-        request.ik_request.pose_stamped.pose.position.y = pose.pose.position.y
-        request.ik_request.pose_stamped.pose.position.z = pose.pose.position.z
+                request.ik_request.pose_stamped.header.frame_id = self.root;
+                request.ik_request.ik_link_name = self.tip;
+                request.ik_request.pose_stamped.pose.position.x = pose.pose.position.x
+                request.ik_request.pose_stamped.pose.position.y = pose.pose.position.y
+                request.ik_request.pose_stamped.pose.position.z = pose.pose.position.z
 
-        e = euler_from_quaternion([pose.pose.orientation.x,pose.pose.orientation.y,pose.pose.orientation.z,pose.pose.orientation.w])
-        q =  quaternion_from_euler(e[0], e[1], e[2])
-        if self.dof < 6:
-            # 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
-            q = quaternion_from_euler(e[0], e[1], atan2(pose.pose.position.y, pose.pose.position.x))
-        if self.dof < 5:
-            # 4 DOF, so yaw as above AND no roll
-            q = quaternion_from_euler(0, e[1], atan2(pose.pose.position.y, pose.pose.position.x))
+                e = euler_from_quaternion([pose.pose.orientation.x,pose.pose.orientation.y,pose.pose.orientation.z,pose.pose.orientation.w])
+                q =  quaternion_from_euler(e[0], e[1], e[2])
+                if self.dof < 6:
+                    # 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
+                    q = quaternion_from_euler(e[0], e[1], atan2(pose.pose.position.y, pose.pose.position.x))
+                if self.dof < 5:
+                    # 4 DOF, so yaw as above AND no roll
+                    q = quaternion_from_euler(0, e[1], atan2(pose.pose.position.y, pose.pose.position.x))
 
-        request.ik_request.pose_stamped.pose.orientation.x = q[0]
-        request.ik_request.pose_stamped.pose.orientation.y = q[1]
-        request.ik_request.pose_stamped.pose.orientation.z = q[2]
-        request.ik_request.pose_stamped.pose.orientation.w = q[3]
+                request.ik_request.pose_stamped.pose.orientation.x = q[0]
+                request.ik_request.pose_stamped.pose.orientation.y = q[1]
+                request.ik_request.pose_stamped.pose.orientation.z = q[2]
+                request.ik_request.pose_stamped.pose.orientation.w = q[3]
 
-        request.ik_request.ik_seed_state.joint_state.name = arm_solver_info.kinematic_solver_info.joint_names
-        request.ik_request.ik_seed_state.joint_state.position = [0]*len(request.ik_request.ik_seed_state.joint_state.name )
+                request.ik_request.ik_seed_state.joint_state.name = arm_solver_info.kinematic_solver_info.joint_names
+                request.ik_request.ik_seed_state.joint_state.position = [0]*len(request.ik_request.ik_seed_state.joint_state.name )
 
-        # get IK
-        response = self._get_ik_proxy(request)
-        rospy.loginfo(response)
+                # get IK
+                response = self._get_ik_proxy(request)
+                rospy.loginfo(response)
 
-        # move the arm
-        # TODO: we need correct trajectories
-        if response.error_code.val == response.error_code.SUCCESS:
-            arm_solver_info = self._get_ik_solver_info_proxy()     
-            msg = JointTrajectory()
-            msg.joint_names = arm_solver_info.kinematic_solver_info.joint_names
-            msg.points = list()
-            point = JointTrajectoryPoint()
-            point.positions = [ 0.0 for servo in msg.joint_names ]
-            point.velocities = [ 0.0 for servo in msg.joint_names ]
-            #dists = [0.0 for servo in msg.joint_names]
-            for joint in request.ik_request.ik_seed_state.joint_state.name:
-                i = msg.joint_names.index(joint)
-                point.positions[i] = response.solution.joint_state.position[response.solution.joint_state.name.index(joint)] 
-                #point.velocities[i] = 0.2
-                # find total travel distance right now
-                #try:
-                #    dists[i] = abs(point.positions[i] - self.servos[joint])
-                #except:
-                #    pass
-            #max_dist = max(dists)
-            #for i in range(len(dists)): #request.ik_request.ik_seed_state.joint_state.name:
-            #    if dists[i] > 0:
-            #        point.velocities[i] = dists[i]/max_dist * 0.2
+                # move the arm
+                # TODO: we need correct trajectories
+                if response.error_code.val == response.error_code.SUCCESS:
+                    arm_solver_info = self._get_ik_solver_info_proxy()     
+                    msg = JointTrajectory()
+                    msg.joint_names = arm_solver_info.kinematic_solver_info.joint_names
+                    msg.points = list()
+                    point = JointTrajectoryPoint()
+                    point.positions = [ 0.0 for servo in msg.joint_names ]
+                    point.velocities = [ 0.0 for servo in msg.joint_names ]
+                    #dists = [0.0 for servo in msg.joint_names]
+                    for joint in request.ik_request.ik_seed_state.joint_state.name:
+                        i = msg.joint_names.index(joint)
+                        point.positions[i] = response.solution.joint_state.position[response.solution.joint_state.name.index(joint)] 
+                        #point.velocities[i] = 0.2
+                        # find total travel distance right now
+                        #try:
+                        #    dists[i] = abs(point.positions[i] - self.servos[joint])
+                        #except:
+                        #    pass
+                    #max_dist = max(dists)
+                    #for i in range(len(dists)): #request.ik_request.ik_seed_state.joint_state.name:
+                    #    if dists[i] > 0:
+                    #        point.velocities[i] = dists[i]/max_dist * 0.2
+                    
+                    if action.move_time > rospy.Duration(0.0):
+                        point.time_from_start = action.move_time
+                    else:
+                        point.time_from_start = rospy.Duration(5.0)
+                    msg.points.append(point)
+                    msg.header.stamp = rospy.Time.now() + rospy.Duration(0.01)
+                    self._pub.publish(msg)
+                    #return MoveArmResponse(True)
+                else:
+                    return MoveArmResponse(False)
             
-            if req.move_time > rospy.Duration(0.0):
-                point.time_from_start = req.move_time
+                # wait for completion
+                while True:
+                    done = True
+                    errors = list()
+                    for j in range(len(msg.joint_names)):
+                        joint = msg.joint_names[j]
+                        errors.append(self.servos[joint] - point.positions[j])
+                        if abs(self.servos[joint] - point.positions[j]) > 0.01:
+                            done = False
+                    print errors
+                    if rospy.Time.now() > msg.header.stamp + rospy.Duration(10.0) or done:
+                        break
+                    rospy.sleep(0.1)
+
             else:
-                point.time_from_start = rospy.Duration(5.0)
-            msg.points.append(point)
-            msg.header.stamp = rospy.Time.now() + rospy.Duration(0.01)
-            self._pub.publish(msg)
-            return MoveArmResponse(True)
-        else:
-            return MoveArmResponse(False)
+                rospy.loginfo("Move gripper to " + str(action.command))
+                # gripper movement
+                self._gripper.publish( Float64(action.command) )
+                rospy.sleep( action.move_time )
+
+        return MoveArmResponse(True)
    
     def haltCb(self, req):
         ''' Publish empty trajectory to stop arm. '''

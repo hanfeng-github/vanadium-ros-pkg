@@ -36,6 +36,7 @@ import sys
 import tf
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
+from simple_arm_server.msg import *
 from simple_arm_server.srv import * 
 
 if __name__ == '__main__':
@@ -45,25 +46,29 @@ if __name__ == '__main__':
         move_srv = rospy.ServiceProxy('simple_arm_server/move', MoveArm) 
 
         req = MoveArmRequest()  
-        req.pose_stamped.header.frame_id = "base_link"
+        req.header.frame_id = "base_link"
         if len(sys.argv) > 6:
-            req.pose_stamped.header.frame_id = sys.argv[6]
+            req.header.frame_id = sys.argv[6]
 
-        req.pose_stamped.pose.position.x = float(sys.argv[1])
-        req.pose_stamped.pose.position.y = float(sys.argv[2])
-        req.pose_stamped.pose.position.z = float(sys.argv[3])
+        action = ArmAction()
+        action.type = ArmAction.MOVE_ARM
+        action.goal.position.x = float(sys.argv[1])
+        action.goal.position.y = float(sys.argv[2])
+        action.goal.position.z = float(sys.argv[3])
 
         roll = 0.0
         if len(sys.argv) > 5:
             roll = float(sys.argv[5])
         q = quaternion_from_euler(roll, float(sys.argv[4]), 0.0, 'sxyz')
-        req.pose_stamped.pose.orientation.x = q[0]
-        req.pose_stamped.pose.orientation.y = q[1]
-        req.pose_stamped.pose.orientation.z = q[2]
-        req.pose_stamped.pose.orientation.w = q[3]
+        action.goal.orientation.x = q[0]
+        action.goal.orientation.y = q[1]
+        action.goal.orientation.z = q[2]
+        action.goal.orientation.w = q[3]
 
         if len(sys.argv) > 7:
-            req.move_time = rospy.Duration(float(sys.argv[7]))
+            action.move_time = rospy.Duration(float(sys.argv[7]))
+
+        req.goals.append(action)
 
         try:
             r = move_srv(req)

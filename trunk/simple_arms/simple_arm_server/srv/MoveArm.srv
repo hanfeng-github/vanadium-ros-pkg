@@ -1,4 +1,4 @@
-geometry_msgs/PoseStamped pose_stamped
-duration move_time
+std_msgs/Header header
+ArmAction[] goals
 ---
 bool success
