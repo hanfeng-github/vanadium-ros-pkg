@@ -3,7 +3,7 @@
 """ Example code of how to access button state. """
 
 # We always import roslib, and load the manifest to handle dependencies
-import roslib; roslib.load_manifest('button_test')
+import roslib; roslib.load_manifest('mini_max_tutorials')
 import rospy
 
 # arbotix_msgs defines the Digital message, which tells us the state
