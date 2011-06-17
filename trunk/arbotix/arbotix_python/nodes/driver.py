@@ -358,7 +358,7 @@ class ArbotixROS(ArbotiX):
                     if servo.temperature > 60:
                         stat.level = DiagnosticStatus.ERROR
                         stat.message = "OVERHEATED"
-                    elif servo.temperature > 40:
+                    elif servo.temperature > 50:
                         stat.level = DiagnosticStatus.WARN
                         stat.message = "VERY HOT"
                     stat.values.append(KeyValue("Voltage", str(servo.voltage)))
