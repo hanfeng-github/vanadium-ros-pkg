@@ -1,0 +1,18 @@
+#summary What should be released (in debs)
+
+= albany-ros-pkg =
+ * albany_vision
+   * ar_kinect
+   * depth_viewer
+   * camera_turnpike
+ * neato_robot
+   * 2dnav_neato
+   * neato_driver
+   * neato_node
+ * slam_coreslam
+ * pocketsphinx (what stack??)
+
+= vanadium-ros-pkg = 
+ * arbotix stack
+ * simple_arms
+ * mini_max
