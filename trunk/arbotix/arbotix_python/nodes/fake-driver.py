@@ -134,6 +134,39 @@ class Servo():
         else:
             return None
 
+class HobbyServo(Servo):
+    """ Class to handle services and updates for a single Servo, on an ArbotiX 
+        robocontroller's AX/RX-bus. """
+    def __init__(self, name, device):
+        self.name = name
+        self.device = device           # ArbotiX instance
+        n = "~servos/"+name+"/"
+
+        # TODO: load URDF specs
+
+        self.id = int(rospy.get_param(n+"id"))
+        self.neutral = rospy.get_param(n+"neutral",512)
+        self.ticks = rospy.get_param(n+"ticks",1024)
+        self.rad_per_tick = radians(rospy.get_param(n+"range",300.0))/self.ticks
+
+        self.max_angle = radians(rospy.get_param(n+"max_angle",150))
+        self.min_angle = radians(rospy.get_param(n+"min_angle",-150))
+        self.max_speed = radians(rospy.get_param(n+"max_speed",684.0)) 
+                                       # max speed = 114 rpm - 684 deg/s
+        self.invert = rospy.get_param(n+"invert",False)
+        self.readable = rospy.get_param(n+"readable",True)
+
+        self.dirty = False             # newly updated position?
+        self.angle = 0.0               # current position, as returned by servo (radians)
+        self.desired = 0.0             # desired position (radians)
+        self.last_cmd = 0.0            # last position sent (radians)
+        self.velocity = 0.0            # moving speed
+        self.relaxed = True            # are we not under torque control?
+        self.last = rospy.Time.now()
+        
+        # ROS interfaces
+        rospy.Subscriber(name+'/command', Float64, self.commandCb)
+        #rospy.Service(name+'/relax', Relax, self.relaxCb)
 
 ###############################################################################
 # Base handling class  
@@ -232,10 +265,10 @@ class ArbotixROS():
         self.dynamixels = dict()
         for name in dynamixels.keys():
             self.dynamixels[name] = Servo(name,self)
-        #hobbyservos = rospy.get_param("~servos", dict())
-        #self.servos = dict()
-        #for name in hobbyservos.keys():
-        #    self.servos[name] = HobbyServo(name, self)
+        hobbyservos = rospy.get_param("~servos", dict())
+        self.servos = dict()
+        for name in hobbyservos.keys():
+            self.servos[name] = HobbyServo(name, self)
 
         # setup a base controller
         self.use_base = False
@@ -256,6 +289,8 @@ class ArbotixROS():
             #    syncpkt = list()
                 for servo in self.dynamixels.values():
                     v = servo.interpolate(self.rate/self.throttle_w)
+                #for servo in self.servos.values():
+                #    v = servo.interpolate(self.rate/self.throttle_w)
             #        if v != None:
             #            syncpkt.append([servo.id,int(v)%256,int(v)>>8])  
             #    if len(syncpkt) > 0:      
@@ -274,6 +309,11 @@ class ArbotixROS():
                 msg.position = list()
                 msg.velocity = list()
                 for servo in self.dynamixels.values():
+                    servo.angle = servo.last_cmd          
+                    msg.name.append(servo.name)
+                    msg.position.append(servo.angle)
+                    msg.velocity.append(servo.velocity)
+                for servo in self.servos.values():
                     servo.angle = servo.last_cmd          
                     msg.name.append(servo.name)
                     msg.position.append(servo.angle)
