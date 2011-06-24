@@ -36,12 +36,12 @@ The following need to be addressed:
  * mini_max_nav
    * launch files for navigation
  * mini_max_apps
-   * tuck_arm
+   * ~~tuck_arm~~
 
 == Documentation Roadmap ==
  * How to build, wire robot
    * Installing Power Board
-   * Setting servo IDs
+   * ~~Setting servo IDs~~
    * Assembling the Frame
    * Assembling, Wiring the Arm
    * Attaching the Kinect
