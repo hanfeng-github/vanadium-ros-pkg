@@ -28,7 +28,7 @@
 """
 
 import roslib; roslib.load_manifest('arbotix_controllers')
-import rospy
+import rospy, tf
 import thread
 
 from std_msgs.msg import Float64
@@ -40,32 +40,74 @@ class ParallelGripperController:
     def __init__(self):
         rospy.init_node("gripper_controller")
 
-        # TODO: load calibration data
-        self.calib = { 0.0000 : 866, 0.0159: 750, 0.0254 : 688, 0.0381 : 600 }
-        self.min = rospy.get_param("~min", 0.0)
-        self.max = rospy.get_param("~max", 0.0381)
+        # TODO: load calibration data. Form: opening->servo angle
+        self.calib = { 0.0000 : 1.8097, 0.0159: 1.2167, 0.0254 : 0.8997, 0.0381 : 0.4499, 0.042 : 0.1943 }
+        #self.calib = { 0.0000 : 866, 0.0159: 750, 0.0254 : 688, 0.0381 : 600, 0.042 : 550 }
 
-        #self.center = rospy.get_param("~center", 0.0)
+        # parameters
+        self.min = rospy.get_param("~min", 0.0)
+        self.max = rospy.get_param("~max", 0.042)
+        self.center = rospy.get_param("~center", 512)
         self.invert = rospy.get_param("~invert", False)
         
         # publishers
         self.commandPub = rospy.Publisher("gripper_joint/command", Float64)
-        self.jointStatePub = rospy.Publisher('joint_states', JointState)
+        self.br = tf.TransformBroadcaster()
+    
+        # current width of gripper
+        self.width = 0.0
 
         # subscribe to command and then spin
-        self.command = 0.0
         rospy.Subscriber("~command", Float64, self.commandCb)
+        rospy.Subscriber("joint_states", JointState, self.stateCb)
         
         r = rospy.Rate(15)
         while not rospy.is_shutdown():
-            # output joint state
-            js = JointState()
-            js.header.stamp = rospy.Time.now()
-            js.name = ["gripper_left_joint", "gripper_right_joint"]
-            js.position = [-self.command/2.0,self.command/2.0]
-            js.velocity = [0,0]
-            #self.jointStatePub.publish(js) 
+            # output tf
+            self.br.sendTransform((0, -self.width/2.0, 0),
+                                   tf.transformations.quaternion_from_euler(0, 0, 0),
+                                   rospy.Time.now(),
+                                   "gripper_left_link",
+                                   "gripper_link")
+            self.br.sendTransform((0, self.width/2.0, 0),
+                                   tf.transformations.quaternion_from_euler(0, 0, 0),
+                                   rospy.Time.now(),
+                                   "gripper_right_link",
+                                   "gripper_link")
             r.sleep()
+
+    def getCommand(self, width):
+        """ Get servo command for an opening width. """
+        keys = self.calib.keys(); keys.sort()   
+        # find end points of segment
+        low = keys[0]; 
+        high = keys[-1]
+        for w in keys[1:-1]:
+            if w > low and w < width:
+                low = w
+            if w < high and w > width:
+                high = w
+        # linear interpolation
+        scale = (width-low)/(high-low)
+        return ((self.calib[high]-self.calib[low])*scale) + self.calib[low]
+
+    def getWidth(self, command):
+        """ Get opening width for a particular servo command. """
+        reverse_calib = dict()
+        for k, v in self.calib.items():
+            reverse_calib[v] = k
+        keys = reverse_calib.keys(); keys.sort()
+        # find end points of segment
+        low = keys[0]
+        high = keys[-1]
+        for c in keys[1:-1]:
+            if c > low and c < command:
+                low = c
+            if c < high and c > command:
+                high = c
+        # linear interpolation
+        scale = (command-low)/(high-low)
+        return ((reverse_calib[high]-reverse_calib[low])*scale) + reverse_calib[low]
 
     def commandCb(self, msg):
         """ Take an input command of width to open gripper. """
@@ -73,18 +115,16 @@ class ParallelGripperController:
         if msg.data > self.max or msg.data < self.min:
             rospy.logerr("Command exceeds limits.")
             return
-        # compute angles
-        low = self.min
-        high = self.max
-        for d in self.calib.keys():
-            if self.calib[d] > self.min and self.calib[d] < msg.data:
-                low = d
-            if self.calib[d] < self.max and self.calib[d] > msg.data:
-                high = d
-        scale = msg.data/(high-low)
-        value = ((self.calib[high] - self.calib[low]) * scale) + self.calib[low]
-        self.commandPub.publish( Float64(value) )
-        self.command = msg.data
+        # compute angle
+        self.commandPub.publish( Float64( self.getCommand(msg.data) ) )
+
+    def stateCb(self, msg):
+        """ The callback that listens for joint_states. """
+        try:
+            index = msg.name.index("gripper_joint")
+        except ValueError:
+            return
+        self.width = self.getWidth(msg.position[index])
 
 if __name__=="__main__": 
     try:
