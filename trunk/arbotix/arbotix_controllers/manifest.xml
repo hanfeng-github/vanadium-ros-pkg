@@ -10,4 +10,5 @@
 
   <depend package="arbotix_python"/>
   <depend package="trajectory_msgs"/>
+  <depend package="tf"/>
 </package>
