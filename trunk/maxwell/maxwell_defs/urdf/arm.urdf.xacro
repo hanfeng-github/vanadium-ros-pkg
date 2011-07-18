@@ -3,17 +3,25 @@
   
   <macro name="maxwell_arm" params="name parent *origin">
 
+    <!-- Arm Link -->
+    <joint name="${name}_base_joint" type="fixed">
+      <insert_block name="origin" />
+      <parent link="${parent}_link"/>
+      <child link="${name}_link"/>
+    </joint>
+
+    <link name="${name}_link"/>
+
     <!-- Shoulder pan -->
     <joint name="${name}_shoulder_pan_joint" type="revolute">
       <axis xyz="0 0 1" />
-      <insert_block name="origin" />
-      <parent link="${parent}_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${name}_link"/>
       <child link="${name}_shoulder_pan_link"/>
       <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />
     </joint>
 
     <link name="${name}_shoulder_pan_link">
-
       <visual name="${name}_shoulder_pan_visual">
         <origin xyz="${-0.065/2+0.0127} 0 0.040" rpy="0 0 0" />
         <geometry name="${name}_shoulder_pan_visual_geom">
@@ -21,27 +29,25 @@
         </geometry>
         <material name="Black" />
       </visual>
-
       <collision>
         <origin xyz="${-0.065/2+0.0127} 0 0.040" rpy="0 0 0" />
         <geometry>
           <box size="0.065 0.057 0.120"/>
         </geometry>
       </collision>
-
     </link>
 
     <!-- Shoulder lift -->
     <joint name="${name}_shoulder_lift_joint" type="revolute">
       <axis xyz="0 1 0"/>
+      <origin xyz="0 0 0" rpy="0 -1.57 0" />
+      <!--<origin xyz="0 0 0.0759" rpy="0 -1.57 0" />-->
       <limit lower="-0.2" upper="2.617" effort="5.0" velocity="5" />
-      <origin xyz="0 0 0.0759" rpy="0 -1.57 0" />
       <parent link="${name}_shoulder_pan_link"/>
       <child link="${name}_shoulder_lift_link"/>
     </joint>
 
     <link name="${name}_shoulder_lift_link">
-
       <visual name="${name}_shoulder_lift_visual">
         <origin xyz="${0.165/2} 0 0" rpy="0 0 0" />
         <geometry name="${name}_shoulder_lift_visual_geom">
@@ -49,14 +55,12 @@
         </geometry>
         <material name="Grey" />
       </visual>
-
       <collision>
         <origin xyz="${0.165/2} 0 0" rpy="0 0 0" />
         <geometry>
           <box size="0.165 0.057 0.040"/>
         </geometry>
       </collision>
-
     </link>
 
     <!-- Elbow -->
@@ -69,7 +73,6 @@
     </joint>
 
     <link name="${name}_elbow_flex_link">
-
       <visual name="${name}_elbow_flex_visual">
         <origin xyz="${0.125/2} 0 0" rpy="0 0 0" />
         <geometry>
@@ -78,14 +81,12 @@
         </geometry>
         <material name="Black" />
       </visual>
-
       <collision>
         <origin xyz="${0.125/2} 0 0" rpy="0 0 0" />
         <geometry>
           <box size="0.125 0.057 0.040"/>
         </geometry>
       </collision>
-
     </link>
 
     <!-- Wrist flex -->
@@ -98,7 +99,6 @@
     </joint>
 
     <link name="${name}_wrist_flex_link">
-
       <visual name="${name}_wrist_flex_visual">
         <origin xyz="${0.030/2} 0 0" rpy="0 0 0" />
         <geometry name="${name}_wrist_flex_visual_geom">
@@ -107,14 +107,12 @@
         </geometry>
         <material name="Grey" />
       </visual>
-
       <collision>
         <origin xyz="${0.030/2} 0 0" rpy="0 0 0" />
         <geometry>
           <box size="0.030 0.057 0.040"/>
         </geometry>
       </collision>
-
     </link>
 
     <!-- Wrist roll -->
@@ -127,7 +125,6 @@
     </joint>
 
     <link name="${name}_wrist_roll_link">
-
       <visual name="${name}_wrist_roll_visual">
         <origin xyz="0.05 0 0" rpy="0 0 0" />
         <geometry name="${name}_wrist_roll_visual_geom">
@@ -136,14 +133,12 @@
         </geometry>
         <material name="Black" />
       </visual>
-
       <collision>
         <origin xyz="0.05 0 0" rpy="0 0 0" />
         <geometry>
           <box size="0.100 0.065 0.050"/>
         </geometry>
       </collision>
-
     </link>
 
   </macro>

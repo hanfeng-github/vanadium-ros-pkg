@@ -1,70 +1,43 @@
 <?xml version="1.0"?>
 <robot>
 
+  <!-- origin is center of head tilt rotation -->
+
   <macro name="maxwell_head" params="name parent *origin">
-    <!-- Head base -->
-    <joint name="${name}_base_joint" type="fixed">
-      <axis xyz="0 1 0" />
-      <insert_block name="origin" />
-      <parent link="${parent}_link"/>
-      <child link="${name}_base_link"/>
-    </joint>
-    <link name="${name}_base_link">
-
-      <visual>
-        <origin xyz="${-0.0635/4} 0 ${0.0381/2}" rpy="0 0 0" />
-        <geometry>
-          <box size=".0635 .0381 .0381"/>
-        </geometry>
-        <material name="Black" />
-      </visual>
-
-      <collision>
-        <origin xyz="${-0.0635/4} 0 ${0.0381/2}" rpy="0 0 0" />
-        <geometry>
-          <box size=".0635 .0381 .0381"/>
-        </geometry>
-      </collision>
-
-    </link>
 
     <!-- Head pan -->
     <joint name="${name}_pan_joint" type="revolute">
-      <axis xyz="0 0 1" />
-      <limit lower="-2.617" upper="2.617" effort="5.0" velocity="5" />
-      <origin xyz="0 0 0.040" rpy="0 0 0" />
-      <parent link="${name}_base_link"/>
+      <axis xyz="0 0 1" />      
+      <insert_block name="origin" />
+      <parent link="${parent}_link"/>
       <child link="${name}_pan_link"/>
+      <limit lower="-2.617" upper="2.617" effort="1" velocity="1" />
     </joint>
     <link name="${name}_pan_link">
-
       <visual>
         <origin xyz="0 0 ${0.0635/2}" rpy="0 0 0 " />
         <geometry>
-          <box size=".0381 .0381 .0635"/>
+          <box size="${ax12_depth} ${ax12_width} ${ax12_height+0.00635}"/>
         </geometry>
         <material name="Black" />
       </visual>
-
       <collision>
         <origin xyz="0 0 ${0.0635/2}" rpy="0 0 0 " />
         <geometry>
-          <box size=".0381 .0381 .0635"/>
+          <box size="${ax12_depth} ${ax12_width} ${ax12_height+0.00635}"/>
         </geometry>
       </collision>
-
     </link>
 
     <!-- Head tilt -->
     <joint name="${name}_tilt_joint" type="revolute">
       <axis xyz="0 1 0" />
       <limit lower="-1.57" upper="1.57" effort="5.0" velocity="5" />
-      <origin xyz="0 0 0.045" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <parent link="${name}_pan_link"/>
       <child link="${name}_tilt_link"/>
     </joint>
     <link name="${name}_tilt_link">
-
       <visual>
         <origin xyz="0 0 ${0.0381/2}" rpy="0.0 0.0 0.0" />
         <geometry>
@@ -72,32 +45,30 @@
         </geometry>
         <material name="Orange" />
       </visual>
-
       <collision>
         <origin xyz="0 0 ${0.0381/2}" rpy="0.0 0.0 0.0" />
         <geometry>
           <box size=".0381 .0381 .0381"/>
         </geometry>
       </collision>
-
     </link>
 
     <!-- Head sensor frame -->
     <joint name="${name}_sensor_frame_joint" type="fixed">
-      <origin xyz="0 0 0.05" rpy="0 0 0" />     
+      <origin xyz="${calib_cam_x} ${calib_cam_y} ${calib_cam_z}" rpy="${calib_cam_rr} ${calib_cam_rp} ${calib_cam_ry}" />
       <parent link="${name}_tilt_link"/>
       <child link="${name}_sensor_frame"/>
     </joint>
     <link name="${name}_sensor_frame">
       <visual>
-        <origin xyz="-0.0254 0 0" rpy="0 0 -1.57" />
+        <origin xyz="${-calib_cam_x-0.0254} 0 0" rpy="0 0 -1.57" />
         <geometry>
           <mesh filename="package://maxwell_defs/meshes/kinect.stl" />
         </geometry>
         <material name="Black" />
       </visual>
-      <!-- TODO: add collision -->
-    </link>
+    </link> <!-- comment this link out for calibration -->
+
   </macro>
 
 </robot>

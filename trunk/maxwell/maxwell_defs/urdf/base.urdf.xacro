@@ -3,6 +3,7 @@
 
   <include filename="$(find maxwell_defs)/urdf/sensors/hokuyo_urg_laser.urdf.xacro" />
 
+  <property name="ground_clearance" value="0.0238" />
   <!-- simplified box collision geometry for base -->
   <property name="wheels_offset_x" value="0.12065" />
   <property name="wheel_offset_y" value="0.19304" />
@@ -41,7 +42,7 @@
   <macro name="armadillo_base" params="name">
     <link name="${name}_link">
       <visual>
-        <origin xyz="0 0 0.0238" rpy="0 0 0" />
+        <origin xyz="0 0 ${ground_clearance}" rpy="0 0 0" />
         <geometry>
           <mesh filename="package://maxwell_defs/meshes/base.stl"  />
         </geometry>

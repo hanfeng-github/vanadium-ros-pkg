@@ -1,9 +1,27 @@
 <?xml version="1.0"?>
 <robot name="maxwell" >
 
+  <!-- interactive calibration output: 
+        [ INFO] [1310855144.314114846]: -0.0184416, -7.34934e-11, 0.07469, 0.0120684, 0.00708517, -8.5516e-05, 0.999902
+
+        [ INFO] [1310858627.105328692]: 0.00927514, 0.00208817, 0.0877625, 0.0240435, 0.0424938, 0.00594516, 0.998789
+        [ INFO] [1310858627.105465208]: 0.00927514, 0.00208817, 0.0877625, 0.048728, 0.0847001, 0.0139699
+  -->
+  <property name="calib_cam_x" value="0.00927514" />
+  <property name="calib_cam_y" value="0.00208817" />
+  <property name="calib_cam_z" value="0.0877625" />
+  <property name="calib_cam_rr" value="0.048728" />
+  <property name="calib_cam_rp" value="0.0847001" />
+  <property name="calib_cam_ry" value="0.0139699" />
+
+  <property name="ax12_height" value="0.04762" />
+  <property name="ax12_width" value="0.0381" />
+  <property name="ax12_depth" value="0.0318" />
+  <property name="ax12_center" value="0.0385" />
+
   <!-- height properties -->
-  <property name="torso_height" value="0.6" />
-  <property name="column_height" value="1.17475" />
+  <property name="arm_height" value="0.885825" /> <!-- height to shoulder lift rotation -->
+  <property name="column_height" value="1.397" /> <!-- height to neck tilt rotation -->
   
   <!-- The following included files set up definitions of parts of the robot body -->
   <include filename="$(find maxwell_defs)/urdf/base.urdf.xacro" />
@@ -18,22 +36,22 @@
 
   <!-- Add Torso Upright -->
   <maxwell_torso name="torso" parent="base">
-    <origin xyz="-0.00635 0 ${0.1397+torso_height}"/>
+    <origin xyz="-0.00635 0 ${arm_height}"/>
   </maxwell_torso>
 
   <!-- Arm -->
   <maxwell_arm name="arm" parent="torso">
-    <origin xyz="0.0608 0 0.0"/>
+    <origin xyz="0.0608 0 0"/>
   </maxwell_arm>
 
   <!-- Gripper -->
   <maxwell_gripper name="gripper" parent="arm_wrist_roll">
-    <origin xyz="0.100 0 0" /> 
+    <origin xyz="0.150 0 0" /> 
   </maxwell_gripper>
 
   <!-- Kinect head -->
-  <maxwell_head name="head" parent="torso">
-    <origin xyz="0.0157 0 ${column_height-torso_height}"/>
+  <maxwell_head name="head" parent="base">
+    <origin xyz="0.0157 0 ${column_height}"/>
   </maxwell_head>
 
 </robot>

@@ -4,13 +4,12 @@
   <macro name="gripper_finger" params="prefix parent reflect">
     <joint name="${prefix}_finger_joint" type="revolute">
       <axis xyz="0 0 1" />
-      <origin xyz="-0.012 ${reflect*0.033/2} 0" rpy="0 0 0" />
+      <origin xyz="-0.062 ${reflect*0.033/2} 0" rpy="0 0 0" />
       <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />
       <parent link="${parent}_link"/>
       <child link="${prefix}_finger_link"/>
     </joint>
     <link name="${prefix}_finger_link">
-
       <visual name="${prefix}_finger_visual">
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry name="${prefix}_finger_visual_geom">
@@ -18,14 +17,12 @@
         </geometry>
         <material name="Orange" />
       </visual>
-
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <box size="0.125 0.01 0.03"/>
         </geometry>
       </collision>
-
     </link>
   </macro>
 
