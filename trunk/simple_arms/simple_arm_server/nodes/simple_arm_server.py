@@ -114,13 +114,14 @@ class SimpleArmServer:
                 request.ik_request.pose_stamped.pose.position.z = pose.pose.position.z
 
                 e = euler_from_quaternion([pose.pose.orientation.x,pose.pose.orientation.y,pose.pose.orientation.z,pose.pose.orientation.w])
-                q =  quaternion_from_euler(e[0], e[1], e[2])
+                e = [i for i in e]
                 if self.dof < 6:
                     # 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
-                    q = quaternion_from_euler(e[0], e[1], atan2(pose.pose.position.y, pose.pose.position.x))
+                    e[2] = atan2(pose.pose.position.y, pose.pose.position.x)
                 if self.dof < 5:
                     # 4 DOF, so yaw as above AND no roll
-                    q = quaternion_from_euler(0, e[1], atan2(pose.pose.position.y, pose.pose.position.x))
+                    e[0] = 0
+                q =  quaternion_from_euler(e[0], e[1], e[2])
 
                 request.ik_request.pose_stamped.pose.orientation.x = q[0]
                 request.ik_request.pose_stamped.pose.orientation.y = q[1]
@@ -130,8 +131,27 @@ class SimpleArmServer:
                 request.ik_request.ik_seed_state.joint_state.name = arm_solver_info.kinematic_solver_info.joint_names
                 request.ik_request.ik_seed_state.joint_state.position = [self.servos[joint] for joint in request.ik_request.ik_seed_state.joint_state.name]
 
-                # get IK
-                response = self._get_ik_proxy(request)
+                # get IK, wiggle if needed
+                tries = 0
+                pitch = e[1]
+                while tries < 40:
+                    try:
+                        response = self._get_ik_proxy(request)
+                        if response.error_code.val == response.error_code.SUCCESS:
+                            break
+                        else:
+                            tries += 1
+                            # wiggle gripper
+                            pitch = e[1] + ((-1)**tries)*((tries+1)/2)*0.05
+                            # update quaternion
+                            q = quaternion_from_euler(e[0], pitch, e[2])
+                            request.ik_request.pose_stamped.pose.orientation.x = q[0]
+                            request.ik_request.pose_stamped.pose.orientation.y = q[1]
+                            request.ik_request.pose_stamped.pose.orientation.z = q[2]
+                            request.ik_request.pose_stamped.pose.orientation.w = q[3]
+                    except rospy.ServiceException, e:
+                        print "Service did not process request: %s"%str(e)
+
                 rospy.loginfo(response)
 
                 # move the arm
