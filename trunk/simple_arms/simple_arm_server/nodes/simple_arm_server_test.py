@@ -48,7 +48,7 @@ if __name__ == '__main__':
         req = MoveArmRequest()  
         req.header.frame_id = "base_link"
         if len(sys.argv) > 7:
-            req.header.frame_id = sys.argv[6]
+            req.header.frame_id = sys.argv[7]
 
         action = ArmAction()
         action.type = ArmAction.MOVE_ARM
@@ -68,8 +68,8 @@ if __name__ == '__main__':
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
 
-        if len(sys.argv) > 7:
-            action.move_time = rospy.Duration(float(sys.argv[7]))
+        if len(sys.argv) > 8:
+            action.move_time = rospy.Duration(float(sys.argv[8]))
 
         req.goals.append(action)
 

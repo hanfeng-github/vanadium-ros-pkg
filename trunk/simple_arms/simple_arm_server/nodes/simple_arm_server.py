@@ -96,12 +96,12 @@ class SimpleArmServer:
   
         for action in req.goals:
             if action.type == ArmAction.MOVE_ARM:
-                rospy.loginfo("Move arm to " + str(action.goal))
                 # arm movement    
                 ps = PoseStamped()
                 ps.header.frame_id = req.header.frame_id
                 ps.pose = action.goal
                 pose = self._listener.transformPose(self.root, ps)
+                rospy.loginfo("Move arm to " + str(pose))
         
                 # create IK request
                 request = GetPositionIKRequest()
@@ -128,7 +128,7 @@ class SimpleArmServer:
                 request.ik_request.pose_stamped.pose.orientation.w = q[3]
 
                 request.ik_request.ik_seed_state.joint_state.name = arm_solver_info.kinematic_solver_info.joint_names
-                request.ik_request.ik_seed_state.joint_state.position = [0]*len(request.ik_request.ik_seed_state.joint_state.name )
+                request.ik_request.ik_seed_state.joint_state.position = [self.servos[joint] for joint in request.ik_request.ik_seed_state.joint_state.name]
 
                 # get IK
                 response = self._get_ik_proxy(request)
@@ -180,7 +180,7 @@ class SimpleArmServer:
                         if abs(self.servos[joint] - point.positions[j]) > 0.01:
                             done = False
                     print errors
-                    if rospy.Time.now() > msg.header.stamp + rospy.Duration(10.0) or done:
+                    if rospy.Time.now() > msg.header.stamp + point.time_from_start + rospy.Duration(1.0) or done:
                         break
                     rospy.sleep(0.1)
 
