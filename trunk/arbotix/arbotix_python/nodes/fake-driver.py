@@ -192,6 +192,7 @@ class BaseController:
         # output for joint states
         self.names = ["base_l_wheel_joint","base_r_wheel_joint"]
         self.positions = [0,0]
+        self.velocities = [0,0]
 
         # subscriptions
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
@@ -321,6 +322,7 @@ class ArbotixROS():
                 if self.use_base:
                     msg.name += self.base.names
                     msg.position += self.base.positions
+                    msg.velocity += self.base.velocities
                 self.jointStatePub.publish(msg)
 
             f += 1
