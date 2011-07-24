@@ -49,7 +49,7 @@ class TrajControllerP:
     def __init__(self):
         rospy.init_node("traj_controller")
         self.joints = rospy.get_param("~joints")
-        self.rate = rospy.get_param("~rate", 50)
+        self.rate = float(rospy.get_param("~rate", 50))
 
         self.mutex = thread.allocate_lock()
 
@@ -57,6 +57,7 @@ class TrajControllerP:
         self.valid = False
         self.dirty = False
         self.current = [0.0 for i in self.joints]
+        self.last = [0.0 for i in self.joints]
         self.desired = [0.0 for i in self.joints]   
         self.velocity = [0.0 for i in self.joints]   # velocity to make next position setpoint
         self.trajectories = list()  
@@ -91,24 +92,39 @@ class TrajControllerP:
                     rospy.logerr('Invalid trajectory. Aborting.')
                     return           
                 self.desired = [ traj.positions[k] for k in indexes ]
-                del self.trajectories[0]                      
+                del self.trajectories[0]                 
+                self.last = [i for i in self.current]       
+                err = [ (d-c) for d,c in zip(self.desired,self.last) ]
+                self.velocity = [ abs(x / (self.rate * (self.endtime - now).to_sec())) for x in err ]   
+                #self.last = [i for i in self.current]
                 self.dirty = True
 
             if self.dirty and self.valid:
                 # interpolate and update outputs
                 cumulative = 0.0
-                err = [ (d-c) for d,c in zip(self.desired,self.current) ]
+                err = [ (d-c) for d,c in zip(self.desired,self.last) ] #self.current) ]
                 rospy.loginfo(err)
                 for i in range(len(self.joints)):
-                    cumulative += err[i]
-                    time = (self.endtime - now).to_sec()
-                    if time > 0:
-                        velocity = err[i] / (self.rate * time)
+                    #if err[i] > self.velocity[i] or err[i] < -self.velocity[i]:
+                    if err[i] > 0.01 or err[i] < -0.01:
+                        cumulative += abs(err[i])
+                    #    time = (self.endtime - now).to_sec()
+                    #    if time > 0:
+                    #        velocity = err[i] / (self.rate * time)
+                    #    else:
+                    #        velocity = err[i]
+                        cmd = err[i] 
+                        top = self.velocity[i]
+                        if cmd > top:
+                            cmd = top
+                        elif cmd < -top:
+                            cmd = -top
+                        self.last[i] += cmd
+                        self.publishers[self.joints[i]].publish(Float64(self.last[i]))
                     else:
-                        velocity = err[i]
-                    self.current[i] += velocity
-                    self.publishers[self.joints[i]].publish(Float64(self.current[i]))
+                        self.last[i] = self.desired[i]
                 # are we done?
+                rospy.loginfo(cumulative)
                 if cumulative == 0.0:
                     self.dirty = False   
             # release mutex
