@@ -1,8 +1,0 @@
-<stack>
-  <description brief="vanadium_drivers">vanadium_drivers</description>
-  <author>Maintained by Michael E. Ferguson</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/vanadium_drivers</url>
-  <depend stack="ros" />
-</stack>
