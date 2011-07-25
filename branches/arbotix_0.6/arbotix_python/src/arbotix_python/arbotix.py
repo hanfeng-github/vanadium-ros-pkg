@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  ArbotiX Driver: serial connection to an ArbotiX board w/ PyPose/NUKE/ROS
+  ArbotiX Driver: serial connection to an ArbotiX board w/ ROS
   Copyright (c) 2008-2011 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -31,17 +31,10 @@ import serial, time, sys, thread
 from ax12 import *
 from struct import unpack
 
-# ArbotiX-specific instructions
-AX_SIZE_POSE = 7
-AX_LOAD_POSE = 8
-AX_ARB_LOAD_SEQ = 9
-AX_PLAY_SEQ = 10
-AX_LOOP_SEQ = 11
-
-# ArbotiX Driver
 class ArbotiX:
     """ Class to open a serial port and control AX-12 servos 
     through an ArbotiX board or USBDynamixel. """
+
     def __init__(self, port="/dev/ttyUSB0",baud=115200, interpolation=False, direct=False, timeout = 0.1):
         """ This may throw errors up the line -- that's a good thing. """
         self.mutex = thread.allocate_lock()
@@ -99,7 +92,6 @@ class ArbotiX:
                 return self.getPacket(5, id, leng, error, params)
         elif mode == 6:         # read checksum
             checksum = id + leng + error + sum(params) + ord(d)
-            #print checksum            
             if checksum % 256 != 255:
                 return None
             return params
@@ -144,7 +136,6 @@ class ArbotiX:
         """ Read values of _length_ registers, starting at addr _start_. """
         values = self.execute(index, AX_READ_DATA, [start, length])
         if values == None:
-            #print "Read Failed: Servo ID = " + str(index)            
             return -1        
         else:
             return values
@@ -170,7 +161,7 @@ class ArbotiX:
             pass  
         self.ser.write(chr(0xFF)+chr(0xFF)+chr(254)+chr(length)+chr(AX_SYNC_WRITE))        
         self.ser.write(chr(start))              # start address
-        self.ser.write(chr(lbytes))   # bytes to write each servo
+        self.ser.write(chr(lbytes))             # bytes to write each servo
         for i in output:
             self.ser.write(chr(i))
         checksum = 255 - ((254 + length + AX_SYNC_WRITE + start + lbytes + sum(output))%256)
@@ -286,24 +277,18 @@ class ArbotiX:
     RIGHT_SIGN = 49
     RIGHT_PWM = 50
 
-    LEFT_SPEED_L = NUKE_X_SPEED_L = 51   # Motor Speed (ticks per frame, 2 bytes, signed) 
-    RIGHT_SPEED_L = NUKE_R_SPEED_L = 53
-    NUKE_Y_SPEED_L = 55
+    LEFT_SPEED_L = X_SPEED_L = 51   # Motor Speed (ticks per frame, 2 bytes, signed) 
+    RIGHT_SPEED_L = R_SPEED_L = 53
+    Y_SPEED_L = 55
 
-    LEFT_ENC_L = NUKE_X_ENC_L = 57   # Endpoints (ticks, 4 bytes, signed)
-    RIGHT_ENC_L = NUKE_R_ENC_L = 61
-    NUKE_Y_ENC_L = 65
+    LEFT_ENC_L = X_ENC_L = 57   # Endpoints (ticks, 4 bytes, signed)
+    RIGHT_ENC_L = R_ENC_L = 61
+    Y_ENC_L = 65
 
     KP = 69             # PID control parameters
     KD = 70
     KI = 71
     KO = 72
-  
-    ROLL = 69           # Body parameters
-    PITCH = 71
-    YAW = 73
-    HEIGHT = 75
-    GAIT = 77
 
     def rescan(self):
         self.write(253, self.REG_RESCAN, [1,])
@@ -314,7 +299,6 @@ class ArbotiX:
             return int(self.read(253, self.ANA_BASE+int(index), 1)[0])
         except:
             return -1
-
     def getDigital(self, index):
         """ Read a digital port, returns 0 (low) or 0xFF (high) (-1 if error).\
             (index = 0 to 15) """
@@ -331,7 +315,6 @@ class ArbotiX:
             return 255
         else:
             return 0
-
     def setDigital(self, index, val, direction=0xff):
         """ Set value (and direction) of a digital IO (index = 0 to 7) """
         if index > 7: return -1
@@ -357,19 +340,18 @@ class ArbotiX:
             print "ArbotiX Error: Motor values out of range"
         else:
             self.write(253, self.LEFT_SIGN, [1*(left<0), abs(left), 1*(right<0), abs(right)])    
-    
-    def setSpeeds(self, left, right):
+    def setDiffSpeeds(self, left, right):
         """ Send a closed-loop speed. Base PID loop runs at 30Hz, these values
                 are therefore in ticks per 1/30 second. """
         left = left&0xffff
         right = right&0xffff
         self.write(253, self.LEFT_SPEED_L, [left%256, left>>8, right%256, right>>8] )
-    def setWalk(self, x, y, th): 
+    def setOmniSpeed(self, x, y, th): 
         """ Send a closed-loop speed. mm/s for the x/y, and 1/1000 rad/s for th. """
         x = x&0xffff
         y = y&0xffff
         th = th&0xffff
-        self.write(253, self.NUKE_X_SPEED_L, [x%256, x>>8, th%256, th>>8, y%256, y>>8] )
+        self.write(253, self.X_SPEED_L, [x%256, x>>8, th%256, th>>8, y%256, y>>8] )
  
     def baseMoving(self):
         try:
@@ -378,18 +360,7 @@ class ArbotiX:
             return -1
 
     # Functions to read 32-bit (signed) encoder values
-    def getEnc(self, addr):
-        values = self.read(253, addr, 4)
-        values = "".join([chr(k) for k in values])
-        try:
-            return unpack('=l',values)[0]
-        except:
-            return None        
-    def getLenc(self):
-        return self.getEnc(self.LEFT_ENC_L)        
-    def getRenc(self):
-        return self.getEnc(self.RIGHT_ENC_L)
-    def getEncoders(self):
+    def getDiffEncoders(self):
         values = self.read(253, self.LEFT_ENC_L, 8)
         left_values = "".join([chr(k) for k in values[0:4] ])        
         right_values = "".join([chr(k) for k in values[4:] ])
@@ -399,8 +370,8 @@ class ArbotiX:
             return [left, right]
         except:
             return None        
-    def getNukeEncoders(self):
-        values = self.read(253, self.NUKE_X_ENC_L, 12)
+    def getOmniEncoders(self):
+        values = self.read(253, self.X_ENC_L, 12)
         x_values = "".join([chr(k) for k in values[0:4] ])        
         th_values = "".join([chr(k) for k in values[4:8] ])  
         y_values = "".join([chr(k) for k in values[8:] ])
@@ -411,29 +382,4 @@ class ArbotiX:
             return [x,y,th]
         except:
             return None    
-    
-    # NUKE body parameters
-    def setBodyRoll(self, roll):
-        k = int(roll*1000)&0xffff    # 1/1000 rad
-        self.write(253, self.ROLL, [k%256, k>>8])
-    def setBodyPitch(self, pitch):
-        k = int(pitch*1000)&0xffff
-        self.write(253, self.PITCH, [k%256, k>>8])
-    def setBodyYaw(self, yaw):
-        k = int(yaw*1000)&0xffff      
-        self.write(253, self.YAW, [k%256, k>>8])
-    def setBodyHeight(self, height):
-        k = int(height*1000)&0xffff   # mm
-        self.write(253, self.HEIGHT, [k%256, k>>8])
-    def getBodyHeight(self):
-        values = self.read(253, self.HEIGHT, 1)
-        return values[0]/1000.0 
-
-    RIPPLE = 0
-    RIPPLE_SMOOTH = 3
-    AMBLE = 4
-    AMBLE_SMOOTH = 5
-    TRIPOD = 6
-    def setGait(self, gait):
-        self.write(253, self.GAIT, [gait])
 
