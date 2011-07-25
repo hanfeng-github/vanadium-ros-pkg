@@ -218,6 +218,7 @@ def getServosFromURDF():
         rospy.loginfo('No URDF defined, proceeding with defaults')
         return dict()
 
+
 def getServoLimits(name, joint_defaults, default_min=-150, default_max=150):
     """ Get limits of servo, from YAML, then URDF, then defaults if neither is defined. """
     min_angle = radians(default_min)
