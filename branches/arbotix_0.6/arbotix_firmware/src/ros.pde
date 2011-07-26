@@ -485,10 +485,15 @@ void loop(){
             Serial.print(0,BYTE);     // error code
             // send actual data
             for(k=2; k<length-2; k++){
-              ax12GetRegister(params[k], start, bytes);
-              for(i=0;i<bytes;i++){
-                checksum += ax_rx_buffer[5+i];
-                Serial.print(ax_rx_buffer[5+i],BYTE);
+              if( ax12GetRegister(params[k], start, bytes) >= 0){
+                for(i=0;i<bytes;i++){
+                  checksum += ax_rx_buffer[5+i];
+                  Serial.print(ax_rx_buffer[5+i],BYTE);
+                }
+              }else{
+                for(i=0;i<bytes;i++){
+                  checksum += 255;
+                  Serial.print(255,BYTE);
               }
             }
             Serial.print(255-((checksum)%256),BYTE);
