@@ -3,7 +3,6 @@
    
   <!-- size properties -->
   <property name="arm_pan_height" value="0.00635" />
-  <!--<property name="arm_major_length" value="0.09208" />-->
   <property name="arm_major_length" value="0.06627" />
 
   <macro name="mini_arm" params="name parent *origin">
@@ -17,7 +16,7 @@
     <!-- Shoulder pan -->
     <joint name="${name}_shoulder_pan_joint" type="revolute">
       <axis xyz="0 0 1" />
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 ${shoulder_pan_offset}"/>
       <parent link="${name}_base_link"/>
       <child link="${name}_shoulder_pan_link"/>
       <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />
@@ -36,14 +35,14 @@
     <joint name="${name}_shoulder_lift_joint" type="revolute">
       <axis xyz="0 1 0"/>
       <limit lower="-0.2" upper="2.617" effort="5.0" velocity="5" />
-      <origin xyz="0 0 ${ax12_center+arm_pan_height}" rpy="0 -1.57 0" />
+      <origin xyz="0 0 ${ax12_center+arm_pan_height}" rpy="0 -1.57 ${shoulder_lift_offset}" />
       <parent link="${name}_shoulder_pan_link"/>
       <child link="${name}_shoulder_lift_link"/>
     </joint>
     <link name="${name}_shoulder_lift_link">
-      <visual name="${name}_shoulder_lift_visual">
+      <visual>
         <origin xyz="${(ax12_center+arm_major_length)/2} 0 0" rpy="0 0 0" />
-        <geometry name="${name}_shoulder_lift_visual_geom">
+        <geometry>
           <box size="${ax12_center+arm_major_length} ${ax12_width} ${ax12_depth}"/>
         </geometry>
         <material name="Orange" />
@@ -54,14 +53,14 @@
     <joint name="${name}_elbow_flex_joint" type="revolute">
       <axis xyz="0 1 0" />
       <limit lower="-1.57" upper="2.617" effort="5.0" velocity="5" />
-      <origin xyz="${ax12_center+arm_major_length} 0 0" rpy="0 0 0" />
+      <origin xyz="${ax12_center+arm_major_length} 0 0" rpy="0 ${elbow_flex_offset} 0" />
       <parent link="${name}_shoulder_lift_link"/>
       <child link="${name}_elbow_flex_link"/>
     </joint>
     <link name="${name}_elbow_flex_link">
-      <visual name="${name}_elbow_flex_visual">
+      <visual>
         <origin xyz="${(ax12_center+arm_major_length)/2} 0 0" rpy="0 0 0" />
-        <geometry name="${name}_elbow_flex_visual_geom">
+        <geometry>
           <box size="${ax12_center+arm_major_length} ${ax12_width} ${ax12_depth}"/>
         </geometry>
         <material name="Black" />
@@ -72,15 +71,14 @@
     <joint name="${name}_wrist_flex_joint" type="revolute">
       <axis xyz="0 1 0" />
       <limit lower="-1.57" upper="1.57" effort="5.0" velocity="5" />
-      <origin xyz="${ax12_center+arm_major_length} 0 0" rpy="0 0 0" />
+      <origin xyz="${ax12_center+arm_major_length} 0 0" rpy="${wrist_flex_offset} 0 0" />
       <parent link="${name}_elbow_flex_link"/>
       <child link="${name}_wrist_flex_link"/>
     </joint>
     <link name="${name}_wrist_flex_link">
-      <visual name="${name}_wrist_flex_visual">
+      <visual>
         <origin xyz="${0.050/2} 0 0" rpy="0 0 0" />
-        <geometry name="${name}_wrist_flex_visual_geom">
-          <!--<mesh filename="package://pr2_defs/meshes/wrist_flex.stl" />-->
+        <geometry>
           <box size="0.05 0.050 ${ax12_depth}"/>
         </geometry>
         <material name="Orange" />
