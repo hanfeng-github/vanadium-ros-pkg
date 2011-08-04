@@ -1,6 +1,6 @@
 /* 
   ArbotiX Firmware for ROS driver
-  Copyright (c) 2009-2010 Vanadium Labs LLC.  All right reserved.
+  Copyright (c) 2009-2011 Vanadium Labs LLC.  All right reserved.
  
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:

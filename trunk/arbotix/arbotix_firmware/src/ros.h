@@ -31,7 +31,10 @@
 #define ARB_LOAD_SEQ        9    // seq size: a single param for the size of the seq
 #define ARB_PLAY_SEQ        10   // load seq: index/times (# of params = 3*seq_size)
 #define ARB_LOOP_SEQ        11   // play seq: no params
-#define ARB_TEST            25   // hardware test: no params
+//#define ARB_TEST          25   // hardware test: no params
+#define ARB_CONTROL_SETUP   26   // write ids: id of controller, params (usually ids of servos, # of params = pose_size + 1)
+#define ARB_CONTROL_WRITE   27   // write positions: positions in order of servos (# of params = 2*pose_size)
+#define ARB_CONTROL_STAT    28   // retrieve status: id of controller
 #define ARB_SYNC_READ       0x84
 
 /* ArbotiX (id:253) Register Table Definitions */
@@ -53,6 +56,7 @@
 #define REG_RM_SIGN         49
 #define REG_RM_PWM          50
 
+/*
 #define REG_LM_SPEED_L      51  // Motor Speed (ticks/sec, 2 bytes, signed)
 #define REG_LM_SPEED_H      52
 #define REG_RM_SPEED_L      53
@@ -65,10 +69,10 @@
 #define REG_Y_SPEED_L       55
 #define REG_Y_SPEED_H       56
 
-#define REG_ENC_LEFT_L      57  // Current Encoder Values (ticks, 4 bytes, signed)    
+#define REG_ENC_LEFT_L      57  // Current Differential Encoder Values (ticks, 4 bytes, signed)    
 #define REG_ENC_RIGHT_L     61
 
-#define REG_ENC_X_L         57  // OR Nuke Encoder Values (mm, 4 bytes, signed)
+#define REG_ENC_X_L         57  // OR Current Omni Encoder Values (mm, 4 bytes, signed)
 #define REG_ENC_R_L         61
 #define REG_ENC_Y_L         65
 
@@ -76,12 +80,7 @@
 #define REG_KD              70
 #define REG_KI              71
 #define REG_KO              72
-
-#define REG_ROLL            69  // OR Body parameters
-#define REG_PITCH           71
-#define REG_YAW             73
-#define REG_HEIGHT          75
-#define REG_GAIT            77
+*/
 
 /* Packet Decoding */
 int mode = 0;                   // where we are in the frame

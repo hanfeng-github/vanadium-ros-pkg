@@ -30,19 +30,22 @@
 #define USE_BIG_MOTORS      // Enable Pololu 30A support
 #define USE_HW_SERVOS       // Enable only 2/8 servos, but using hardware control
 
+#define CONTROLLER_COUNT    5
 /* Hardware Constructs */
 #include <ax12.h>
-#include <BioloidController.h>
-BioloidController bioloid = BioloidController(1000000);
+#include <BioloidController2.h>
+BioloidController controllers[CONTROLLER_COUNT];
 
 #include "ros.h"
 
 #ifdef USE_HW_SERVOS
   #include <HServo.h>
   HServo servos[2];
+  int servo_vals[2];            // in millis
 #else 
   #include <Servo.h>
   Servo servos[10];
+  int servo_vals[10];           // in millis
 #endif
 
 #ifdef USE_BASE
@@ -54,14 +57,13 @@ BioloidController bioloid = BioloidController(1000000);
     Motors2 drive = Motors2();
   #endif
   #include <EncodersAB.h>
-  #include "pid.h"
+  #include "diff_controller.h"
 #endif
 
 /* Register Storage */
 unsigned char baud = 7;         // ?
 unsigned char ret_level = 1;    // ?
 unsigned char alarm_led = 0;    // ?
-int servo_vals[10];             // in millis
 
 /* Pose & Sequence Structures */
 typedef struct{
@@ -88,13 +90,15 @@ void scan(){
 }
 #endif
 void setup(){
-  Serial.begin(115200);  
+  Serial.begin(115200);
+  ax12Init(1000000);
 
 #ifdef USE_BASE  
   Encoders.Begin();
   setupPID();
 #endif
 
+// note: ARBOTIX_PLUS and SERVO_STIK are defined in our Bioloid library.
 #if defined(AX_RX_SWITCHED)
   delay(1000);
   scan();
@@ -164,64 +168,6 @@ unsigned char handleWrite(){
           }
         }
       }
-    }else if(addr == REG_MOVING){
-      return INSTRUCTION_ERROR;
-      
-#ifdef USE_BASE
-    // motor pwms = 1 byte sign + 1 byte value
-    }else if(addr == REG_LM_SIGN){          
-      left_pwm = 1 + -2*params[k];
-    }else if(addr == REG_LM_PWM){
-      left_pwm = left_pwm * params[k];
-      PIDmode = 0;
-      drive.left(left_pwm);
-      if(left_pwm != 0)
-        moving = 1;
-    }else if(addr == REG_RM_SIGN){
-      right_pwm = 1 + -2*params[k];
-    }else if(addr == REG_RM_PWM){
-      right_pwm = right_pwm * params[k];
-      PIDmode = 0;
-      drive.right(right_pwm);
-      if(right_pwm != 0)
-        moving = 1;
-        
-    // motor speed for move_base (ticks/frame, 2 bytes, signed)
-    }else if(addr == REG_LM_SPEED_L){       
-      left_speed = params[k];
-    }else if(addr == REG_LM_SPEED_H){
-      left_speed += (params[k]<<8);
-    }else if(addr == REG_RM_SPEED_L){
-      right_speed = params[k];
-    }else if(addr == REG_RM_SPEED_H){
-      right_speed += (params[k]<<8); 
-      //assumed to be all written at once
-      if((left_speed == 0) && (right_speed == 0)){
-        drive.set(0,0);
-        ClearPID();
-      }else{
-        if((left.Velocity == 0) && (right.Velocity == 0)){
-          PIDmode = 1; moving = 1;
-          left.PrevEnc = Encoders.left;
-          right.PrevEnc = Encoders.right;
-        }
-      }   
-      left.Velocity = left_speed;
-      right.Velocity = right_speed; 
-      
-    }else if(addr < REG_KP){
-      // can't write encoders?  
-      return INSTRUCTION_ERROR;
-    }else if(addr == REG_KP){
-      Kp = params[k];  
-    }else if(addr == REG_KD){
-      Kd = params[k];  
-    }else if(addr == REG_KI){
-      Ki = params[k];  
-    }else if(addr == REG_KO){
-      Ko = params[k];  
-#endif
-
     }else{
       return INSTRUCTION_ERROR;
     }
@@ -266,7 +212,6 @@ int handleRead(){
         // 16-23
         v = PIND;
       }
-      
     }else if(addr == REG_RETURN_LEVEL){
       v = ret_level;
     }else if(addr == REG_ALARM_LED){
@@ -276,31 +221,7 @@ int handleRead(){
       v = analogRead(addr-REG_ANA_BASE)>>2;
     }else if(addr < REG_MOVING){
       // send servo position
-      v = 0;
-      
-#ifdef USE_BASE
-    }else if(addr == REG_MOVING){
-      v = moving;
-    }else if(addr < REG_ENC_LEFT_L){
-      v = 0;
-    }else if(addr < REG_ENC_RIGHT_L){
-      // send left encoder value
-      int k = (addr - REG_ENC_LEFT_L)*8;
-      v = ((unsigned long)Encoders.left>>k)%256;
-    }else if(addr < REG_KP){
-      // send right encoder values
-      int k = (addr - REG_ENC_RIGHT_L)*8;
-      v = ((unsigned long)Encoders.right>>k)%256;
-    }else if(addr == REG_KP){
-      v = Kp;
-    }else if(addr == REG_KD){
-      v = Kd;
-    }else if(addr == REG_KI){
-      v = Ki;
-    }else if(addr == REG_KO){
-      v = Ko;
-#endif
-      
+      v = 0;      
     }else{
       v = 0;        
     }
@@ -311,38 +232,6 @@ int handleRead(){
   return checksum;
 }
 
-#ifdef USE_BASE
-void doTest(){
-  int i;
-  // Test I/O
-  for(i=0;i<8;i++){
-    // test digital
-    pinMode(i,OUTPUT);
-    digitalWrite(i,HIGH);  
-    // test analog
-    pinMode(31-i,OUTPUT);
-    digitalWrite(31-i,HIGH);
-    delay(500);
-    digitalWrite(i,LOW);
-    digitalWrite(31-i,LOW);
-  }
-  // Test Ax-12
-  for(i=452;i<552;i+=20){
-    SetPosition(1,i);
-    delay(200);
-  }
-  // Test Motors
-  drive.set(-255,-255);
-  delay(500);
-  drive.set(0,0);
-  delay(1500);
-  drive.set(255,255);
-  delay(500);
-  drive.set(0,0);
-  delay(1500);
-}
-#endif
-
 int doPlaySeq(){
   seqPos = 0; int i;
   while(sequence[seqPos].pose != 0xff){
@@ -350,11 +239,11 @@ int doPlaySeq(){
     // are we HALT?
     if(Serial.read() == 'H') return 1;
     // load pose
-    for(i=0; i<bioloid.poseSize; i++)
-      bioloid.setNextPose(i+1,poses[p][i]); 
-    bioloid.interpolateSetup(sequence[seqPos].time);
-    while(bioloid.interpolating)
-      bioloid.interpolateStep();
+    for(i=0; i<controllers[0].poseSize; i++)
+      controllers[0].setNextPose(i+1,poses[p][i]); 
+    controllers[0].interpolateSetup(sequence[seqPos].time);
+    while(controllers[0].interpolating)
+      controllers[0].interpolateStep();
     // next transition
     seqPos++;
   }
@@ -436,13 +325,15 @@ void loop(){
              
             case ARB_SIZE_POSE:                   // Pose Size = 7, followed by single param: size of pose
               statusPacket(id,0);
-              bioloid.poseSize = params[0];
-              bioloid.readPose();    
+              if(controllers[0].poseSize == 0)
+                controllers[0].setup(18);
+              controllers[0].poseSize = params[0];
+              controllers[0].readPose();    
               break;
              
             case ARB_LOAD_POSE:                   // Load Pose = 8, followed by index, then pose positions (# of param = 2*pose_size)
               statusPacket(id,0);
-              for(i=0; i<bioloid.poseSize; i++)
+              for(i=0; i<controllers[0].poseSize; i++)
                 poses[params[0]][i] = params[(2*i)+1]+(params[(2*i)+2]<<8); 
               break;
              
@@ -464,12 +355,102 @@ void loop(){
               while(doPlaySeq() > 0);
               break;
 
-#ifdef USE_BASE   
-            case ARB_TEST:
+            // ARB_TEST is deprecated and removed
+
+            case ARB_CONTROL_SETUP:              // Setup a controller
               statusPacket(id,0);
-              doTest();
-              break;
+              if(params[0] < CONTROLLER_COUNT){
+                controllers[params[0]].setup(length-3);
+                for(int i=0; i<length-3; i++){
+                  controllers[params[0]].id[i] = params[i+1];
+                }
+#ifdef USE_BASE
+              }else if(params[0] == 10){
+                Kp = params[1];
+                Kd = params[2];
+                Ki = params[3];
+                Ko = params[4];
 #endif
+              }
+              break;
+
+            case ARB_CONTROL_WRITE:              // Write values to a controller
+              statusPacket(id,0);
+              if(params[0] < CONTROLLER_COUNT){
+                for(int i=0; i<length-4; i++){
+                  controllers[params[0]].setNextPose(controllers[params[0]].id[i], params[i+1]);
+                }
+                controllers[params[0]].interpolateSetup(params[length-2]*30);
+#ifdef USE_BASE
+              }else if(params[0] == 10){
+                left_speed = params[1];
+                left_speed += (params[2]<<8);
+                right_speed = params[3];
+                right_speed += (params[4]<<8); 
+                if((left_speed == 0) && (right_speed == 0)){
+                  drive.set(0,0);
+                  ClearPID();
+                }else{
+                  if((left.Velocity == 0) && (right.Velocity == 0)){
+                    PIDmode = 1; moving = 1;
+                    left.PrevEnc = Encoders.left;
+                    right.PrevEnc = Encoders.right;
+                  }
+                }   
+                left.Velocity = left_speed;
+                right.Velocity = right_speed; 
+#endif
+              }
+              break;
+
+            case ARB_CONTROL_STAT:               // Read status of a controller
+              if(params[0] < CONTROLLER_COUNT){             
+                Serial.print(0xff,BYTE);
+                Serial.print(0xff,BYTE);
+                Serial.print(id,BYTE);
+                Serial.print(3,BYTE);
+                Serial.print(0,BYTE);
+                checksum = controllers[params[0]].interpolating;
+                Serial.print(checksum,BYTE);
+                checksum += id + 3;
+                Serial.print(255-((checksum)%256),BYTE);
+#ifdef USE_BASE
+              }else if(params[0] == 10){
+                checksum = id + 2 + 8;                            
+                Serial.print(0xff,BYTE);
+                Serial.print(0xff,BYTE);
+                Serial.print(id,BYTE);
+                Serial.print(2+8,BYTE);
+                Serial.print(0,BYTE);   // error level
+                int v = ((unsigned long)Encoders.left>>0)%256;
+                Serial.print(v, BYTE);                
+                checksum += v;
+                v = ((unsigned long)Encoders.left>>8)%256;
+                Serial.print(v, BYTE);                
+                checksum += v;
+                v = ((unsigned long)Encoders.left>>16)%256;
+                Serial.print(v, BYTE);                
+                checksum += v;
+                v = ((unsigned long)Encoders.left>>24)%256;
+                Serial.print(v, BYTE);                
+                checksum += v;
+                v = ((unsigned long)Encoders.right>>0)%256;
+                Serial.print(v, BYTE);                
+                checksum += v;
+                v = ((unsigned long)Encoders.right>>8)%256;
+                Serial.print(v, BYTE);                
+                checksum += v;
+                v = ((unsigned long)Encoders.right>>16)%256;
+                Serial.print(v, BYTE);                
+                checksum += v;
+                v = ((unsigned long)Encoders.right>>24)%256;
+                Serial.print(v, BYTE);                
+                checksum += v;
+                Serial.print(255-((checksum)%256),BYTE);
+#endif
+              }
+              break;
+
           }
         }else if(id == 0xFE){
           // sync read or write
@@ -485,10 +466,16 @@ void loop(){
             Serial.print(0,BYTE);     // error code
             // send actual data
             for(k=2; k<length-2; k++){
-              ax12GetRegister(params[k], start, bytes);
-              for(i=0;i<bytes;i++){
-                checksum += ax_rx_buffer[5+i];
-                Serial.print(ax_rx_buffer[5+i],BYTE);
+              if( ax12GetRegister(params[k], start, bytes) >= 0){
+                for(i=0;i<bytes;i++){
+                  checksum += ax_rx_buffer[5+i];
+                  Serial.print(ax_rx_buffer[5+i],BYTE);
+                }
+              }else{
+                for(i=0;i<bytes;i++){
+                  checksum += 255;
+                  Serial.print(255,BYTE);
+                }
               }
             }
             Serial.print(255-((checksum)%256),BYTE);
@@ -534,7 +521,8 @@ void loop(){
     } // end mode == 5
   } // end while(available)
   // update joints
-  bioloid.interpolateStep();
+  for(int i=0; i<5; i++)
+    controllers[i].interpolateStep();
  
 #ifdef USE_BASE
   // update pid
