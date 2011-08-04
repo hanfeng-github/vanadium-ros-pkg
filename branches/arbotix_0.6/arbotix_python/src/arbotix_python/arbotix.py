@@ -272,23 +272,6 @@ class ArbotiX:
                         # Each additional port is BASE + index
     SERVO_BASE = 26     # Up to 10 servos, each uses 2 bytes (L, then H), pulse width (0, 1000-2000ms) (Write only)
                         # Address 46 is Moving, just like an AX-12
-    LEFT_SIGN = 47      # Motor pwm (-255 to 255), 1 byte sign + 1 byte speed per side
-    LEFT_PWM = 48
-    RIGHT_SIGN = 49
-    RIGHT_PWM = 50
-
-    LEFT_SPEED_L = X_SPEED_L = 51   # Motor Speed (ticks per frame, 2 bytes, signed) 
-    RIGHT_SPEED_L = R_SPEED_L = 53
-    Y_SPEED_L = 55
-
-    LEFT_ENC_L = X_ENC_L = 57   # Endpoints (ticks, 4 bytes, signed)
-    RIGHT_ENC_L = R_ENC_L = 61
-    Y_ENC_L = 65
-
-    KP = 69             # PID control parameters
-    KD = 70
-    KI = 71
-    KO = 72
 
     def rescan(self):
         self.write(253, self.REG_RESCAN, [1,])
@@ -334,52 +317,9 @@ class ArbotiX:
         else:
             self.write(253, self.SERVO_BASE + 2*index, [val%256, val>>8])
 
-    def setMotors(self, left, right):
-        """ Set raw motor pwm speeds. """
-        if left < -255 or left > 255 or right < -255 or right > 255:
-            print "ArbotiX Error: Motor values out of range"
-        else:
-            self.write(253, self.LEFT_SIGN, [1*(left<0), abs(left), 1*(right<0), abs(right)])    
-    def setDiffSpeeds(self, left, right):
-        """ Send a closed-loop speed. Base PID loop runs at 30Hz, these values
-                are therefore in ticks per 1/30 second. """
-        left = left&0xffff
-        right = right&0xffff
-        self.write(253, self.LEFT_SPEED_L, [left%256, left>>8, right%256, right>>8] )
-    def setOmniSpeed(self, x, y, th): 
-        """ Send a closed-loop speed. mm/s for the x/y, and 1/1000 rad/s for th. """
-        x = x&0xffff
-        y = y&0xffff
-        th = th&0xffff
-        self.write(253, self.X_SPEED_L, [x%256, x>>8, th%256, th>>8, y%256, y>>8] )
- 
     def baseMoving(self):
         try:
             return int(self.read(253, P_MOVING, 1)[0])
         except:
             return -1
-
-    # Functions to read 32-bit (signed) encoder values
-    def getDiffEncoders(self):
-        values = self.read(253, self.LEFT_ENC_L, 8)
-        left_values = "".join([chr(k) for k in values[0:4] ])        
-        right_values = "".join([chr(k) for k in values[4:] ])
-        try:
-            left = unpack('=l',left_values)[0]
-            right = unpack('=l',right_values)[0]
-            return [left, right]
-        except:
-            return None        
-    def getOmniEncoders(self):
-        values = self.read(253, self.X_ENC_L, 12)
-        x_values = "".join([chr(k) for k in values[0:4] ])        
-        th_values = "".join([chr(k) for k in values[4:8] ])  
-        y_values = "".join([chr(k) for k in values[8:] ])
-        try:
-            x = unpack('=l',x_values)[0]
-            y = unpack('=l',y_values)[0]
-            th = unpack('=l',th_values)[0]
-            return [x,y,th]
-        except:
-            return None    
 

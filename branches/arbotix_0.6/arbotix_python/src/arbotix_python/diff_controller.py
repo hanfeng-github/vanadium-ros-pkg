@@ -34,7 +34,11 @@ from math import sin,cos,pi
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
+from diagnostic_msgs.msg import *
 from tf.broadcaster import TransformBroadcaster
+
+from ax12 import *
+
 
 class DiffController:
     """ Controller to handle movement & odometry feedback for a differential 
@@ -44,7 +48,7 @@ class DiffController:
         # handle for robocontroller
         self.device = device
 
-        # parameters: throttle rate and geometry
+        # parameters: rates and geometry
         self.rate = rospy.get_param("~base/rate",10.0)
         self.t_delta = rospy.Duration(1.0/self.rate)
         self.t_next = rospy.Time.now() + self.t_delta
@@ -83,7 +87,7 @@ class DiffController:
         self.odomPub = rospy.Publisher("odom",Odometry)
         self.odomBroadcaster = TransformBroadcaster()
 		
-        rospy.loginfo("Started base_controller for a base of " + str(self.base_width) + "m wide with " + str(self.ticks_meter) + " ticks per meter")
+        rospy.loginfo("Started DiffController for a base of " + str(self.base_width) + "m wide with " + str(self.ticks_meter) + " ticks per meter")
 
     def update(self):
         now = rospy.Time.now()
@@ -94,7 +98,7 @@ class DiffController:
 
             # read encoders
             try:
-                left, right = self.device.getDiffEncoders()
+                left, right = self.status()
             except Exception as e:
                 rospy.logerr("Could not update encoders")
                 return
@@ -162,15 +166,15 @@ class DiffController:
                 self.v_right -= self.max_accel
                 if self.v_right < self.v_des_right:
                     self.v_right = self.v_des_right
-            self.device.setDiffSpeeds(self.v_left, self.v_right)
 
+            self.write(self.v_left, self.v_right)
             self.t_next = now + self.t_delta
  
     def startup(self):
-        self.device.write(253,self.device.KP,[self.Kp,self.Kd,self.Ki,self.Ko]) 
+        self.setup(self.Kp,self.Kd,self.Ki,self.Ko) 
     
     def shutdown(self):
-        self.device.setDiffSpeeds(0,0)
+        self.write(0,0)
 
     def cmdVelCb(self,req):
         """ Handle movement requests. """
@@ -196,4 +200,46 @@ class DiffController:
         # set motor speeds in ticks per 1/30s
         self.v_des_left = l
         self.v_des_right = r
+
+    def getDiagnostics(self):
+        """ Get a diagnostics status. """
+        msg = DiagnosticStatus()
+        msg.name = "Encoders"
+        msg.level = DiagnosticStatus.OK
+        msg.message = "OK"
+        msg.values.append(KeyValue("Left", str(self.enc_left)))
+        msg.values.append(KeyValue("Right", str(self.enc_right)))
+        return msg
+
+    ###
+    ### Controller Specification: 
+    ###
+    ###  setup: Kp, Kd, Ki, Ko (all unsigned char)
+    ###
+    ###  write: left_speed, right_speed (2-byte signed, ticks per frame)
+    ###
+    ###  status: left_enc, right_enc (4-byte signed)
+    ### 
+    
+    def setup(self, kp, kd, ki, ko):
+        success = self.device.execute(253, AX_CONTROL_SETUP, [10, kp, kd, ki, ko])
+
+    def write(self, left, right):
+        """ Send a closed-loop speed. Base PID loop runs at 30Hz, these values
+                are therefore in ticks per 1/30 second. """
+        left = left&0xffff
+        right = right&0xffff
+        success = self.device.execute(253, AX_CONTROL_WRITE, [10, left%256, left>>8, right%256, right>>8])
+
+    def status(self):
+        """ read 32-bit (signed) encoder values. """
+        values = self.device.execute(253, AX_CONTROL_STATUS, [10])
+        left_values = "".join([chr(k) for k in values[0:4] ])        
+        right_values = "".join([chr(k) for k in values[4:] ])
+        try:
+            left = unpack('=l',left_values)[0]
+            right = unpack('=l',right_values)[0]
+            return [left, right]
+        except:
+            return None
 

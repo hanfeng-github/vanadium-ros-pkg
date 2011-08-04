@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  servos.py: helper functions for servo interactions
+  servos.py: classes for servo interaction
   Copyright (c) 2011 Vanadium Labs LLC.  All right reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -33,20 +33,21 @@ from math import pi, radians
 import xml.dom.minidom
 
 from std_msgs.msg import Float64
-from arbotix_msgs.srv import Relax
+from arbotix_msgs.srv import *
+from diagnostic_msgs.msg import *
 
-###############################################################################
-# Servo handling classes    
-class Servo():
-    """ Class to handle services and updates for a single Servo, on an ArbotiX 
-        robocontroller's AX/RX-bus. """
-    def __init__(self, name, device):
+from arbotix_python.ax12 import *
+       
+
+class Servo:
+    """ Class to handle services and updates for a single Servo, 
+        on an ArbotiX robocontroller's AX/RX-bus. """
+
+    def __init__(self, device, name):
+        self.device = device
         self.name = name
-        self.device = device           # ArbotiX instance
         n = "~dynamixels/"+name+"/"
-
-        # TODO: load URDF specs
-
+        
         self.id = int(rospy.get_param(n+"id"))
         self.neutral = rospy.get_param(n+"neutral",512)
         self.ticks = rospy.get_param(n+"ticks",1024)
@@ -55,19 +56,24 @@ class Servo():
         self.max_angle = radians(rospy.get_param(n+"max_angle",150))
         self.min_angle = radians(rospy.get_param(n+"min_angle",-150))
         self.max_speed = radians(rospy.get_param(n+"max_speed",684.0)) 
-                                       # max speed = 114 rpm - 684 deg/s
+                                                # max speed = 114 rpm - 684 deg/s
         self.invert = rospy.get_param(n+"invert",False)
         self.readable = rospy.get_param(n+"readable",True)
 
-        self.dirty = False             # newly updated position?
-        self.angle = 0.0               # current position, as returned by servo (radians)
-        self.desired = 0.0             # desired position (radians)
-        self.last_cmd = 0.0            # last position sent (radians)
-        self.velocity = 0.0            # moving speed
-        self.relaxed = True            # are we not under torque control?
+        self.controller = None
+        self.status = "OK"
+        self.level = DiagnosticStatus.OK
+
+        self.dirty = False                      # newly updated position?
+        self.angle = 0.0                        # current position, as returned by servo (radians)
+        self.desired = 0.0                      # desired position (radians)
+        self.last_cmd = 0.0                     # last position sent (radians)
+        self.velocity = 0.0                     # moving speed
+        self.relaxed = True                     # are we not under torque control?
+        self.last = rospy.Time.now()
+
         self.voltage = 0.0
         self.temperature = 0.0
-        self.last = rospy.Time.now()
         
         # ROS interfaces
         rospy.Subscriber(name+'/command', Float64, self.commandCb)
@@ -80,41 +86,71 @@ class Servo():
         return RelaxResponse()
 
     def commandCb(self, req):
+        """ Float64 style command input. """
         if self.desired != req.data or self.relaxed:
             self.dirty = True   
             self.relaxed = False
             self.desired = req.data
-   
-    def update(self, value):
-        """ Update angle in radians by reading from servo, or
-            by using position passed in from a sync read.  """
-        if value < 0:
-            # read servo locally (no sync_read)
+
+    def update(self, reading=None):
+        """ Update angle in radians by reading from servo, or by 
+            using position passed in from a sync read (in ticks). """
+        if reading == None:                     # read from device (no sync_read)
             if self.readable:
-                value = self.device.getPosition(self.id)
-        if value != -1:
-            # convert ticks to radians
+                reading = self.device.getPosition(self.id)
+        if reading > -1 and reading < self.ticks:     # check validity
             last_angle = self.angle
             if self.invert:
-                self.angle = -1.0 * (value - self.neutral) * self.rad_per_tick
+                self.angle = -1.0 * (reading - self.neutral) * self.rad_per_tick
             else:
-                self.angle = (value - self.neutral) * self.rad_per_tick
+                self.angle = (reading - self.neutral) * self.rad_per_tick
             # update velocity estimate
             t = rospy.Time.now()
             self.velocity = (self.angle - last_angle)/((t - self.last).to_nsec()/1000000000.0)
             self.last = t
+        else:
+            rospy.logerr("Invalid read of servo: id " + str(self.id) + ", value " + str(reading))
+            return
         if self.relaxed:
             self.last_cmd = self.angle
 
+    def updateTemp(self, reading=None):
+        """ Update temperature by reading from servo, or by passing value from a sync read. """
+        if reading == None:                     # read from device (no sync_read)
+            if self.readable:
+                self.temperature = self.device.getTemperature(self.id)
+        else:                                   # reading has come from sync_read
+            self.temperature = reading
+        if self.temperature > 60:
+            self.status = "OVERHEATED, SHUTDOWN"
+            self.level = DiagnosticStatus.ERROR
+        elif self.temperature > 50 and self.status != "OVERHEATED, SHUTDOWN":
+            self.status = "OVERHEATING"
+            self.level = DiagnosticStatus.WARN
+        elif self.status != "OVERHEATED, SHUTDOWN":
+            self.status = "OK"
+            self.level = DiagnosticStatus.OK
+
+    def updateVoltage(self, reading=None):
+        """ Update voltage by reading from servo, or by passing value from a sync read. """
+        if reading == None:                     # read from device (no sync_read)
+            if self.readable:
+                self.voltage = self.device.getVoltage(self.id)
+        else:                                   # reading has come from sync_read
+            self.voltage = reading
+
     def interpolate(self, frame):
         """ Get the new position to move to, in ticks. """
+        if self.controller and self.controller.active:
+            # under controller?
+            return None
         if self.dirty:
             # compute command, limit velocity
             cmd = self.desired - self.last_cmd
-            if cmd > self.max_speed/float(frame):
-                cmd = self.max_speed/float(frame)
-            elif cmd < -self.max_speed/float(frame):
-                cmd = -self.max_speed/float(frame)
+            if cmd > self.max_speed/frame:
+                cmd = self.max_speed/frame
+            elif cmd < -self.max_speed/frame:
+                cmd = -self.max_speed/frame
             # compute angle, apply limits
             self.last_cmd += cmd
             if self.last_cmd < self.min_angle:
@@ -131,35 +167,53 @@ class Servo():
                 return self.neutral + (self.last_cmd/self.rad_per_tick)
         else:
             return None
+    
+    def getDiagnostics(self):
+        """ Get a diagnostics status. """
+        msg = DiagnosticStatus()
+        msg.name = "Joint " + self.name
+        msg.level = self.level
+        msg.message = self.status
+        msg.values.append(KeyValue("Position", str(self.angle)))
+        msg.values.append(KeyValue("Temperature", str(self.temperature)))
+        msg.values.append(KeyValue("Voltage", str(self.voltage)))
+        if self.relaxed:
+            msg.values.append(KeyValue("Torque", "OFF"))
+        else:
+            msg.values.append(KeyValue("Torque", "ON"))
+        return msg
 
 
 class HobbyServo(Servo):
-    """ Class to handle services and updates for a single Hobby Servo, connected to 
-        an ArbotiX robocontroller. """
-    def __init__(self, name, device):
+    """ Class to handle services and updates for a single Hobby Servo, 
+        connected to an ArbotiX robocontroller. """
+    def __init__(self, device, params):
+        self.device = device
         self.name = name
-        self.device = device           # ArbotiX instance
         n = "~servos/"+name+"/"
-
-        # TODO: load URDF specs
-
+        
         self.id = int(rospy.get_param(n+"id"))
-        self.neutral = rospy.get_param(n+"neutral",1500) # might be adjusted for crappy servos
+        self.neutral = rospy.get_param(n+"neutral",1500)
         self.ticks = rospy.get_param(n+"ticks",2000)
         self.rad_per_tick = radians(rospy.get_param(n+"range",180.0))/self.ticks
 
         self.max_angle = radians(rospy.get_param(n+"max_angle",90))
         self.min_angle = radians(rospy.get_param(n+"min_angle",-90))
+        self.max_speed = radians(rospy.get_param(n+"max_speed",90.0))
 
         self.invert = rospy.get_param(n+"invert",False)
-        self.readable = False          # can't read a hobby servo!
+        self.readable = False
+
+        self.controller = None
+        self.status = "OK"
+        self.level = DiagnosticStatus.OK
 
         self.dirty = False             # newly updated position?
         self.angle = 0.0               # current position
         self.velocity = 0.0            # this currently doesn't provide info for hobby servos
         
         # ROS interfaces
-        rospy.Subscriber(name+'/command', Float64, self.commandCb)
+        rospy.Subscriber(params.name+'/command', Float64, self.commandCb)
 
     def commandCb(self, req):
         """ Callback to set position to angle, in radians. """
@@ -181,6 +235,137 @@ class HobbyServo(Servo):
             ticks = int(round( ang / self.rad_per_tick ))
             self.device.setServo(self.id, ticks)
             self.dirty = False
+
+    def getDiagnostics(self):
+        """ Get a diagnostics status. """
+        msg = DiagnosticStatus()
+        msg.name = "Joint " + self.name
+        msg.level = self.level
+        msg.message = self.status
+        msg.values.append(KeyValue("Position", str(self.angle)))
+        return msg
+
+
+class Servos(dict):
+
+    def __init__(self, device):
+        self.device = device
+
+        dynamixels = rospy.get_param("~dynamixels", dict())
+        self.dynamixels = dict()
+        for name in dynamixels.keys():
+            self.dynamixels[name] = Servo(device, name)
+
+        hobbyservos = rospy.get_param("~servos", dict())
+        self.hobbyservos = dict()
+        for name in hobbyservos.keys():
+            self.hobbyservos[name] = HobbyServo(device, name)
+
+        self.w_delta = rospy.Duration(1.0/rospy.get_param("~write_rate", 10.0))
+        self.w_next = rospy.Time.now() + self.w_delta
+
+        self.r_delta = rospy.Duration(1.0/rospy.get_param("~read_rate", 10.0))
+        self.r_next = rospy.Time.now() + self.r_delta
+
+    def values(self):
+        return self.dynamixels.values() + self.hobbyservos.values()
+
+    def __getitem__(self, key):
+        try:
+            return self.dynamixels[key]
+        except:
+            return self.hobbyservos[key]
+
+    def __setitem__(self, key, value):
+        try:
+            k = self.dynamixels[key]
+            k.update(value)
+        except:        
+            k = self.hobbyservos[key]
+            k.update(value)
+    
+    def update(self, sync=True):
+        """ Read servo positions. """
+        if rospy.Time.now() > self.r_next:
+            #try:
+                if sync:
+                    # arbotix/servostik/wifi board sync_read
+                    synclist = list()
+                    for servo in self.dynamixels.values():
+                        if servo.readable:
+                            synclist.append(servo.id)
+                        else:
+                            servo.update(-1)
+                    if len(synclist) > 0:
+                        val = self.device.syncRead(synclist, P_PRESENT_POSITION_L, 2)
+                        if val: 
+                            for servo in self.dynamixels.values():
+                                try:
+                                    i = synclist.index(servo.id)*2
+                                    servo.update(val[i]+(val[i+1]<<8))
+                                except:
+                                    # not a readable servo
+                                    continue 
+                else:
+                    # direct connection, or other hardware with no sync_read capability
+                    for servo in self.dynamixels.values():
+                        servo.update(-1)
+            #except:
+            #    rospy.loginfo("Error in updating positions.")  
+            #    return           
+                self.r_next = rospy.Time.now() + self.r_delta
+                        
+    def updateStats(self, sync=True):
+        """ Read servo voltages, temperatures. """
+        try:
+            if sync:
+                # arbotix/servostik/wifi board sync_read
+                synclist = list()
+                for servo in self.dynamixels.values():
+                    if servo.readable:
+                        synclist.append(servo.id)
+                    else:
+                        servo.update(-1)
+                if len(synclist) > 0:
+                    val = self.device.syncRead(synclist, P_PRESENT_VOLTAGE, 2)
+                    if val: 
+                        for servo in self.dynamixels.values():
+                            try:
+                                i = synclist.index(servo.id)*2
+                                servo.voltage = val[i]/10.0
+                                servo.temperature = val[i+1]
+                            except:
+                                # not a readable servo
+                                continue 
+            else:
+                # direct connection, or other hardware with no sync_read capability
+                for servo in self.dynamixels.values():
+                    if servo.readable:
+                        val = self.device.read(servo.id, P_PRESENT_VOLTAGE, 2)
+                        servo.voltage = val[0]
+                        servo.temperature = val[1]
+        except:
+            rospy.loginfo("Error in updating stats.")  
+            return           
+
+    def interpolate(self, sync=True):
+        """ Write updated positions to servos. """
+        if rospy.Time.now() > self.w_next:
+            if sync:
+                syncpkt = list()
+                for servo in self.dynamixels.values():
+                    v = servo.interpolate(1.0/self.w_delta.to_sec())
+                    if v != None:   # if was dirty
+                        syncpkt.append([servo.id,int(v)%256,int(v)>>8])  
+                if len(syncpkt) > 0:      
+                    self.device.syncWrite(P_GOAL_POSITION_L,syncpkt)
+            else:
+                for servo in self.dynamixels.values():
+                    v = servo.interpolate(1.0/self.w_delta.to_sec())
+                    if v != None:   # if was dirty      
+                        self.device.setPosition(servo.id, int(v))
+            self.w_next = rospy.Time.now() + self.w_delta
+
 
 
 def getServosFromURDF():

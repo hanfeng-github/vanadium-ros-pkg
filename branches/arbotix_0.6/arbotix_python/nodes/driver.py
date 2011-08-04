@@ -30,77 +30,15 @@
 import roslib; roslib.load_manifest('arbotix_python')
 import rospy
 
-from sensor_msgs.msg import JointState
 from arbotix_msgs.msg import *
 from arbotix_msgs.srv import *
 
 from arbotix_python.arbotix import ArbotiX
 from arbotix_python.diff_controller import DiffController
-from arbotix_python.diagnostics import DiagnosticsPublisher
-from arbotix_python.ax12 import P_PRESENT_POSITION_L, P_GOAL_POSITION_L
-from arbotix_python.io import *
+from arbotix_python.follow_controller import FollowController
+from arbotix_python.publishers import *
 from arbotix_python.servos import *
-
-
-class JointStatePublisher:
-    """ Class to handle publications of joint_states message. """
-
-    def __init__(self, device):
-
-        # handle for robocontroller
-        self.device = device
-
-        # parameters: throttle rate and geometry
-        self.rate = rospy.get_param("~read_rate", 10.0)
-        self.t_delta = rospy.Duration(1.0/self.rate)
-        self.t_next = rospy.Time.now() + self.t_delta
-
-        # subscriber
-        self.pub = rospy.Publisher('joint_states', JointState)
-
-    def update(self):
-        try:
-            if self.device.use_sync_read:
-                # arbotix/servostik/wifi board sync_read
-                synclist = list()
-                for servo in self.device.dynamixels.values():
-                    if servo.readable:
-                        synclist.append(servo.id)
-                    else:
-                        servo.update(-1)
-                if len(synclist) > 0:
-                    val = self.device.syncRead(synclist, P_PRESENT_POSITION_L, 2)
-                    if val: 
-                        for servo in self.device.dynamixels.values():
-                            try:
-                                i = synclist.index(servo.id)*2
-                                servo.update(val[i]+(val[i+1]<<8))
-                            except:
-                                # not a readable servo
-                                continue 
-            else:
-                # direct connection, or other hardware with no sync_read capability
-                for servo in self.device.dynamixels.values():
-                    servo.update(-1)
-        except:
-            rospy.loginfo("Error in filling joint_states message")  
-            return           
-                        
-        # publish joint states         
-        msg = JointState()
-        msg.header.stamp = rospy.Time.now()
-        msg.name = list()
-        msg.position = list()
-        msg.velocity = list()
-        for servo in self.device.dynamixels.values() + self.device.servos.values():
-            msg.name.append(servo.name)
-            msg.position.append(servo.angle)
-            msg.velocity.append(servo.velocity)
-        if self.device.base:
-            msg.name += self.device.base.joint_names
-            msg.position += self.device.base.joint_positions
-            msg.velocity += self.device.base.joint_velocities
-        self.pub.publish(msg)
+from arbotix_python.io import *
 
 
 ###############################################################################
@@ -112,16 +50,14 @@ class ArbotixROS(ArbotiX):
         port = rospy.get_param("~port", "/dev/ttyUSB0")
         baud = int(rospy.get_param("~baud", "115200"))
 
-        self.rate = rospy.get_param("~rate", 50.0)
-        self.t_delta = rospy.Duration(1.0/rospy.get_param("~write_rate", 10.0))
-        self.t_next = rospy.Time.now() + self.t_delta
+        self.rate = rospy.get_param("~rate", 100.0)
 
         self.use_sync_read = rospy.get_param("~sync_read",True)      # use sync read?
         self.use_sync_write = rospy.get_param("~sync_write",True)    # use sync write?
 
         # setup publishers
-        self.diagnostics = DiagnosticsPublisher(self)
-        self.joint_state_publisher = JointStatePublisher(self)
+        self.diagnostics = DiagnosticsPublisher()
+        self.joint_state_publisher = JointStatePublisher()
 
         # start an arbotix driver
         ArbotiX.__init__(self, port, baud)        
@@ -135,27 +71,27 @@ class ArbotixROS(ArbotiX):
                 rospy.sleep(0.25)
             rospy.loginfo("ArbotiX connected.")
 
-        # TODO: initialize dynamixel & hobby servos
-        dynamixels = rospy.get_param("~dynamixels", dict())
-        self.dynamixels = dict()
-        for name in dynamixels.keys():
-            self.dynamixels[name] = Servo(name,self)
-        hobbyservos = rospy.get_param("~servos", dict())
-        self.servos = dict()
-        for name in hobbyservos.keys():
-            self.servos[name] = HobbyServo(name, self)
-
-        # setup base controllers
-        self.base = None
-        if rospy.has_param("~base"):
-            if rospy.has_param("~base/omni"):
-                self.base = OmniController(self)
-            else:
-                self.base = DiffController(self)
-            self.base.startup()
+        # initialize dynamixel & hobby servos
+        self.servos = Servos(self)
 
         # setup trajectory actions
-#         TODO
+        self.controllers = list()
+        controllers = rospy.get_param("~controllers", dict())
+        for name, params in controllers.items():
+            if params["type"] == "follow_controller":
+                self.controllers.append(FollowController(self, name))
+            else:
+                rospy.logerr("Unrecognized controller: " + params["type"])
+
+        # setup base controller
+        if rospy.has_param("~base"):
+            if rospy.has_param("~base/omni"):
+                self.controllers.append(OmniController(self))
+            else:
+                self.controllers.append(DiffController(self))
+
+        for controller in self.controllers:
+            controller.startup()
 
         # services for io
         rospy.Service('~SetupAnalogIn',SetupChannel, self.analogInCb)
@@ -177,46 +113,27 @@ class ArbotixROS(ArbotiX):
         while not rospy.is_shutdown():
     
             # TODO: update controllers
+            for controller in self.controllers:
+                controller.update()
 
             # update servo positions (via sync_write)
-            self.update()
-    
-            # update base
-            if self.base:
-                self.base.update()
+            self.servos.update(self.use_sync_write)
 
             # update io
             for io in self.io.values():
                 io.update()
 
             # publish
-            self.joint_state_publisher.update()
-            self.diagnostics.update()
+            self.servos.interpolate(self.use_sync_read)
+            self.joint_state_publisher.update(self.servos, self.controllers)
+            self.diagnostics.update(self.servos, self.controllers)
 
             r.sleep()
 
         # do shutdown
-        if self.base:
-            self.base.shutdown()
+        for controller in self.controllers:
+            controller.shutdown()
 
-
-    def update(self):
-        """ Write updated positions to servos. """
-        if rospy.Time.now() > self.t_next:
-            if self.use_sync_write:
-                syncpkt = list()
-                for servo in self.dynamixels.values():
-                    v = servo.interpolate(self.t_delta.to_sec())
-                    if v != None:   # if was dirty
-                        syncpkt.append([servo.id,int(v)%256,int(v)>>8])  
-                if len(syncpkt) > 0:      
-                    self.syncWrite(P_GOAL_POSITION_L,syncpkt)
-            else:
-                for servo in self.dynamixels.values():
-                    v = servo.interpolate(self.t_delta.to_sec())
-                    if v != None:   # if was dirty      
-                        self.setPosition(servo.id, int(v))
-            self.t_next = rospy.Time.now() + self.t_delta
 
     def analogInCb(self, req):
         # TODO: Add check, only 1 service per pin
