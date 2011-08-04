@@ -27,6 +27,9 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+import rospy
+from arbotix_msgs.msg import *
+
 class DigitalServo:
     """ Class for a digital output. """
     def __init__(self, name, pin, value, rate, device):
