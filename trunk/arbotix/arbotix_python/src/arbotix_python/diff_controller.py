@@ -42,27 +42,31 @@ from ax12 import *
 class DiffController:
     """ Controller to handle movement & odometry feedback for a differential 
             drive mobile base. """
-    def __init__(self, device):
-
-        # handle for robocontroller
+    def __init__(self, device, name):
+        self.name = name
         self.device = device
 
         # parameters: rates and geometry
-        self.rate = rospy.get_param("~base/rate",10.0)
+        self.rate = rospy.get_param('~controllers/'+name+'/rate',10.0)
         self.t_delta = rospy.Duration(1.0/self.rate)
         self.t_next = rospy.Time.now() + self.t_delta
-        self.ticks_meter = float(rospy.get_param("~base/ticks_meter", 26154))
-        self.base_width = float(rospy.get_param("~base/base_width", 0.144))
+        self.ticks_meter = float(rospy.get_param('~controllers/'+name+'/ticks_meter'))
+        self.base_width = float(rospy.get_param('~controllers/'+name+'/base_width'))
 
         # parameters: PID
-        self.Kp = rospy.get_param("~base/Kp", 5)
-        self.Kd = rospy.get_param("~base/Kd", 1)
-        self.Ki = rospy.get_param("~base/Ki", 0)
-        self.Ko = rospy.get_param("~base/Ko", 50)       
+        self.Kp = rospy.get_param('~controllers/'+name+'/Kp', 5)
+        self.Kd = rospy.get_param('~controllers/'+name+'/Kd', 1)
+        self.Ki = rospy.get_param('~controllers/'+name+'/Ki', 0)
+        self.Ko = rospy.get_param('~controllers/'+name+'/Ko', 50)
 
         # parameters: acceleration
-        self.accel_limit = rospy.get_param("~base/accel_limit", 0.1)
+        self.accel_limit = rospy.get_param('~controllers/'+name+'/accel_limit', 0.1)
         self.max_accel = int(self.accel_limit*self.ticks_meter/self.rate)
+
+        # output for joint states publisher
+        self.joint_names = ["base_l_wheel_joint","base_r_wheel_joint"]
+        self.joint_positions = [0,0]
+        self.joint_velocities = [0,0]
 
         # internal data            
         self.v_left = 0                 # current setpoint velocity
@@ -76,18 +80,16 @@ class DiffController:
         self.th = 0
         self.then = rospy.Time.now()    # time for determining dx/dy
 
-        # output for joint states
-        self.joint_names = ["base_l_wheel_joint","base_r_wheel_joint"]
-        self.joint_positions = [0,0]
-        self.joint_velocities = [0,0]
-
         # subscriptions
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
         self.odomPub = rospy.Publisher("odom",Odometry)
         self.odomBroadcaster = TransformBroadcaster()
 		
-        rospy.loginfo("Started DiffController for a base of " + str(self.base_width) + "m wide with " + str(self.ticks_meter) + " ticks per meter")
+        rospy.loginfo("Started DiffController ("+name+"). Geometry: " + str(self.base_width) + "m wide, " + str(self.ticks_meter) + " ticks/m.")
 
+    def startup(self):
+        self.setup(self.Kp,self.Kd,self.Ki,self.Ko) 
+    
     def update(self):
         now = rospy.Time.now()
         if now > self.t_next:
@@ -169,9 +171,6 @@ class DiffController:
             self.write(self.v_left, self.v_right)
             self.t_next = now + self.t_delta
  
-    def startup(self):
-        self.setup(self.Kp,self.Kd,self.Ki,self.Ko) 
-    
     def shutdown(self):
         self.write(0,0)
 

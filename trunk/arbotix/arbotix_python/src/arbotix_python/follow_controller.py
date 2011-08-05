@@ -41,15 +41,16 @@ class FollowController:
         self.device = device   
         self.interpolating = 0
 
-        # parameters
+        # parameters: rates and joints
         self.rate = rospy.get_param('~controllers/'+name+'/rate',50.0)
         self.joints = rospy.get_param('~controllers/'+name+'/joints')
-        self.index = rospy.get_param('~controllers/'+name+'/index', 0)
+        self.index = rospy.get_param('~controllers/'+name+'/index', len(device.controllers))
         self.onboard = rospy.get_param('~controllers/'+name+'/onboard', True)
         for joint in self.joints:
             self.device.servos[joint].controller = self
         self.ids = [self.device.servos[joint].id for joint in self.joints]
         
+        # output for joint states publisher
         self.joint_names = []
         self.joint_positions = []
         self.joint_velocities = []
@@ -58,7 +59,18 @@ class FollowController:
         name = rospy.get_param('~controllers/'+name+'/action_name','follow_joint_trajectory')
         self.server = actionlib.SimpleActionServer(name, FollowJointTrajectoryAction, execute_cb=self.actionCb, auto_start=False)
 
-        rospy.loginfo("Started FollowController controlling: " + str(self.joints))
+        rospy.loginfo("Started FollowController ("+name+"). Joints: " + str(self.joints))
+
+    def startup(self):
+        self.setup() 
+        self.server.start()
+
+    def update(self):
+        if self.interpolating != 0:
+            self.status()
+    
+    def shutdown(self):
+        pass
 
     def actionCb(self, goal):
         traj = goal.trajectory
@@ -124,17 +136,6 @@ class FollowController:
             pass
 
         self.server.set_succeeded()
-                
-    def startup(self):
-        self.setup() 
-        self.server.start()
-
-    def update(self):
-        if self.interpolating != 0:
-            self.status()
-    
-    def shutdown(self):
-        pass
 
     def active(self):
         """ Is controller overriding servo internal control? """

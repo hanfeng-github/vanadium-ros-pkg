@@ -40,7 +40,6 @@ from arbotix_python.publishers import *
 from arbotix_python.servos import *
 from arbotix_python.io import *
 
-
 ###############################################################################
 # Main ROS interface
 class ArbotixROS(ArbotiX):
@@ -74,22 +73,18 @@ class ArbotixROS(ArbotiX):
         # initialize dynamixel & hobby servos
         self.servos = Servos(self)
 
-        # setup trajectory action controllers
+        # setup controllers
         self.controllers = list()
         controllers = rospy.get_param("~controllers", dict())
         for name, params in controllers.items():
             if params["type"] == "follow_controller":
                 self.controllers.append(FollowController(self, name))
+            elif params["type"] == "diff_controller":
+                self.controllers.append(DiffController(self, name))
+#           elif params["type"] == "omni_controller":
+#               self.controllers.append(OmniController(self, name))
             else:
                 rospy.logerr("Unrecognized controller: " + params["type"])
-
-        # setup base controller
-        if rospy.has_param("~base"):
-            if rospy.has_param("~base/omni"):
-                self.controllers.append(OmniController(self))
-            else:
-                self.controllers.append(DiffController(self))
-
         for controller in self.controllers:
             controller.startup()
 
