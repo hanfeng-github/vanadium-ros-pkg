@@ -171,7 +171,7 @@ class SimpleArmServer:
                     goal.trajectory = msg
 
                     self._client.send_goal(goal)
-                    self._client.wait_for_result(point.time_from_start*1.2)
+                    print self._client.wait_for_result(point.time_from_start*1.2)
                 else:
                     return MoveArmResponse(False)
             else:
