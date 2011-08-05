@@ -54,7 +54,7 @@ class max_sonar:
 
         # setup a range message to use
         self.msg = Range()
-        self.msg.radiation_type = Range.ULTRASOUND
+        self.msg.radiation_type = self.sensor.radiation_type
         self.msg.field_of_view = self.sensor.field_of_view
         self.msg.min_range = self.sensor.min_range
         self.msg.max_range = self.sensor.max_range

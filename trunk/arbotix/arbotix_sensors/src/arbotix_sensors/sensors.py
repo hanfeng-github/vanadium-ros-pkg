@@ -27,10 +27,10 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-#from sensor_msgs.msg import Range
+from sensor_msgs.msg import Range
 
 class SharpIR:
-    #radiation_type = Range.INFRARED
+    radiation_type = Range.INFRARED
     field_of_view = 0.001
     min_range = 0.0
     max_range = 1.0
@@ -75,7 +75,7 @@ class gp2d12(SharpIR):
             return self.max_range+0.1
 
 class maxSonar():
-    #radiation_type = Range.ULTRASOUND
+    radiation_type = Range.ULTRASOUND
     field_of_view = 0.785398163
     min_range = 0.0
     max_range = 6.4516 
