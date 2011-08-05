@@ -99,7 +99,7 @@ class FollowController:
                 while self.interpolating > 0: 
                     pass
                 positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
-                self.write(positions, int(30.0*point.time_from_start.to_sec()) )
+                self.write(positions, point.time_from_start.to_sec())
             else:
                 last = [ self.servos[joint] for joint in self.joints ]
                 desired = [ point.positions[k] for k in indexes ]
@@ -123,7 +123,7 @@ class FollowController:
                             velocity[i] = 0
                     r.sleep()
 
-        while self.onboard and self.interpolating > 0:
+        while self.onboard and self.interpolating != 0:
             pass
 
         self.active = False
@@ -166,15 +166,19 @@ class FollowController:
         params = [self.index] + self.ids
         success = self.device.execute(253, AX_CONTROL_SETUP, params)
 
-    def write(self, positions, frames):
+    def write(self, positions, time):
+        """ Write a movement to occur in time (s). """
         self.interpolating = 1
         params = [self.index]
         for p in positions:
             params.append( int(p)%256 )
             params.append( (int(p)>>8)%256 )
-        params.append(frames)
+        params.append(int(time*30))
         success = self.device.execute(253, AX_CONTROL_WRITE, params)
 
     def status(self):
-        self.interpolating = self.device.execute(253, AX_CONTROL_STAT, [self.index])
-        
+        try:
+            self.interpolating = self.device.execute(253, AX_CONTROL_STAT, [self.index])[0]
+        except:
+            pass
+
