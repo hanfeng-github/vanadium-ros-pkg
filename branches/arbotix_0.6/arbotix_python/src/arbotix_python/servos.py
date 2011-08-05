@@ -141,7 +141,7 @@ class Servo:
 
     def interpolate(self, frame):
         """ Get the new position to move to, in ticks. """
-        if self.controller and self.controller.active:
+        if self.controller and self.controller.active():
             # under controller?
             return None
         if self.dirty:

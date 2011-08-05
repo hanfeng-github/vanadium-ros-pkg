@@ -39,7 +39,6 @@ class FollowController:
     def __init__(self, device, name):
         self.name = name
         self.device = device   
-        self.active = False  
         self.interpolating = 0
 
         # parameters
@@ -62,21 +61,18 @@ class FollowController:
         rospy.loginfo("Started FollowController controlling: " + str(self.joints))
 
     def actionCb(self, goal):
-        self.active = True
         traj = goal.trajectory
 
         if set(self.joints) != set(traj.joint_names):
             msg = "Trajectory joint names does not match action controlled joints."
             rospy.logerr(msg)
             self.server.set_aborted(text=msg)
-            self.active = False
             return
 
         if not traj.points:
             msg = "Trajectory empy."
             rospy.logerr(msg)
             self.server.set_aborted(text=msg)
-            self.active = False
             return
 
         try:
@@ -85,13 +81,12 @@ class FollowController:
             msg = "Trajectory invalid."
             rospy.logerr(msg)
             self.server.set_aborted(text=msg)
-            self.active = False
             return    
 
         # carry out trajectory
         time = rospy.Time.now()
         start = traj.header.stamp
-        r = rospy.Rate(1.0/self.rate)
+        r = rospy.Rate(self.rate)
         for point in traj.points:
             while rospy.Time.now() + rospy.Duration(0.01) < start:
                 rospy.sleep(0.01)
@@ -100,8 +95,9 @@ class FollowController:
                     pass
                 positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
                 self.write(positions, point.time_from_start.to_sec())
+                self.interpolating = 1
             else:
-                last = [ self.servos[joint] for joint in self.joints ]
+                last = [ self.device.servos[joint].angle for joint in self.joints ]
                 desired = [ point.positions[k] for k in indexes ]
                 endtime = start + point.time_from_start
                 while rospy.Time.now() + rospy.Duration(0.01) < endtime:
@@ -117,8 +113,9 @@ class FollowController:
                             elif cmd < -top:
                                 cmd = -top
                             last[i] += cmd
-                            self.servos[self.joints[i]].desired = last[i]
-                            self.servos[self.joints[i]].dirty = True
+                            self.device.servos[self.joints[i]].desired = last[i]
+                            self.device.servos[self.joints[i]].relaxed = False
+                            self.device.servos[self.joints[i]].dirty = True
                         else:
                             velocity[i] = 0
                     r.sleep()
@@ -126,19 +123,22 @@ class FollowController:
         while self.onboard and self.interpolating != 0:
             pass
 
-        self.active = False
         self.server.set_succeeded()
                 
-    def update(self):
-        if self.active:
-            self.status()
-
     def startup(self):
         self.setup() 
         self.server.start()
+
+    def update(self):
+        if self.interpolating != 0:
+            self.status()
     
     def shutdown(self):
         pass
+
+    def active(self):
+        """ Is controller overriding servo internal control? """
+        return self.onboard and self.server.is_active()
 
     def getDiagnostics(self):
         """ Get a diagnostics status. """
