@@ -167,6 +167,16 @@ class Servo:
                 return self.neutral + (self.last_cmd/self.rad_per_tick)
         else:
             return None
+
+    def setControl(self, position):
+        """ Set the position that controller is moving to. 
+            Returns output value in ticks. """
+        self.desired = position
+        self.last_cmd = position
+        if self.invert:
+            return self.neutral - (self.last_cmd/self.rad_per_tick)
+        else:
+            return self.neutral + (self.last_cmd/self.rad_per_tick)
     
     def getDiagnostics(self):
         """ Get a diagnostics status. """
