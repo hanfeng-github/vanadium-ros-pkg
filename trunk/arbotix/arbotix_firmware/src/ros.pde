@@ -377,10 +377,11 @@ void loop(){
             case ARB_CONTROL_WRITE:              // Write values to a controller
               statusPacket(id,0);
               if(params[0] < CONTROLLER_COUNT){
-                for(int i=0; i<length-4; i++){
-                  controllers[params[0]].setNextPose(controllers[params[0]].id[i], params[i+1]);
+                for(int i=0; i<length-4; i+=2){
+                  controllers[params[0]].setNextPose(controllers[params[0]].id[i/2], params[i+1]+(params[i+2]<<8));
                 }
-                controllers[params[0]].interpolateSetup(params[length-2]*30);
+                controllers[params[0]].readPose();
+                controllers[params[0]].interpolateSetup(params[length-3]*33);
 #ifdef USE_BASE
               }else if(params[0] == 10){
                 left_speed = params[1];

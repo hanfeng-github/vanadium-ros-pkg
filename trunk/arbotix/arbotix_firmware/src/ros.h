@@ -56,32 +56,6 @@
 #define REG_RM_SIGN         49
 #define REG_RM_PWM          50
 
-/*
-#define REG_LM_SPEED_L      51  // Motor Speed (ticks/sec, 2 bytes, signed)
-#define REG_LM_SPEED_H      52
-#define REG_RM_SPEED_L      53
-#define REG_RM_SPEED_H      54
-
-#define REG_X_SPEED_L       51  // OR Nuke Speed (mm/s, 2 bytes, signed) 
-#define REG_X_SPEED_H       52
-#define REG_R_SPEED_L       53
-#define REG_R_SPEED_H       54
-#define REG_Y_SPEED_L       55
-#define REG_Y_SPEED_H       56
-
-#define REG_ENC_LEFT_L      57  // Current Differential Encoder Values (ticks, 4 bytes, signed)    
-#define REG_ENC_RIGHT_L     61
-
-#define REG_ENC_X_L         57  // OR Current Omni Encoder Values (mm, 4 bytes, signed)
-#define REG_ENC_R_L         61
-#define REG_ENC_Y_L         65
-
-#define REG_KP              69  // PID parameters
-#define REG_KD              70
-#define REG_KI              71
-#define REG_KO              72
-*/
-
 /* Packet Decoding */
 int mode = 0;                   // where we are in the frame
 
