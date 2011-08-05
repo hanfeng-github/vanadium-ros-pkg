@@ -39,7 +39,6 @@ from tf.broadcaster import TransformBroadcaster
 
 from ax12 import *
 
-
 class DiffController:
     """ Controller to handle movement & odometry feedback for a differential 
             drive mobile base. """
@@ -233,7 +232,7 @@ class DiffController:
 
     def status(self):
         """ read 32-bit (signed) encoder values. """
-        values = self.device.execute(253, AX_CONTROL_STATUS, [10])
+        values = self.device.execute(253, AX_CONTROL_STAT, [10])
         left_values = "".join([chr(k) for k in values[0:4] ])        
         right_values = "".join([chr(k) for k in values[4:] ])
         try:

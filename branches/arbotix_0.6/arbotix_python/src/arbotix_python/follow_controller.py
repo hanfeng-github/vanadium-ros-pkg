@@ -33,7 +33,6 @@ from diagnostic_msgs.msg import *
 
 from ax12 import *
 
-
 class FollowController:
     """ A controller for joint chains, exposing a FollowJointTrajectory action. """
 
@@ -47,7 +46,7 @@ class FollowController:
         self.rate = rospy.get_param('~controllers/'+name+'/rate',50.0)
         self.joints = rospy.get_param('~controllers/'+name+'/joints')
         self.index = rospy.get_param('~controllers/'+name+'/index', 0)
-        self.use_onboard = rospy.get_param('~controllers/'+name+'/onboard', True)
+        self.onboard = rospy.get_param('~controllers/'+name+'/onboard', True)
         for joint in self.joints:
             self.device.servos[joint].controller = self
         self.ids = [self.device.servos[joint].id for joint in self.joints]
@@ -57,7 +56,7 @@ class FollowController:
         self.joint_velocities = []
 
         # action server
-        name = rospy.get_param('~controllers/'+name+'/action_name','~follow_joint_trajectory')
+        name = rospy.get_param('~controllers/'+name+'/action_name','follow_joint_trajectory')
         self.server = actionlib.SimpleActionServer(name, FollowJointTrajectoryAction, execute_cb=self.actionCb, auto_start=False)
 
         rospy.loginfo("Started FollowController controlling: " + str(self.joints))
@@ -99,7 +98,8 @@ class FollowController:
             if self.onboard:
                 while self.interpolating > 0: 
                     pass
-                self.write([ point.positions[k] for k in indexes ], int(30.0*point.time_from_start.to_sec()) )
+                positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
+                self.write(positions, int(30.0*point.time_from_start.to_sec()) )
             else:
                 last = [ self.servos[joint] for joint in self.joints ]
                 desired = [ point.positions[k] for k in indexes ]
@@ -163,11 +163,18 @@ class FollowController:
     ### 
     
     def setup(self):
-        success = self.device.execute(253, AX_CONTROL_SETUP, [self.index] + self.ids)
+        params = [self.index] + self.ids
+        success = self.device.execute(253, AX_CONTROL_SETUP, params)
 
     def write(self, positions, frames):
-        success = self.device.execute(253, AX_CONTROL_WRITE, [self.index] + positions + [frames])
+        self.interpolating = 1
+        params = [self.index]
+        for p in positions:
+            params.append( int(p)%256 )
+            params.append( (int(p)>>8)%256 )
+        params.append(frames)
+        success = self.device.execute(253, AX_CONTROL_WRITE, params)
 
     def status(self):
-        self.interpolating = self.device.execute(253, AX_CONTROL_STATUS, [self.index])
-
+        self.interpolating = self.device.execute(253, AX_CONTROL_STAT, [self.index])
+        
