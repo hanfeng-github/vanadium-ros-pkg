@@ -33,7 +33,7 @@
 #define CONTROLLER_COUNT    5
 /* Hardware Constructs */
 #include <ax12.h>
-#include <BioloidController2.h>
+#include <BioloidController.h>
 BioloidController controllers[CONTROLLER_COUNT];
 
 #include "ros.h"
@@ -362,7 +362,7 @@ void loop(){
               if(params[0] < CONTROLLER_COUNT){
                 controllers[params[0]].setup(length-3);
                 for(int i=0; i<length-3; i++){
-                  controllers[params[0]].id[i] = params[i+1];
+                  controllers[params[0]].setId(i, params[i+1]);
                 }
 #ifdef USE_BASE
               }else if(params[0] == 10){
@@ -378,7 +378,7 @@ void loop(){
               statusPacket(id,0);
               if(params[0] < CONTROLLER_COUNT){
                 for(int i=0; i<length-4; i+=2){
-                  controllers[params[0]].setNextPose(controllers[params[0]].id[i/2], params[i+1]+(params[i+2]<<8));
+                  controllers[params[0]].setNextPose(controllers[params[0]].getId(i/2), params[i+1]+(params[i+2]<<8));
                 }
                 controllers[params[0]].readPose();
                 controllers[params[0]].interpolateSetup(params[length-3]*33);
