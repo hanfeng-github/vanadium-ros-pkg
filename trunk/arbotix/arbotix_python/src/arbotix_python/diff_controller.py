@@ -45,6 +45,7 @@ class DiffController:
     def __init__(self, device, name):
         self.name = name
         self.device = device
+        self.fake = device.fake
 
         # parameters: rates and geometry
         self.rate = rospy.get_param('~controllers/'+name+'/rate',10.0)
@@ -78,6 +79,8 @@ class DiffController:
         self.x = 0                      # position in xy plane
         self.y = 0
         self.th = 0
+        self.dx = 0                     # speeds in x/rotation
+        self.dr = 0
         self.then = rospy.Time.now()    # time for determining dx/dy
 
         # subscriptions
@@ -88,7 +91,8 @@ class DiffController:
         rospy.loginfo("Started DiffController ("+name+"). Geometry: " + str(self.base_width) + "m wide, " + str(self.ticks_meter) + " ticks/m.")
 
     def startup(self):
-        self.setup(self.Kp,self.Kd,self.Ki,self.Ko) 
+        if not self.fake:
+            self.setup(self.Kp,self.Kd,self.Ki,self.Ko) 
     
     def update(self):
         now = rospy.Time.now()
@@ -97,38 +101,46 @@ class DiffController:
             self.then = now
             elapsed = elapsed.to_sec()
 
-            # read encoders
-            try:
-                left, right = self.status()
-            except Exception as e:
-                rospy.logerr("Could not update encoders")
-                return
-            rospy.logdebug("Encoders: " + str(left) +","+ str(right))
+            if self.fake:
+                x = cos(self.th)*self.dx*elapsed
+                y = -sin(self.th)*self.dx*elapsed
+                self.x += cos(self.th)*self.dx*elapsed
+                self.y += sin(self.th)*self.dx*elapsed
+                self.th += self.dr*elapsed
+            else:
+                # read encoders
+                try:
+                    left, right = self.status()
+                except Exception as e:
+                    rospy.logerr("Could not update encoders")
+                    return
+                rospy.logdebug("Encoders: " + str(left) +","+ str(right))
 
-            # calculate odometry
-            d_left = (left - self.enc_left)/self.ticks_meter
-            d_right = (right - self.enc_right)/self.ticks_meter
-            self.enc_left = left
-            self.enc_right = right
+                # calculate odometry
+                d_left = (left - self.enc_left)/self.ticks_meter
+                d_right = (right - self.enc_right)/self.ticks_meter
+                self.enc_left = left
+                self.enc_right = right
 
-            d = (d_left+d_right)/2
-            th = (d_right-d_left)/self.base_width
-            dx = d / elapsed
-            dth = th / elapsed
+                d = (d_left+d_right)/2
+                th = (d_right-d_left)/self.base_width
+                self.dx = d / elapsed
+                self.dth = th / elapsed
 
-            if (d != 0):
-                x = cos(th)*d
-                y = -sin(th)*d
-                self.x = self.x + (cos(self.th)*x - sin(self.th)*y)
-                self.y = self.y + (sin(self.th)*x + cos(self.th)*y)
-            if (th != 0):
-                self.th = self.th + th
+                if (d != 0):
+                    x = cos(th)*d
+                    y = -sin(th)*d
+                    self.x = self.x + (cos(self.th)*x - sin(self.th)*y)
+                    self.y = self.y + (sin(self.th)*x + cos(self.th)*y)
+                if (th != 0):
+                    self.th = self.th + th
+
+            # publish or perish
             quaternion = Quaternion()
             quaternion.x = 0.0 
             quaternion.y = 0.0
             quaternion.z = sin(self.th/2)
             quaternion.w = cos(self.th/2)
-            # publish or perish
             self.odomBroadcaster.sendTransform(
                 (self.x, self.y, 0), 
                 (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
@@ -144,69 +156,58 @@ class DiffController:
             odom.pose.pose.position.z = 0
             odom.pose.pose.orientation = quaternion
             odom.child_frame_id = "base_link"
-            odom.twist.twist.linear.x = dx
+            odom.twist.twist.linear.x = self.dx
             odom.twist.twist.linear.y = 0
-            odom.twist.twist.angular.z = dth
+            odom.twist.twist.angular.z = self.dr
             self.odomPub.publish(odom)
 
             # update motors
-            if self.v_left < self.v_des_left:
-                self.v_left += self.max_accel
-                if self.v_left > self.v_des_left:
-                    self.v_left = self.v_des_left
-            else:
-                self.v_left -= self.max_accel
+            if not self.fake:
                 if self.v_left < self.v_des_left:
-                    self.v_left = self.v_des_left
-            
-            if self.v_right < self.v_des_right:
-                self.v_right += self.max_accel
-                if self.v_right > self.v_des_right:
-                    self.v_right = self.v_des_right
-            else:
-                self.v_right -= self.max_accel
+                    self.v_left += self.max_accel
+                    if self.v_left > self.v_des_left:
+                        self.v_left = self.v_des_left
+                else:
+                    self.v_left -= self.max_accel
+                    if self.v_left < self.v_des_left:
+                        self.v_left = self.v_des_left
+                
                 if self.v_right < self.v_des_right:
-                    self.v_right = self.v_des_right
+                    self.v_right += self.max_accel
+                    if self.v_right > self.v_des_right:
+                        self.v_right = self.v_des_right
+                else:
+                    self.v_right -= self.max_accel
+                    if self.v_right < self.v_des_right:
+                        self.v_right = self.v_des_right
+                self.write(self.v_left, self.v_right)
 
-            self.write(self.v_left, self.v_right)
             self.t_next = now + self.t_delta
  
     def shutdown(self):
-        self.write(0,0)
+        if not self.fake:
+            self.write(0,0)
 
     def cmdVelCb(self,req):
         """ Handle movement requests. """
-        x = req.linear.x        # m/s
-        th = req.angular.z      # rad/s
+        self.dx = req.linear.x        # m/s
+        self.dr = req.angular.z       # rad/s
 
-        if x == 0:
-            # turn in place
-            r = th * self.base_width/2.0 * self.ticks_meter
-            l = -r
-        elif th == 0:   
-            # pure forward/backward motion
-            l = r = x * self.ticks_meter
-        else:
-            # rotation about a point in space
-            l = (x - th * self.base_width/2.0) * self.ticks_meter
-            r = (x + th * self.base_width/2.0) * self.ticks_meter
-
-        # clean up and log values                  
-        rospy.logdebug("Twist move: "+str(l)+","+str(r))
-        l = int(l/30.0)
-        r = int(r/30.0)      
         # set motor speeds in ticks per 1/30s
-        self.v_des_left = l
-        self.v_des_right = r
+        self.v_des_left = int( ((self.dx - (self.dr * self.base_width/2.0)) * self.ticks_meter) / 30.0)
+        self.v_des_right = int( ((self.dx + (self.dr * self.base_width/2.0)) * self.ticks_meter) / 30.0)
 
     def getDiagnostics(self):
         """ Get a diagnostics status. """
         msg = DiagnosticStatus()
-        msg.name = "Encoders"
+        msg.name = self.name
         msg.level = DiagnosticStatus.OK
         msg.message = "OK"
-        msg.values.append(KeyValue("Left", str(self.enc_left)))
-        msg.values.append(KeyValue("Right", str(self.enc_right)))
+        if not self.fake:
+            msg.values.append(KeyValue("Left", str(self.enc_left)))
+            msg.values.append(KeyValue("Right", str(self.enc_right)))
+        msg.values.append(KeyValue("dX", str(self.dx)))
+        msg.values.append(KeyValue("dR", str(self.dr)))
         return msg
 
     ###

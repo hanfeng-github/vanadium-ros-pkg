@@ -5,9 +5,9 @@ analyzers:
     type: GenericAnalyzer
     path: 'Joints'
     timeout: 5.0
-    startswith: ['Joint']
+    contains: '_joint'
   encoders:
     type: GenericAnalyzer
-    path: 'Encoders'
+    path: 'Controllers'
     timeout: 5.0
-    startswith: ['Encoders']
+    contains: '_controller'

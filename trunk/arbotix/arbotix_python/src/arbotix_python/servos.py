@@ -81,7 +81,8 @@ class Servo:
 
     def relaxCb(self, req):
         """ Turn off servo torque, so that it is pose-able. """
-        self.device.disableTorque(self.id)
+        if not self.device.fake:
+            self.device.disableTorque(self.id)
         self.relaxed = True
         return RelaxResponse()
 
@@ -96,7 +97,7 @@ class Servo:
         """ Update angle in radians by reading from servo, or by 
             using position passed in from a sync read (in ticks). """
         if reading == None:                     # read from device (no sync_read)
-            if self.readable:
+            if self.readable and not self.device.fake:
                 reading = self.device.getPosition(self.id)
         if reading > -1 and reading < self.ticks:     # check validity
             last_angle = self.angle
@@ -117,7 +118,7 @@ class Servo:
     def updateTemp(self, reading=None):
         """ Update temperature by reading from servo, or by passing value from a sync read. """
         if reading == None:                     # read from device (no sync_read)
-            if self.readable:
+            if self.readable and not self.device.fake:
                 self.temperature = self.device.getTemperature(self.id)
         else:                                   # reading has come from sync_read
             self.temperature = reading
@@ -134,7 +135,7 @@ class Servo:
     def updateVoltage(self, reading=None):
         """ Update voltage by reading from servo, or by passing value from a sync read. """
         if reading == None:                     # read from device (no sync_read)
-            if self.readable:
+            if self.readable and not self.device.fake:
                 self.voltage = self.device.getVoltage(self.id)
         else:                                   # reading has come from sync_read
             self.voltage = reading
@@ -161,6 +162,9 @@ class Servo:
             # cap movement
             if self.last_cmd == self.desired:
                 self.dirty = False
+            if self.device.fake:
+                self.angle = self.last_cmd
+                return None
             if self.invert:
                 return self.neutral - (self.last_cmd/self.rad_per_tick)
             else:
@@ -181,7 +185,7 @@ class Servo:
     def getDiagnostics(self):
         """ Get a diagnostics status. """
         msg = DiagnosticStatus()
-        msg.name = "Joint " + self.name
+        msg.name = self.name
         msg.level = self.level
         msg.message = self.status
         msg.values.append(KeyValue("Position", str(self.angle)))
@@ -232,6 +236,9 @@ class HobbyServo(Servo):
 
     def update(self, value):
         """ If dirty, update value of servo at device. """
+        pass
+
+    def interpolate(self, frame):
         if self.dirty:
             # test limits
             if self.angle < self.min_angle:
@@ -243,7 +250,8 @@ class HobbyServo(Servo):
             if self.invert:
                 ang = ang * -1.0
             ticks = int(round( ang / self.rad_per_tick ))
-            self.device.setServo(self.id, ticks)
+            if not self.device.fake:
+                self.device.setServo(self.id, ticks)
             self.dirty = False
 
     def getDiagnostics(self):
@@ -260,6 +268,7 @@ class Servos(dict):
 
     def __init__(self, device):
         self.device = device
+        self.fake = device.fake
 
         dynamixels = rospy.get_param("~dynamixels", dict())
         self.dynamixels = dict()
@@ -296,7 +305,7 @@ class Servos(dict):
     
     def update(self, sync=True):
         """ Read servo positions. """
-        if rospy.Time.now() > self.r_next:
+        if rospy.Time.now() > self.r_next and not self.fake:
             #try:
                 if sync:
                     # arbotix/servostik/wifi board sync_read
@@ -327,6 +336,8 @@ class Servos(dict):
                         
     def updateStats(self, sync=True):
         """ Read servo voltages, temperatures. """
+        if self.fake: 
+            return
         try:
             if sync:
                 # arbotix/servostik/wifi board sync_read
@@ -361,12 +372,14 @@ class Servos(dict):
     def interpolate(self, sync=True):
         """ Write updated positions to servos. """
         if rospy.Time.now() > self.w_next:
-            if sync:
+            if sync and not self.fake:
                 syncpkt = list()
                 for servo in self.dynamixels.values():
                     v = servo.interpolate(1.0/self.w_delta.to_sec())
                     if v != None:   # if was dirty
-                        syncpkt.append([servo.id,int(v)%256,int(v)>>8])  
+                        syncpkt.append([servo.id,int(v)%256,int(v)>>8]) 
+                for servo in self.hobbyservos.values(): 
+                    servo.interpolate(1.0/self.w_delta.to_sec())
                 if len(syncpkt) > 0:      
                     self.device.syncWrite(P_GOAL_POSITION_L,syncpkt)
             else:
@@ -374,6 +387,8 @@ class Servos(dict):
                     v = servo.interpolate(1.0/self.w_delta.to_sec())
                     if v != None:   # if was dirty      
                         self.device.setPosition(servo.id, int(v))
+                for servo in self.hobbyservos.values(): 
+                    servo.interpolate(1.0/self.w_delta.to_sec())
             self.w_next = rospy.Time.now() + self.w_delta
 
 

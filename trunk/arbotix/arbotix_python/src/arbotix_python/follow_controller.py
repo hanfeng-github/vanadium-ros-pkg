@@ -39,6 +39,7 @@ class FollowController:
     def __init__(self, device, name):
         self.name = name
         self.device = device   
+        self.fake = device.fake
         self.interpolating = 0
 
         # parameters: rates and joints
@@ -46,6 +47,8 @@ class FollowController:
         self.joints = rospy.get_param('~controllers/'+name+'/joints')
         self.index = rospy.get_param('~controllers/'+name+'/index', len(device.controllers))
         self.onboard = rospy.get_param('~controllers/'+name+'/onboard', True)
+        if self.fake:
+            self.onboard = False
         for joint in self.joints:
             self.device.servos[joint].controller = self
         self.ids = [self.device.servos[joint].id for joint in self.joints]
@@ -59,10 +62,11 @@ class FollowController:
         name = rospy.get_param('~controllers/'+name+'/action_name','follow_joint_trajectory')
         self.server = actionlib.SimpleActionServer(name, FollowJointTrajectoryAction, execute_cb=self.actionCb, auto_start=False)
 
-        rospy.loginfo("Started FollowController ("+name+"). Joints: " + str(self.joints))
+        rospy.loginfo("Started FollowController ("+self.name+"). Joints: " + str(self.joints))
 
     def startup(self):
-        self.setup() 
+        if not self.fake:
+            self.setup() 
         self.server.start()
 
     def update(self):

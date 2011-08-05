@@ -50,6 +50,7 @@ class ArbotixROS(ArbotiX):
         baud = int(rospy.get_param("~baud", "115200"))
 
         self.rate = rospy.get_param("~rate", 100.0)
+        self.fake = rospy.get_param("~sim", False)
 
         self.use_sync_read = rospy.get_param("~sync_read",True)      # use sync read?
         self.use_sync_write = rospy.get_param("~sync_write",True)    # use sync write?
@@ -59,9 +60,12 @@ class ArbotixROS(ArbotiX):
         self.joint_state_publisher = JointStatePublisher()
 
         # start an arbotix driver
-        ArbotiX.__init__(self, port, baud)        
+        if not self.fake:
+            ArbotiX.__init__(self, port, baud)        
         rospy.sleep(1.0)
         rospy.loginfo("Started ArbotiX connection on port " + port + ".")
+        if self.fake:
+            rospy.loginfo("ArbotiX being simulated.")
         
         # wait for arbotix to start up (especially after reset)
         if rospy.has_param("~base") or rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
@@ -94,13 +98,14 @@ class ArbotixROS(ArbotiX):
         rospy.Service('~SetupDigitalOut',SetupChannel, self.digitalOutCb)
         # initialize digital/analog IO streams
         self.io = dict()
-        for v,t in {"digital_servos":DigitalServo,"digital_sensors":DigitalSensor,"analog_sensors":AnalogSensor}.items():
-            temp = rospy.get_param("~"+v,dict())
-            for name in temp.keys():
-                pin = rospy.get_param('~'+v+'/'+name+'/pin',1)
-                value = rospy.get_param('~'+v+'/'+name+'/value',0)
-                rate = rospy.get_param('~'+v+'/'+name+'/rate',10)
-                self.io[name] = t(name, pin, value, rate, self)
+        if not self.fake:
+            for v,t in {"digital_servos":DigitalServo,"digital_sensors":DigitalSensor,"analog_sensors":AnalogSensor}.items():
+                temp = rospy.get_param("~"+v,dict())
+                for name in temp.keys():
+                    pin = rospy.get_param('~'+v+'/'+name+'/pin',1)
+                    value = rospy.get_param('~'+v+'/'+name+'/value',0)
+                    rate = rospy.get_param('~'+v+'/'+name+'/rate',10)
+                    self.io[name] = t(name, pin, value, rate, self)
         
         r = rospy.Rate(self.rate)
 
@@ -132,15 +137,18 @@ class ArbotixROS(ArbotiX):
 
     def analogInCb(self, req):
         # TODO: Add check, only 1 service per pin
-        self.io[req.topic_name] = AnalogSensor(req.topic_name, req.pin, req.value, req.rate, self) 
+        if not self.fake:
+            self.io[req.topic_name] = AnalogSensor(req.topic_name, req.pin, req.value, req.rate, self) 
         return SetupChannelResponse()
 
     def digitalInCb(self, req):
-        self.io[req.topic_name] = DigitalSensor(req.topic_name, req.pin, req.value, req.rate, self) 
+        if not self.fake:
+            self.io[req.topic_name] = DigitalSensor(req.topic_name, req.pin, req.value, req.rate, self) 
         return SetupChannelResponse()
 
     def digitalOutCb(self, req):
-        self.io[req.topic_name] = DigitalServo(req.topic_name, req.pin, req.value, req.rate, self) 
+        if not self.fake:
+            self.io[req.topic_name] = DigitalServo(req.topic_name, req.pin, req.value, req.rate, self) 
         return SetupChannelResponse()
 
 
