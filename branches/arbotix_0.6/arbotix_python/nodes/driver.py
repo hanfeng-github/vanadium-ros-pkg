@@ -74,7 +74,7 @@ class ArbotixROS(ArbotiX):
         # initialize dynamixel & hobby servos
         self.servos = Servos(self)
 
-        # setup trajectory actions
+        # setup trajectory action controllers
         self.controllers = list()
         controllers = rospy.get_param("~controllers", dict())
         for name, params in controllers.items():
@@ -112,7 +112,7 @@ class ArbotixROS(ArbotiX):
         # main loop -- do all the read/write here
         while not rospy.is_shutdown():
     
-            # TODO: update controllers
+            # update controllers
             for controller in self.controllers:
                 controller.update()
 

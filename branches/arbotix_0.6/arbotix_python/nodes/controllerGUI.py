@@ -36,6 +36,7 @@ from math import radians
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
+from arbotix_msgs.srv import Relax
 from arbotix_python.servos import *
 
 width = 325
@@ -92,12 +93,14 @@ class controllerGUI(wx.Frame):
         dynamixels = rospy.get_param("/arbotix/dynamixels", dict())
         self.servos = list()
         self.publishers = list()
+        self.relaxers = list()
         # create sliders and publishers
         for name in sorted(dynamixels.keys()):
             # pull angles
             min_angle, max_angle = getServoLimits(name, joint_defaults)
             # create publisher
             self.publishers.append(rospy.Publisher(name+'/command', Float64))
+            self.relaxers.append(rospy.ServiceProxy(name+'/relax', Relax))
             # create slider
             s = servoSlider(self, min_angle, max_angle, name, i)
             servoSizer.Add(s.enabled,(i,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)   
@@ -135,6 +138,7 @@ class controllerGUI(wx.Frame):
             self.servos[servo].position.Enable()
         else:
             self.servos[servo].position.Disable()
+            self.relaxers[servo]()
 
     def stateCb(self, msg):        
         for servo in self.servos:
