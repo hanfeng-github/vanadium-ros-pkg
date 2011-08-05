@@ -29,9 +29,10 @@
 
 import roslib; roslib.load_manifest('simple_arm_server')
 import rospy
+import actionlib
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from sensor_msgs.msg import JointState
+from control_msgs.msg import *
 
 import tf
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -70,12 +71,9 @@ class SimpleArmServer:
         self._listener = tf.TransformListener()
 
         # a publisher for arm movement
-        self._pub = rospy.Publisher('arm_controller/command', JointTrajectory)
+        self._client = actionlib.SimpleActionClient('follow_joint_trajectory', FollowJointTrajectoryAction)
+        self._client.wait_for_server()
         self._gripper = rospy.Publisher('gripper_controller/command', Float64)
-
-        # listen to joint states
-        self.servos = dict()
-        rospy.Subscriber('joint_states', JointState, self.stateCb)
 
         # load service for moving arm
         rospy.Service('~move', MoveArm, self.moveCb)
@@ -84,16 +82,10 @@ class SimpleArmServer:
         rospy.loginfo('simple_arm_server node started')
         rospy.spin()
 
-    def stateCb(self, msg):
-        """ Update our known location of joints, for interpolation. """
-        for i in range(len(msg.name)):
-            joint = msg.name[i]
-            self.servos[joint] = msg.position[i]
-
     def moveCb(self, req):
         """ Given pose to move gripper to, do it. """ 
         arm_solver_info = self._get_ik_solver_info_proxy()     
-  
+
         for action in req.goals:
             if action.type == ArmAction.MOVE_ARM:
                 # arm movement    
@@ -129,11 +121,12 @@ class SimpleArmServer:
                 request.ik_request.pose_stamped.pose.orientation.w = q[3]
 
                 request.ik_request.ik_seed_state.joint_state.name = arm_solver_info.kinematic_solver_info.joint_names
-                request.ik_request.ik_seed_state.joint_state.position = [self.servos[joint] for joint in request.ik_request.ik_seed_state.joint_state.name]
+                request.ik_request.ik_seed_state.joint_state.position = [0.0 for joint in request.ik_request.ik_seed_state.joint_state.name]
 
                 # get IK, wiggle if needed
                 tries = 0
                 pitch = e[1]
+                print "roll", e[0]
                 while tries < 40:
                     try:
                         response = self._get_ik_proxy(request)
@@ -164,46 +157,23 @@ class SimpleArmServer:
                     point = JointTrajectoryPoint()
                     point.positions = [ 0.0 for servo in msg.joint_names ]
                     point.velocities = [ 0.0 for servo in msg.joint_names ]
-                    #dists = [0.0 for servo in msg.joint_names]
                     for joint in request.ik_request.ik_seed_state.joint_state.name:
                         i = msg.joint_names.index(joint)
                         point.positions[i] = response.solution.joint_state.position[response.solution.joint_state.name.index(joint)] 
-                        #point.velocities[i] = 0.2
-                        # find total travel distance right now
-                        #try:
-                        #    dists[i] = abs(point.positions[i] - self.servos[joint])
-                        #except:
-                        #    pass
-                    #max_dist = max(dists)
-                    #for i in range(len(dists)): #request.ik_request.ik_seed_state.joint_state.name:
-                    #    if dists[i] > 0:
-                    #        point.velocities[i] = dists[i]/max_dist * 0.2
-                    
                     if action.move_time > rospy.Duration(0.0):
                         point.time_from_start = action.move_time
                     else:
                         point.time_from_start = rospy.Duration(5.0)
                     msg.points.append(point)
                     msg.header.stamp = rospy.Time.now() + rospy.Duration(0.01)
-                    self._pub.publish(msg)
-                    #return MoveArmResponse(True)
+
+                    goal = FollowJointTrajectoryGoal()
+                    goal.trajectory = msg
+
+                    self._client.send_goal(goal)
+                    self._client.wait_for_result(point.time_from_start*1.2)
                 else:
                     return MoveArmResponse(False)
-            
-                # wait for completion
-                while True:
-                    done = True
-                    errors = list()
-                    for j in range(len(msg.joint_names)):
-                        joint = msg.joint_names[j]
-                        errors.append(self.servos[joint] - point.positions[j])
-                        if abs(self.servos[joint] - point.positions[j]) > 0.01:
-                            done = False
-                    print errors
-                    if rospy.Time.now() > msg.header.stamp + point.time_from_start + rospy.Duration(1.0) or done:
-                        break
-                    rospy.sleep(0.1)
-
             else:
                 rospy.loginfo("Move gripper to " + str(action.command))
                 # gripper movement
@@ -214,7 +184,7 @@ class SimpleArmServer:
    
     def haltCb(self, req):
         ''' Publish empty trajectory to stop arm. '''
-        self._pub.publish(JointTrajectory())
+        self._client.cancel_goal()
         return HaltArmResponse(True)
 
 if __name__ == '__main__':
