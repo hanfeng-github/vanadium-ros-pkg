@@ -110,8 +110,9 @@ class FollowController:
                 while self.interpolating > 0: 
                     pass
                 positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
-                rospy.loginfo(self.name + ": Sending Point," + str(positions))
-                self.write(positions, point.time_from_start.to_sec())
+                t = ((start + point.time_from_start) - rospy.Time.now()).to_sec()
+                rospy.loginfo(self.name + ": Sending Point," + str(positions) + " " + str(t))
+                self.write(positions, t)
                 self.interpolating = 1
             else:
                 last = [ self.device.servos[joint].angle for joint in self.joints ]
@@ -180,7 +181,7 @@ class FollowController:
         for p in positions:
             params.append( int(p)%256 )
             params.append( (int(p)>>8)%256 )
-        params.append(int(time*30))
+        params.append(int(time*30)%256)
         success = self.device.execute(253, AX_CONTROL_WRITE, params)
 
     def status(self):
