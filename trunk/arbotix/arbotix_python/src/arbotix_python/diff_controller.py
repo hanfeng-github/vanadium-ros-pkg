@@ -38,6 +38,7 @@ from diagnostic_msgs.msg import *
 from tf.broadcaster import TransformBroadcaster
 
 from ax12 import *
+from struct import unpack
 
 class DiffController:
     """ Controller to handle movement & odometry feedback for a differential 
@@ -112,7 +113,7 @@ class DiffController:
                 try:
                     left, right = self.status()
                 except Exception as e:
-                    rospy.logerr("Could not update encoders")
+                    rospy.logerr("Could not update encoders: " + str(e))
                     return
                 rospy.logdebug("Encoders: " + str(left) +","+ str(right))
 

@@ -62,7 +62,7 @@ class FollowController:
         name = rospy.get_param('~controllers/'+name+'/action_name','follow_joint_trajectory')
         self.server = actionlib.SimpleActionServer(name, FollowJointTrajectoryAction, execute_cb=self.actionCb, auto_start=False)
 
-        rospy.loginfo("Started FollowController ("+self.name+"). Joints: " + str(self.joints))
+        rospy.loginfo("Started FollowController ("+self.name+"). Joints: " + str(self.joints) + " on C" + str(self.index))
 
     def startup(self):
         if not self.fake:
@@ -70,17 +70,17 @@ class FollowController:
         self.server.start()
 
     def update(self):
-        if self.interpolating != 0:
-            self.status()
+        self.status()
     
     def shutdown(self):
         pass
 
     def actionCb(self, goal):
+        rospy.loginfo(self.name + ": Action goal recieved.")
         traj = goal.trajectory
 
         if set(self.joints) != set(traj.joint_names):
-            msg = "Trajectory joint names does not match action controlled joints."
+            msg = "Trajectory joint names does not match action controlled joints." + str(traj.joint_names)
             rospy.logerr(msg)
             self.server.set_aborted(text=msg)
             return
@@ -110,6 +110,7 @@ class FollowController:
                 while self.interpolating > 0: 
                     pass
                 positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
+                rospy.loginfo(self.name + ": Sending Point," + str(positions))
                 self.write(positions, point.time_from_start.to_sec())
                 self.interpolating = 1
             else:
@@ -139,6 +140,7 @@ class FollowController:
         while self.onboard and self.interpolating != 0:
             pass
 
+        rospy.loginfo(self.name + ": Done.")
         self.server.set_succeeded()
 
     def active(self):
@@ -182,8 +184,9 @@ class FollowController:
         success = self.device.execute(253, AX_CONTROL_WRITE, params)
 
     def status(self):
-        try:
-            self.interpolating = self.device.execute(253, AX_CONTROL_STAT, [self.index])[0]
-        except:
-            pass
+        if self.interpolating != 0:
+            try:
+                self.interpolating = self.device.execute(253, AX_CONTROL_STAT, [self.index])[0]
+            except:
+                pass
 
