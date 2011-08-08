@@ -9,12 +9,6 @@
   <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
       <rosparam file="$(find maxwell_defs)/params/maxwell.yaml" command="load" />
   </node>
-  <node name="head_traj_controller" pkg="arbotix_controllers" type="traj_controller.py">
-      <rosparam param="joints">[head_pan_joint, head_tilt_joint]</rosparam>
-  </node>
-  <node name="arm_controller" pkg="arbotix_controllers" type="traj_controller.py">
-      <rosparam param="joints">[arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint, arm_wrist_roll_joint]</rosparam>
-  </node>
   <node name="gripper_controller" pkg="arbotix_controllers" type="parallel_gripper_controller.py">
       <param name="pad_width" value="0.0381" />
       <param name="finger_length" value="0.08255" />
