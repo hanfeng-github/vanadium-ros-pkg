@@ -7,12 +7,29 @@
         [ INFO] [1310858627.105328692]: 0.00927514, 0.00208817, 0.0877625, 0.0240435, 0.0424938, 0.00594516, 0.998789
         [ INFO] [1310858627.105465208]: 0.00927514, 0.00208817, 0.0877625, 0.048728, 0.0847001, 0.0139699
   -->
-  <property name="calib_cam_x" value="0.00927514" />
-  <property name="calib_cam_y" value="0.00208817" />
+  <!--<property name="calib_cam_x" value="0" />
+  <property name="calib_cam_y" value="0" />
+  <property name="calib_cam_z" value="0" />
+  <property name="calib_cam_rr" value="0" />
+  <property name="calib_cam_rp" value="0" />
+  <property name="calib_cam_ry" value="0" />-->
+
+  <property name='calib_cam_x' value='-0.000859868' />
+  <property name='calib_cam_y' value='0.0171667' />
+  <!--<property name='calib_cam_y' value='0.0743167' />-->
+  <property name='calib_cam_z' value='0.0192186' />
+  <property name='calib_cam_rr' value='-0.0432624' />
+  <property name='calib_cam_rp' value='-0.0226177' />
+  <property name='calib_cam_ry' value='0.00714413' />
+
+  <!--<property name="calib_cam_x" value="0.00927514" />
+  <property name="calib_cam_y" value="-0.015" />
+  <property name="old_calib_cam_y" value="0.00208817" />
   <property name="calib_cam_z" value="0.0877625" />
   <property name="calib_cam_rr" value="0.048728" />
   <property name="calib_cam_rp" value="0.0847001" />
-  <property name="calib_cam_ry" value="0.0139699" />
+  <property name="calib_cam_ry" value="0.0359699" />
+  <property name="old_calib_cam_ry" value="0.0139699" />-->
 
   <property name="ax12_height" value="0.04762" />
   <property name="ax12_width" value="0.0381" />
