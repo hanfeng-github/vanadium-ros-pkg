@@ -68,7 +68,7 @@ class ArbotixROS(ArbotiX):
             rospy.loginfo("ArbotiX being simulated.")
         
         # wait for arbotix to start up (especially after reset)
-        if rospy.has_param("~base") or rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
+        if rospy.has_param("~controllers") or rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
             while self.getDigital(1) == -1:
                 rospy.loginfo("Waiting for response...")
                 rospy.sleep(0.25)
