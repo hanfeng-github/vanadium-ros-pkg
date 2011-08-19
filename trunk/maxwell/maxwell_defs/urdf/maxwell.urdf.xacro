@@ -1,35 +1,38 @@
 <?xml version="1.0"?>
 <robot name="maxwell" >
 
-  <!-- interactive calibration output: 
-        [ INFO] [1310855144.314114846]: -0.0184416, -7.34934e-11, 0.07469, 0.0120684, 0.00708517, -8.5516e-05, 0.999902
-
-        [ INFO] [1310858627.105328692]: 0.00927514, 0.00208817, 0.0877625, 0.0240435, 0.0424938, 0.00594516, 0.998789
-        [ INFO] [1310858627.105465208]: 0.00927514, 0.00208817, 0.0877625, 0.048728, 0.0847001, 0.0139699
-  -->
-  <!--<property name="calib_cam_x" value="0" />
-  <property name="calib_cam_y" value="0" />
-  <property name="calib_cam_z" value="0" />
-  <property name="calib_cam_rr" value="0" />
-  <property name="calib_cam_rp" value="0" />
-  <property name="calib_cam_ry" value="0" />-->
-
+  <!-- Calibration from 8/7
   <property name='calib_cam_x' value='-0.000859868' />
   <property name='calib_cam_y' value='0.0171667' />
-  <!--<property name='calib_cam_y' value='0.0743167' />-->
   <property name='calib_cam_z' value='0.0192186' />
   <property name='calib_cam_rr' value='-0.0432624' />
   <property name='calib_cam_rp' value='-0.0226177' />
   <property name='calib_cam_ry' value='0.00714413' />
+  -->
+  <!-- Calibration from 8/8
+  <property name='calib_cam_x' value='-0.00515338' />
+  <property name='calib_cam_y' value='0.0131489' />
+  <property name='calib_cam_z' value='0.0169829' />
+  <property name='calib_cam_rr' value='-0.0397998' />
+  <property name='calib_cam_rp' value='-0.0241423' />
+  <property name='calib_cam_ry' value='0.00627637' />
+  -->
 
-  <!--<property name="calib_cam_x" value="0.00927514" />
-  <property name="calib_cam_y" value="-0.015" />
-  <property name="old_calib_cam_y" value="0.00208817" />
-  <property name="calib_cam_z" value="0.0877625" />
-  <property name="calib_cam_rr" value="0.048728" />
-  <property name="calib_cam_rp" value="0.0847001" />
-  <property name="calib_cam_ry" value="0.0359699" />
-  <property name="old_calib_cam_ry" value="0.0139699" />-->
+  <property name='calib_cam_x' value='0.00468423' />
+  <property name='calib_cam_y' value='0.0060704' />
+  <property name='calib_cam_z' value='0.0118428' />
+  <property name='calib_cam_rr' value='-0.024976' />
+  <property name='calib_cam_rp' value='-0.0119664' />
+  <property name='calib_cam_ry' value='0.0228755' />
+
+  <!--
+  <property name="calib_cam_x" value="0" />
+  <property name="calib_cam_y" value="0" />
+  <property name="calib_cam_z" value="0" />
+  <property name="calib_cam_rr" value="0" />
+  <property name="calib_cam_rp" value="0" />
+  <property name="calib_cam_ry" value="0" />
+  -->
 
   <property name="ax12_height" value="0.04762" />
   <property name="ax12_width" value="0.0381" />
@@ -37,7 +40,8 @@
   <property name="ax12_center" value="0.0385" />
 
   <!-- height properties -->
-  <property name="arm_height" value="0.885825" /> <!-- height to shoulder lift rotation -->
+  <!--<property name="arm_height" value="0.911225" />-->
+  <property name="arm_height" value="0.885825" /><!-- height to shoulder lift rotation -->
   <property name="column_height" value="1.397" /> <!-- height to neck tilt rotation -->
   
   <!-- The following included files set up definitions of parts of the robot body -->
@@ -68,7 +72,8 @@
 
   <!-- Kinect head -->
   <maxwell_head name="head" parent="base">
-    <origin xyz="0.0157 0 ${column_height}"/>
+    <!--<origin xyz="0.0157 0 ${column_height}"/>-->
+    <origin xyz="${0.0157+0.05715/2} -0.005 ${column_height}"/>
   </maxwell_head>
 
 </robot>
