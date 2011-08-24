@@ -30,25 +30,28 @@
 usage_= "usage: simple_arm_server_test.py x y z wrist_pitch [wrist_roll=0.0 wrist_yaw=0.0 frame_id='base_link' duration=5.0]"
 
 import roslib; roslib.load_manifest('simple_arm_server')
-import rospy
+import rospy, actionlib
 import sys
 
 import tf
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
-
 from simple_arm_server.msg import *
-from simple_arm_server.srv import * 
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 4:     
         rospy.init_node('simple_arm_server_test')
-        rospy.wait_for_service('simple_arm_server/move')
-        move_srv = rospy.ServiceProxy('simple_arm_server/move', MoveArm) 
 
-        req = MoveArmRequest()  
-        req.header.frame_id = "base_link"
+        client = actionlib.SimpleActionClient('move_arm', MoveArmAction)
+        client.wait_for_server()
+        #rospy.wait_for_service('simple_arm_server/move')
+        #move_srv = rospy.ServiceProxy('simple_arm_server/move', MoveArm) 
+
+        goal = MoveArmGoal()
+        #req = MoveArmRequest()  
+        goal.header.frame_id = "base_link"
         if len(sys.argv) > 7:
-            req.header.frame_id = sys.argv[7]
+            goal.header.frame_id = sys.argv[7]
 
         action = ArmAction()
         action.type = ArmAction.MOVE_ARM
@@ -71,10 +74,11 @@ if __name__ == '__main__':
         if len(sys.argv) > 8:
             action.move_time = rospy.Duration(float(sys.argv[8]))
 
-        req.goals.append(action)
-
         try:
-            r = move_srv(req)
+            goal.motions.append(action)
+            client.send_goal(goal)
+            client.wait_for_result()   
+            r = client.get_result()
             print r
         except rospy.ServiceException, e:
             print "Service did not process request: %s"%str(e)

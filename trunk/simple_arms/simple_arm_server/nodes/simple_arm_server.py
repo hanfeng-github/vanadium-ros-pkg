@@ -28,8 +28,7 @@
 """
 
 import roslib; roslib.load_manifest('simple_arm_server')
-import rospy
-import actionlib
+import rospy, actionlib
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from control_msgs.msg import *
@@ -37,6 +36,7 @@ from control_msgs.msg import *
 import tf
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
+from actionlib_msgs.msg import GoalStatus
 from kinematics_msgs.msg import KinematicSolverInfo, PositionIKRequest
 from kinematics_msgs.srv import GetKinematicSolverInfo, GetPositionIK, GetPositionIKRequest
 from geometry_msgs.msg import PoseStamped
@@ -80,12 +80,25 @@ class SimpleArmServer:
         self.servos = dict()
         rospy.Subscriber('joint_states', JointState, self.stateCb)
 
-        # load service for moving arm
-        rospy.Service('~move', MoveArm, self.moveCb)
-        rospy.Service('~halt', HaltArm, self.haltCb)
+        # load action for moving arm
+        self.server = actionlib.SimpleActionServer("move_arm", MoveArmAction, execute_cb=self.actionCb, auto_start=False)
+        self.server.start()
+
+        # service for checking trajectory
+        rospy.Service('~get_trajectory_validity', GetTrajectoryValidity, self.validityCb)
 
         rospy.loginfo('simple_arm_server node started')
         rospy.spin()
+
+
+    def validityCb(self, req):
+        """ Check a trajectory for validity. """
+        for action in req.motions:
+            if action.type == ArmAction.MOVE_ARM:
+                if self.motionToTrajectory(action, req.header.frame_id) == None:
+                    return GetTrajectoryValidityResponse(False)
+        return GetTrajectoryValidityResponse(True)
+
 
     def stateCb(self, msg):
         """ Update our known location of joints, for interpolation. """
@@ -93,107 +106,28 @@ class SimpleArmServer:
             joint = msg.name[i]
             self.servos[joint] = msg.position[i]
 
-    def moveCb(self, req):
+
+    def actionCb(self, req):
         """ Given pose to move gripper to, do it. """ 
-        arm_solver_info = self._get_ik_solver_info_proxy() 
+        self.arm_solver_info = self._get_ik_solver_info_proxy() 
         computed_actions = list()       
 
-        for action in req.goals:
+        # compute trajectories
+        for action in req.motions:
+            if self.server.is_preempt_requested():
+                self.server.set_preempted( MoveArmResult(False) )
+                return
             if action.type == ArmAction.MOVE_ARM:
-                # arm movement    
-                ps = PoseStamped()
-                ps.header.frame_id = req.header.frame_id
-                ps.pose = action.goal
-                pose = self._listener.transformPose(self.root, ps)
-                rospy.loginfo("Move arm to " + str(pose))
-        
-                # create IK request
-                request = GetPositionIKRequest()
-                request.timeout = rospy.Duration(self.timeout)
-
-                request.ik_request.pose_stamped.header.frame_id = self.root;
-                request.ik_request.ik_link_name = self.tip;
-                request.ik_request.pose_stamped.pose.position.x = pose.pose.position.x
-                request.ik_request.pose_stamped.pose.position.y = pose.pose.position.y
-                request.ik_request.pose_stamped.pose.position.z = pose.pose.position.z
-
-                e = euler_from_quaternion([pose.pose.orientation.x,pose.pose.orientation.y,pose.pose.orientation.z,pose.pose.orientation.w])
-                e = [i for i in e]
-                if self.dof < 6:
-                    # 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
-                    e[2] = atan2(pose.pose.position.y, pose.pose.position.x)
-                if self.dof < 5:
-                    # 4 DOF, so yaw as above AND no roll
-                    e[0] = 0
-                q =  quaternion_from_euler(e[0], e[1], e[2])
-
-                request.ik_request.pose_stamped.pose.orientation.x = q[0]
-                request.ik_request.pose_stamped.pose.orientation.y = q[1]
-                request.ik_request.pose_stamped.pose.orientation.z = q[2]
-                request.ik_request.pose_stamped.pose.orientation.w = q[3]
-
-                request.ik_request.ik_seed_state.joint_state.name = arm_solver_info.kinematic_solver_info.joint_names
-                request.ik_request.ik_seed_state.joint_state.position = [self.servos[joint] for joint in request.ik_request.ik_seed_state.joint_state.name]
-                #request.ik_request.ik_seed_state.joint_state.position = [0.0 for joint in request.ik_request.ik_seed_state.joint_state.name]
-
-                # get IK, wiggle if needed
-                tries = 0
-                pitch = e[1]
-                print "roll", e[0]
-                while tries < 80:
-                    try:
-                        response = self._get_ik_proxy(request)
-                        if response.error_code.val == response.error_code.SUCCESS:
-                            break
-                        else:
-                            tries += 1
-                            # wiggle gripper
-                            pitch = e[1] + ((-1)**tries)*((tries+1)/2)*0.025
-                            # update quaternion
-                            q = quaternion_from_euler(e[0], pitch, e[2])
-                            request.ik_request.pose_stamped.pose.orientation.x = q[0]
-                            request.ik_request.pose_stamped.pose.orientation.y = q[1]
-                            request.ik_request.pose_stamped.pose.orientation.z = q[2]
-                            request.ik_request.pose_stamped.pose.orientation.w = q[3]
-                    except rospy.ServiceException, e:
-                        print "Service did not process request: %s"%str(e)
-
-                rospy.loginfo(response)
-
-                # move the arm
-                # TODO: we need correct trajectories
-                if response.error_code.val == response.error_code.SUCCESS:
-                    arm_solver_info = self._get_ik_solver_info_proxy()     
-                    msg = JointTrajectory()
-                    msg.joint_names = arm_solver_info.kinematic_solver_info.joint_names
-                    msg.points = list()
-                    point = JointTrajectoryPoint()
-                    point.positions = [ 0.0 for servo in msg.joint_names ]
-                    point.velocities = [ 0.0 for servo in msg.joint_names ]
-                    for joint in request.ik_request.ik_seed_state.joint_state.name:
-                        i = msg.joint_names.index(joint)
-                        point.positions[i] = response.solution.joint_state.position[response.solution.joint_state.name.index(joint)] 
-                    if action.move_time > rospy.Duration(0.0):
-                        point.time_from_start = action.move_time
-                    else:
-                        point.time_from_start = rospy.Duration(5.0)
-                    msg.points.append(point)
-                    msg.header.stamp = rospy.Time.now() + rospy.Duration(0.01)
-
-                    computed_actions.append( [ 'move', msg, point.time_from_start ] )
-
-                    #goal = FollowJointTrajectoryGoal()
-                    #goal.trajectory = msg
-                    
-                    #self._client.send_goal(goal)
-                    #print "Action succeeded:", self._client.wait_for_result()
+                msg = self.motionToTrajectory(action, req.header.frame_id)
+                if msg != None:
+                    computed_actions.append( [ 'move', msg, msg.points[0].time_from_start ] )
                 else:
-                    return MoveArmResponse(False)
+                    self.server.set_aborted( MoveArmResult(False) )
+                    return
             else:
                 computed_actions.append( [ 'grip', Float64(action.command), action.move_time ] )
 
-        
-        # actually move arm!
+        # smooth and execute trajectories
         traj = None
         for action in computed_actions:
             msg = action[1]
@@ -208,29 +142,118 @@ class SimpleArmServer:
             else: 
                 # move arm
                 if traj != None:
-                    goal = FollowJointTrajectoryGoal()
-                    goal.trajectory = traj
-                    rospy.loginfo("Sending action with " + str(len(traj.points)) + " points.")
-                    self._client.send_goal(goal)
-                    rospy.loginfo("Action succeeded: " + str(self._client.wait_for_result()))  
+                    if not self.executeTrajectory(traj):
+                        return
                     traj = None
                 # move gripper
                 rospy.loginfo("Move gripper to " + str(msg.data))
                 self._gripper.publish( msg )
                 rospy.sleep( time )
-
         if traj != None:
-            goal = FollowJointTrajectoryGoal()
-            goal.trajectory = traj
-            rospy.loginfo("Sending action with " + str(len(traj.points)) + " points.")
-            self._client.send_goal(goal)
-            rospy.loginfo("Action succeeded: " + str(self._client.wait_for_result()))  
-        return MoveArmResponse(True)
+            print traj
+            if not self.executeTrajectory(traj):
+                return
+
+        self.server.set_succeeded( MoveArmResult(True) )
+        return
+
+
+    def executeTrajectory(self, traj):
+        """ Execute a trajectory. """
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory = traj
+        rospy.loginfo("Sending action with " + str(len(traj.points)) + " points.")
+        self._client.send_goal(goal)
+        while self._client.get_state() == GoalStatus.SUCCEEDED:
+            if self.server.is_preempt_requested():
+                self._client.cancel_goal()
+                self.server.set_preempted( MoveArmResult(False) )
+                return False
+        rospy.loginfo("Action succeeded: " + str(self._client.wait_for_result()))   
+        return True
    
-    def haltCb(self, req):
-        ''' Publish empty trajectory to stop arm. '''
-        self._client.cancel_goal()
-        return HaltArmResponse(True)
+
+    def motionToTrajectory(self, action, frame_id):
+        """ Convert an arm movement action into a trajectory. """
+        ps = PoseStamped()
+        ps.header.frame_id = frame_id
+        ps.pose = action.goal
+        pose = self._listener.transformPose(self.root, ps)
+        rospy.loginfo("Parsing move to:\n" + str(pose))
+        
+        # create IK request
+        request = GetPositionIKRequest()
+        request.timeout = rospy.Duration(self.timeout)
+
+        request.ik_request.pose_stamped.header.frame_id = self.root;
+        request.ik_request.ik_link_name = self.tip;
+        request.ik_request.pose_stamped.pose.position.x = pose.pose.position.x
+        request.ik_request.pose_stamped.pose.position.y = pose.pose.position.y
+        request.ik_request.pose_stamped.pose.position.z = pose.pose.position.z
+
+        e = euler_from_quaternion([pose.pose.orientation.x,pose.pose.orientation.y,pose.pose.orientation.z,pose.pose.orientation.w])
+        e = [i for i in e]
+        if self.dof < 6:
+            # 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
+            e[2] = atan2(pose.pose.position.y, pose.pose.position.x)
+        if self.dof < 5:
+            # 4 DOF, so yaw as above AND no roll
+            e[0] = 0
+        q =  quaternion_from_euler(e[0], e[1], e[2])
+
+        request.ik_request.pose_stamped.pose.orientation.x = q[0]
+        request.ik_request.pose_stamped.pose.orientation.y = q[1]
+        request.ik_request.pose_stamped.pose.orientation.z = q[2]
+        request.ik_request.pose_stamped.pose.orientation.w = q[3]
+
+        request.ik_request.ik_seed_state.joint_state.name = self.arm_solver_info.kinematic_solver_info.joint_names
+        request.ik_request.ik_seed_state.joint_state.position = [self.servos[joint] for joint in request.ik_request.ik_seed_state.joint_state.name]
+
+        # get IK, wiggle if needed
+        tries = 0
+        pitch = e[1]
+        print "roll", e[0]
+        while tries < 80:
+            try:
+                response = self._get_ik_proxy(request)
+                if response.error_code.val == response.error_code.SUCCESS:
+                    break
+                else:
+                    tries += 1
+                    # wiggle gripper
+                    pitch = e[1] + ((-1)**tries)*((tries+1)/2)*0.025
+                    # update quaternion
+                    q = quaternion_from_euler(e[0], pitch, e[2])
+                    request.ik_request.pose_stamped.pose.orientation.x = q[0]
+                    request.ik_request.pose_stamped.pose.orientation.y = q[1]
+                    request.ik_request.pose_stamped.pose.orientation.z = q[2]
+                    request.ik_request.pose_stamped.pose.orientation.w = q[3]
+            except rospy.ServiceException, e:
+                print "Service did not process request: %s"%str(e)
+
+        print response
+        if response.error_code.val == response.error_code.SUCCESS:
+            arm_solver_info = self._get_ik_solver_info_proxy()     
+            msg = JointTrajectory()
+            msg.joint_names = arm_solver_info.kinematic_solver_info.joint_names
+            msg.points = list()
+            point = JointTrajectoryPoint()
+            point.positions = [ 0.0 for servo in msg.joint_names ]
+            point.velocities = [ 0.0 for servo in msg.joint_names ]
+            for joint in request.ik_request.ik_seed_state.joint_state.name:
+                i = msg.joint_names.index(joint)
+                point.positions[i] = response.solution.joint_state.position[response.solution.joint_state.name.index(joint)] 
+            if action.move_time > rospy.Duration(0.0):
+                point.time_from_start = action.move_time
+            else:
+                point.time_from_start = rospy.Duration(5.0)
+            msg.points.append(point)
+            msg.header.stamp = rospy.Time.now() + rospy.Duration(0.01)
+
+            return msg
+        else:
+            return None
+
 
 if __name__ == '__main__':
     try:
