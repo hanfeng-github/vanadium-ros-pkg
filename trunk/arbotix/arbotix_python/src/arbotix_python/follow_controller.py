@@ -66,7 +66,7 @@ class FollowController:
 
     def startup(self):
         if not self.fake:
-            self.setup() 
+            self.setup()
         self.server.start()
 
     def update(self):

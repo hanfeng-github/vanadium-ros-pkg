@@ -62,17 +62,17 @@ class ArbotixROS(ArbotiX):
         # start an arbotix driver
         if not self.fake:
             ArbotiX.__init__(self, port, baud)        
-        rospy.sleep(1.0)
-        rospy.loginfo("Started ArbotiX connection on port " + port + ".")
+            rospy.sleep(1.0)
+            rospy.loginfo("Started ArbotiX connection on port " + port + ".")
+            # wait for arbotix to start up (especially after reset)
+            if rospy.has_param("~controllers") or rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
+                while self.getDigital(1) == -1:
+                    rospy.loginfo("Waiting for response...")
+                    rospy.sleep(0.25)
+                rospy.loginfo("ArbotiX connected.")
         if self.fake:
             rospy.loginfo("ArbotiX being simulated.")
         
-        # wait for arbotix to start up (especially after reset)
-        if rospy.has_param("~controllers") or rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
-            while self.getDigital(1) == -1:
-                rospy.loginfo("Waiting for response...")
-                rospy.sleep(0.25)
-            rospy.loginfo("ArbotiX connected.")
 
         # initialize dynamixel & hobby servos
         self.servos = Servos(self)
