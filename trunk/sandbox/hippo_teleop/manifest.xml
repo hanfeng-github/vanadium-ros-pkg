@@ -1,0 +1,17 @@
+<package>
+  <description brief="hippo_teleop">
+
+     hippo_teleop
+
+  </description>
+  <author>Melonee Wise, Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/hippo_teleop</url>
+  <depend package="joy"/>
+  <depend package="geometry_msgs"/>
+  <depend package="roscpp"/>
+
+</package>
+
+
