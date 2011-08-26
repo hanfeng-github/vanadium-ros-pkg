@@ -1,0 +1,6 @@
+---
+port: /dev/ttyUSB1
+write_rate: 20.0
+dynamixels: {
+  gripper_joint: {id: 8}
+}
