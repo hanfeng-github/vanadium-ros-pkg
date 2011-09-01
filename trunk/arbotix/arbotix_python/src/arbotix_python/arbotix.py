@@ -240,9 +240,11 @@ class ArbotiX:
     def enableWheelMode(self, index):
         """ Enable wheel mode. """
         self.write(index, P_CCW_ANGLE_LIMIT_L, [0,0])
-    def disableWheelMode(self, index):
-        """ Reset to joint mode. """
-        self.write(index, P_CCW_ANGLE_LIMIT_L, [255,3])
+    def disableWheelMode(self, index, resolution=10):
+        """ Reset to joint mode. 
+            NOTE: if using 12-bit resolution servos (EX-106, MX-28, etc), you must pass resolution = 12. """
+        resolution = (2 ** resolution) - 1
+        self.write(index, P_CCW_ANGLE_LIMIT_L, [resolution%256,resolution>>8])
 
     FORWARD = 0
     BACKWARD = 1
