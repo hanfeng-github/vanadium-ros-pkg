@@ -108,7 +108,7 @@ class FollowController:
                 rospy.sleep(0.01)
             if self.onboard:
                 while self.interpolating > 0: 
-                    pass
+                    rospy.sleep(0.01)
                 positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
                 t = ((start + point.time_from_start) - rospy.Time.now()).to_sec()
                 rospy.loginfo(self.name + ": Sending Point," + str(positions) + " " + str(t))
@@ -139,7 +139,7 @@ class FollowController:
                     r.sleep()
 
         while self.onboard and self.interpolating != 0:
-            pass
+            rospy.sleep(0.01)
 
         rospy.loginfo(self.name + ": Done.")
         self.server.set_succeeded()
