@@ -117,7 +117,7 @@ class FollowController:
             else:
                 last = [ self.device.servos[joint].angle for joint in self.joints ]
                 desired = [ point.positions[k] for k in indexes ]
-                endtime = start + point.time_from_start
+                endtime = rospy.Time.now() + point.time_from_start # let controller fall behind
                 while rospy.Time.now() + rospy.Duration(0.01) < endtime:
                     err = [ (d-c) for d,c in zip(desired,last) ]
                     velocity = [ abs(x / (self.rate * (endtime - rospy.Time.now()).to_sec())) for x in err ]   
