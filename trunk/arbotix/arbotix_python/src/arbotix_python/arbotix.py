@@ -1,58 +1,70 @@
 #!/usr/bin/env python
 
-"""
-  ArbotiX Driver: serial connection to an ArbotiX board w/ ROS
-  Copyright (c) 2008-2011 Vanadium Labs LLC.  All right reserved.
+# Copyright (c) 2008-2011 Vanadium Labs LLC. 
+# All right reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#   * Neither the name of Vanadium Labs LLC nor the names of its 
+#     contributors may be used to endorse or promote products derived 
+#     from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL VANADIUM LABS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+# OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-      * Redistributions of source code must retain the above copyright
-        notice, this list of conditions and the following disclaimer.
-      * Redistributions in binary form must reproduce the above copyright
-        notice, this list of conditions and the following disclaimer in the
-        documentation and/or other materials provided with the distribution.
-      * Neither the name of Vanadium Labs LLC nor the names of its 
-        contributors may be used to endorse or promote products derived 
-        from this software without specific prior written permission.
-  
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  DISCLAIMED. IN NO EVENT SHALL VANADIUM LABS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-  OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
+# Author: Michael Ferguson
+
+## @file arbotix.py Low-level code to control an ArbotiX.
 
 import serial, time, sys, thread
 from ax12 import *
 from struct import unpack
 
+## @brief This class controls an ArbotiX, USBDynamixel, or similar board through a serial connection.
 class ArbotiX:
-    """ Class to open a serial port and control AX-12 servos 
-    through an ArbotiX board or USBDynamixel. """
 
-    def __init__(self, port="/dev/ttyUSB0",baud=115200, interpolation=False, direct=False, timeout = 0.1):
-        """ This may throw errors up the line -- that's a good thing. """
-        self.mutex = thread.allocate_lock()
-        self.ser = serial.Serial()
+    ## @brief Constructs an ArbotiX instance and opens the serial connection.
+    ##
+    ## @param port The name of the serial port to open.
+    ## 
+    ## @param baud The baud rate to run the port at. 
+    ##
+    ## @param timeout The timeout to use for the port. When operating over a wireless link, you may need to
+    ## increase this.
+    def __init__(self, port="/dev/ttyUSB0",baud=115200, timeout = 0.1):
+        self._mutex = thread.allocate_lock()
+        self._ser = serial.Serial()
         
-        self.ser.baudrate = baud
-        self.ser.port = port
-        self.ser.timeout = timeout
-        self.ser.open()
+        self._ser.baudrate = baud
+        self._ser.port = port
+        self._ser.timeout = timeout
+        self._ser.open()
 
+        ## The last error level read back
         self.error = 0
-        self.hasInterpolation = interpolation
-        self.direct = direct
 
+    ## @brief Read a dynamixel return packet in an iterative attempt.
+    ##
+    ## @param mode This should be 0 to start reading packet. 
+    ##
+    ## @return The error level returned by the device. 
     def getPacket(self, mode, id=-1, leng=-1, error=-1, params = None):
-        """ Read a dynamixel return packet, iterative attempt. Returns error level. """ 
         try:
-            d = self.ser.read()     
+            d = self._ser.read()     
         except Exception as e:
             print e
             return None
@@ -98,195 +110,329 @@ class ArbotiX:
         # fail
         return None
 
+    ## @brief Send an instruction to the device. 
+    ##
+    ## @param index The ID of the servo to write.
+    ##
+    ## @param ins The instruction to send.
+    ##
+    ## @param params A list of the params to send.
+    ##
+    ## @param ret Whether to read a return packet.
+    ##
+    ## @return The return packet, if read.
     def execute(self, index, ins, params, ret=True):
-        """ Send an instruction to a device. """
         values = None
-        self.mutex.acquire()  
+        self._mutex.acquire()  
         try:      
-            self.ser.flushInput()
+            self._ser.flushInput()
         except Exception as e:
             print e
         length = 2 + len(params)
         checksum = 255 - ((index + length + ins + sum(params))%256)
         try: 
-            self.ser.write(chr(0xFF)+chr(0xFF)+chr(index)+chr(length)+chr(ins))
+            self._ser.write(chr(0xFF)+chr(0xFF)+chr(index)+chr(length)+chr(ins))
         except Exception as e:
             print e
-            self.mutex.release()
+            self._mutex.release()
             return None
         for val in params:
             try:
-                self.ser.write(chr(val))
+                self._ser.write(chr(val))
             except Exception as e:
                 print e
-                self.mutex.release()
+                self._mutex.release()
                 return None
         try:
-            self.ser.write(chr(checksum))
+            self._ser.write(chr(checksum))
         except Exception as e:
             print e
-            self.mutex.release()
+            self._mutex.release()
             return None
         if ret:
             values = self.getPacket(0)
-        self.mutex.release()
+        self._mutex.release()
         return values
     
+    ## @brief Read values of registers.
+    ##
+    ## @param index The ID of the servo.
+    ## 
+    ## @param start The starting register address to begin the read at.
+    ##
+    ## @param length The number of bytes to read.
+    ##
+    ## @return A list of the bytes read, or -1 if failure.
     def read(self, index, start, length):
-        """ Read values of _length_ registers, starting at addr _start_. """
         values = self.execute(index, AX_READ_DATA, [start, length])
         if values == None:
             return -1        
         else:
             return values
 
+    ## @brief Write values to registers.
+    ##
+    ## @param index The ID of the servo.
+    ##
+    ## @param start The starting register address to begin writing to.
+    ##
+    ## @param values The data to write, in a list.
+    ##
+    ## @return The error level.
     def write(self, index, start, values):
-        """ Write values to registers, starting at _start_, returns 
-        error level. Should be called like setReg(1,1,(0x01,0x05)) """ 
         self.execute(index, AX_WRITE_DATA, [start] + values)
         return self.error     
 
+    ## @brief Write values to registers on many servos.
+    ##
+    ## @param start The starting register address to begin writing to.
+    ##
+    ## @param values The data to write, in a list of lists. Format should be
+    ## [(id1, val1, val2), (id2, val1, val2)]
     def syncWrite(self, start, values):
-        """ Set the value of registers. Should be called as such:
-        ax12.syncWrite(reg, ((id1, val1, val2), (id2, val1, val2))) """ 
         output = list()
         for i in values:
             output = output + i 
         length = len(output) + 4                # length of overall packet
         lbytes = len(values[0])-1               # length of bytes to write to a servo               
-        self.mutex.acquire()  
+        self._mutex.acquire()  
         try:      
-            self.ser.flushInput()
+            self._ser.flushInput()
         except:
             pass  
-        self.ser.write(chr(0xFF)+chr(0xFF)+chr(254)+chr(length)+chr(AX_SYNC_WRITE))        
-        self.ser.write(chr(start))              # start address
-        self.ser.write(chr(lbytes))             # bytes to write each servo
+        self._ser.write(chr(0xFF)+chr(0xFF)+chr(254)+chr(length)+chr(AX_SYNC_WRITE))        
+        self._ser.write(chr(start))              # start address
+        self._ser.write(chr(lbytes))             # bytes to write each servo
         for i in output:
-            self.ser.write(chr(i))
+            self._ser.write(chr(i))
         checksum = 255 - ((254 + length + AX_SYNC_WRITE + start + lbytes + sum(output))%256)
-        self.ser.write(chr(checksum))
-        self.mutex.release()
+        self._ser.write(chr(checksum))
+        self._mutex.release()
 
+    ## @brief Read values of registers on many servos.
+    ##
+    ## @param servos A list of the servo IDs to read from.
+    ##
+    ## @param start The starting register address to begin reading at.
+    ##
+    ## @param length The number of bytes to read from each servo.
+    ##
+    ## @return A list of bytes read.
     def syncRead(self, servos, start, length):
-        """ syncRead( [1,2,3,4], P_PRESENT_POSITION_L, 2) """
         return self.execute(0xFE, AX_SYNC_READ, [start, length] + servos )
     
-    ##########################################################################
-    # Common Helper Functions
+    ## @brief Set baud rate of a device.
+    ##
+    ## @param index The ID of the device to write (Note: ArbotiX is 253).
+    ##
+    ## @param baud The baud rate.
+    ##
+    ## @return The error level.
     def setBaud(self, index, baud):
-        """ Set baud rate. """
         return self.write(index, P_BAUD_RATE, [baud, ])
 
+    ## @brief Get the return level of a device.
+    ##
+    ## @param index The ID of the device to read.
+    ##
+    ## @return The return level, .
     def getReturnLevel(self, index):
-        """ Returns the return level (integer). """
         try:
             return int(self.read(index, P_RETURN_LEVEL, 1)[0])
         except:
             return -1
+
+    ## @brief Set the return level of a device.
+    ##
+    ## @param index The ID of the device to write.
+    ##
+    ## @param value The return level.
+    ##
+    ## @return The error level.
     def setReturnLevel(self, index, value):
-        """ Set the value of the return level. """
         return self.write(index, P_RETURN_LEVEL, [value])        
-        
+
+    ## @brief Turn on the torque of a servo.
+    ##
+    ## @param index The ID of the device to enable.
+    ##
+    ## @return The error level.
     def enableTorque(self, index):
         return self.write(index, P_TORQUE_ENABLE, [1])
+
+    ## @brief Turn on the torque of a servo.
+    ##
+    ## @param index The ID of the device to disable.
+    ##
+    ## @return The error level.
     def disableTorque(self, index):
         return self.write(index, P_TORQUE_ENABLE, [0])
 
+    ## @brief Set the status of the LED on a servo.
+    ##
+    ## @param index The ID of the device to write.
+    ##
+    ## @param value 0 to turn the LED off, >0 to turn it on
+    ##
+    ## @return The error level.
     def setLed(self, index, value):
-        """ Set LED status. """
         return self.write(index, P_LED, [value])
 
+    ## @brief Set the position of a servo.
+    ##
+    ## @param index The ID of the device to write.
+    ##
+    ## @param value The position to go to in, in servo ticks.
+    ##
+    ## @return The error level.
     def setPosition(self, index, value):
-        """ Move to position in ticks. """
         return self.write(index, P_GOAL_POSITION_L, [value%256, value>>8])
 
+    ## @brief Set the speed of a servo.
+    ##
+    ## @param index The ID of the device to write.
+    ##
+    ## @param value The speed to write.
+    ##
+    ## @return The error level.
     def setSpeed(self, index, value):
-        """ Set Speed of movement. """
         return self.write(index, P_GOAL_SPEED_L, [value%256, value>>8])
 
+    ## @brief Get the position of a servo.
+    ##
+    ## @param index The ID of the device to read.
+    ##
+    ## @return The servo position.
     def getPosition(self, index):
-        """ Returns position in ticks """
         values = self.read(index, P_PRESENT_POSITION_L, 2)
         try:
             return int(values[0]) + (int(values[1])<<8)
         except:
             return -1
 
+    ## @brief Get the voltage of a device.
+    ##
+    ## @param index The ID of the device to read.
+    ##
+    ## @return The voltage, in Volts.
     def getVoltage(self, index):
-        """ Returns voltage (V). """
         try:
             return int(self.read(index, P_PRESENT_VOLTAGE, 1)[0])/10.0
         except:
             return -1    
-    
+
+    ## @brief Get the temperature of a device.
+    ##
+    ## @param index The ID of the device to read.
+    ##
+    ## @return The temperature, in degrees C.
     def getTemperature(self, index):
-        """ Returns temperature (C). """
         try:
             return int(self.read(index, P_PRESENT_TEMPERATURE, 1)[0])
         except:
             return -1
 
+    ## @brief Determine if a device is moving.
+    ##
+    ## @param index The ID of the device to read.
+    ##
+    ## @return True if servo is moving.
     def isMoving(self, index):
-        """ Returns True if servo is moving. """
         try:
             d = self.read(index, P_MOVING, 1)[0]
         except:
             return True
         return d != 0
     
-    ###########################################################################
-    # Helper functions for 'wheel mode'
+    ## @brief Put a servo into wheel mode (continuous rotation).
+    ##
+    ## @param index The ID of the device to write.
     def enableWheelMode(self, index):
-        """ Enable wheel mode. """
         self.write(index, P_CCW_ANGLE_LIMIT_L, [0,0])
+
+    ## @brief Put a servo into servo mode.
+    ##
+    ## @param index The ID of the device to write.
+    ##
+    ## @param resolution The resolution of the encoder on the servo. NOTE: if using 
+    ## 12-bit resolution servos (EX-106, MX-28, etc), you must pass resolution = 12.
+    ##
+    ## @return 
     def disableWheelMode(self, index, resolution=10):
-        """ Reset to joint mode. 
-            NOTE: if using 12-bit resolution servos (EX-106, MX-28, etc), you must pass resolution = 12. """
         resolution = (2 ** resolution) - 1
         self.write(index, P_CCW_ANGLE_LIMIT_L, [resolution%256,resolution>>8])
 
+    ## Direction definition for setWheelSpeed
     FORWARD = 0
+    ## Direction definition for setWheelSpeed
     BACKWARD = 1
+
+    ## @brief Set the speed and direction of a servo which is in wheel mode (continuous rotation).
+    ##
+    ## @param index The ID of the device to write.
+    ##
+    ## @param direction The direction of rotation, either FORWARD or BACKWARD
+    ##
+    ## @param speed The speed to move at (0-1023).
+    ##
+    ## @return 
     def setWheelSpeed(self, index, direction, speed):
-        """ If a value in the range of 0~1023 is used, it is stopped by setting to 0 while rotating to CCW direction.
-            If a value in the range of 1024~2047 is used, it is stopped by setting to 1024 while rotating to CW direction.
-            That is, the 10th bit becomes the direction bit to control the direction. """
         if direction == self.FORWARD:
+            # 0~1023 is forward, it is stopped by setting to 0 while rotating to CCW direction.
             self.write(index, P_GOAL_SPEED_L, [speed%256, speed>>8])
         else:
+            # 1024~2047 is backward, it is stopped by setting to 1024 while rotating to CW direction.
             speed += 1024
             self.write(index, P_GOAL_SPEED_L, [speed%256, speed>>8])
 
     ###########################################################################
     # Extended ArbotiX Driver
+
+    ## Helper definition for analog and digital access.
     LOW = 0
+    ## Helper definition for analog and digital access.
     HIGH = 0xff
+    ## Helper definition for analog and digital access.
     INPUT = 0
+    ## Helper definition for analog and digital access.
     OUTPUT = 0xff
 
     # ArbotiX-specific register table
-                        # We do Model, Version, ID, Baud, just like the AX-12
-    DIG_BASE = 5        # Write digital, Read digital pins 0-7
-    REG_RESCAN = 15     
-                        # 16, 17 = RETURN, ALARM
-    ANA_BASE = 18       # First analog port (Read only)
-                        # Each additional port is BASE + index
-    SERVO_BASE = 26     # Up to 10 servos, each uses 2 bytes (L, then H), pulse width (0, 1000-2000ms) (Write only)
-                        # Address 46 is Moving, just like an AX-12
+    # We do Model, Version, ID, Baud, just like the AX-12
+    ## Register base address for reading digital ports
+    DIG_BASE = 5
+    ## Register address for triggering rescan
+    REG_RESCAN = 15
+    # 16, 17 = RETURN, ALARM
+    ## Register address of first analog port (read only).
+    ## Each additional port is BASE + index.
+    ANA_BASE = 18
+    ## Register address of analog servos. Up to 10 servos, each
+    ## uses 2 bytes (L, then H), pulse width (0, 1000-2000ms) (Write only)
+    SERVO_BASE = 26
+    # Address 46 is Moving, just like an AX-12
 
+    ## @brief Force the ArbotiX2 to rescan the Dynamixel busses.
     def rescan(self):
         self.write(253, self.REG_RESCAN, [1,])
 
+    ## @brief Get the value of an analog input pin.
+    ##
+    ## @param index The ID of the pin to read (0 to 7).
+    ##
+    ## @return 8-bit analog value of the pin, -1 if error.
     def getAnalog(self, index):
-        """ Read an analog port, returns 0-255 (-1 if error). """
         try:
             return int(self.read(253, self.ANA_BASE+int(index), 1)[0])
         except:
             return -1
+
+    ## @brief Get the value of an digital input pin.
+    ##
+    ## @param index The ID of the pin to read (0 to 15).
+    ##
+    ## @return 0 for low, 255 for high, -1 if error.
     def getDigital(self, index):
-        """ Read a digital port, returns 0 (low) or 0xFF (high) (-1 if error).\
-            (index = 0 to 15) """
         try:
             if index > 15:
                 x = self.read(253, self.DIG_BASE+2, 1)[0]
@@ -300,28 +446,42 @@ class ArbotiX:
             return 255
         else:
             return 0
-    def setDigital(self, index, val, direction=0xff):
-        """ Set value (and direction) of a digital IO (index = 0 to 7) """
+
+    ## @brief Get the value of an digital input pin.
+    ##
+    ## @param index The ID of the pin to write. Note that this
+    ## only works on the lower half of the digital IO (ID 0 to 7).
+    ##
+    ## @param value The value of the port, >0 is high.
+    ##
+    ## @param direction The direction of the port, >0 is output.
+    ##
+    ## @return -1 if error.
+    def setDigital(self, index, value, direction=0xff):
         if index > 7: return -1
-        if val == 0 and direction > 0:
+        if value == 0 and direction > 0:
             self.write(253, self.DIG_BASE + int(index), [1])
-        elif val > 0 and direction > 0:
+        elif value > 0 and direction > 0:
             self.write(253, self.DIG_BASE + int(index), [3])
-        elif val > 0 and direction == 0:
+        elif value > 0 and direction == 0:
             self.write(253, self.DIG_BASE + int(index), [2])
         else:
             self.write(253, self.DIG_BASE + int(index), [0])
-            
-    def setServo(self, index, val):
-        """ Set a servo value (in milliseconds) """
-        if val != 0 and (val < 500 or val > 2500):
+        return 0
+
+    ## @brief Set the position of a hobby servo.
+    ##
+    ## @param index The ID of the servo to write (0 to 7).
+    ##
+    ## @param value The position of the servo in milliseconds (1500-2500). 
+    ## A value of 0 disables servo output.
+    ##
+    ## @return -1 if error.
+    def setServo(self, index, value):
+        if index > 7: return -1
+        if value != 0 and (value < 500 or value > 2500):
             print "ArbotiX Error: Servo value out of range:",val
         else:
-            self.write(253, self.SERVO_BASE + 2*index, [val%256, val>>8])
-
-    def baseMoving(self):
-        try:
-            return int(self.read(253, P_MOVING, 1)[0])
-        except:
-            return -1
+            self.write(253, self._serVO_BASE + 2*index, [value%256, value>>8])
+        return 0
 

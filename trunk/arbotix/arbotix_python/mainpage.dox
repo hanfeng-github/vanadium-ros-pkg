@@ -2,25 +2,10 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b arbotix is ... 
+In addition to the ROS API offered by the driver.py node, arbotix_python offers a Python API for interacting with the ArbotiX or other Dynamixel-like devices.
 
-<!-- 
-Provide an overview of your package.
--->
-
-
-\section codeapi Code API
-
-<!--
-Provide links to specific auto-generated API documentation within your
-package that is of particular interest to a reader. Doxygen will
-document pretty much every part of your code, so do your best here to
-point the reader to the actual API.
-
-If your codebase is fairly large or has different sets of APIs, you
-should use the doxygen 'group' tag to keep these APIs together. For
-example, the roscpp documentation has 'libros' group.
--->
-
+\section ArbotixPythonAPI ArbotiX Python API
+- \link arbotix_python::arbotix::ArbotiX ArbotiX Class API \endlink
+- \link arbotix_python::ax12 Dynamixel register table defintions \endlink
 
 */
