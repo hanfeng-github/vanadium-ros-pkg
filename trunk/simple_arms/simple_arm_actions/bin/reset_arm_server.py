@@ -66,7 +66,7 @@ class ResetArmServer:
 
         self.client.send_goal(goal)
         self.client.wait_for_result()
-        self.server.set_succeeded( ResetArmResult(self.client.get_state()) )   
+        self.server.set_succeeded( ResetArmResult() )   
 
 
 if __name__ == '__main__':

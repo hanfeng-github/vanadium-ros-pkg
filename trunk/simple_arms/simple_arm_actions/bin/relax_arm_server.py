@@ -50,7 +50,7 @@ class RelaxArmServer:
     def actionCb(self, req):
         for service in self.services:
             service()
-        self.server.set_succeeded( ResetArmResult(True) )   
+        self.server.set_succeeded( ResetArmResult() )   
 
 
 if __name__ == '__main__':
