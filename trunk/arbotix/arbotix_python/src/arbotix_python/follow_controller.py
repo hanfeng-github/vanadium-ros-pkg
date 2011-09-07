@@ -185,7 +185,7 @@ class FollowController:
         success = self.device.execute(253, AX_CONTROL_WRITE, params)
 
     def status(self):
-        if self.interpolating != 0:
+        if self.onboard and self.interpolating != 0:
             try:
                 self.interpolating = self.device.execute(253, AX_CONTROL_STAT, [self.index])[0]
             except:
