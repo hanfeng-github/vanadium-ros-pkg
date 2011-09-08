@@ -79,6 +79,28 @@ class Servo:
         rospy.Subscriber(name+'/command', Float64, self.commandCb)
         rospy.Service(name+'/relax', Relax, self.relaxCb)
 
+    def angleToTicks(self, angle):
+        """ Convert an angle to ticks, applying limits. """
+        ticks = self.neutral + (angle/self.rad_per_tick)
+        if self.invert:
+            ticks = self.neutral - (angle/self.rad_per_tick)
+        if ticks >= self.ticks:
+            return self.ticks-1.0
+        if ticks < 0:
+            return 0
+        return ticks
+
+    def ticksToAngle(self, ticks):
+        """ Convert an ticks to angle, applying limits. """
+        angle = (ticks - self.neutral) * self.rad_per_tick
+        if self.invert:
+            ticks = -1.0 * ticks
+        if angle > self.max_angle:
+            return self.max_angle
+        if angle < self.min_angle:
+            return self.min_angle
+        return angle        
+
     def relaxCb(self, req):
         """ Turn off servo torque, so that it is pose-able. """
         if not self.device.fake:
@@ -101,10 +123,7 @@ class Servo:
                 reading = self.device.getPosition(self.id)
         if reading > -1 and reading < self.ticks:     # check validity
             last_angle = self.angle
-            if self.invert:
-                self.angle = -1.0 * (reading - self.neutral) * self.rad_per_tick
-            else:
-                self.angle = (reading - self.neutral) * self.rad_per_tick
+            self.angle = self.ticksToAngle(reading)
             # update velocity estimate
             t = rospy.Time.now()
             self.velocity = (self.angle - last_angle)/((t - self.last).to_nsec()/1000000000.0)
@@ -153,11 +172,8 @@ class Servo:
             elif cmd < -self.max_speed/frame:
                 cmd = -self.max_speed/frame
             # compute angle, apply limits
-            self.last_cmd += cmd
-            if self.last_cmd < self.min_angle:
-                self.last_cmd = self.min_angle
-            if self.last_cmd > self.max_angle:
-                self.last_cmd = self.max_angle
+            ticks = self.angleToTicks(self.last_cmd + cmd)
+            self.last_cmd = self.ticksToAngle(ticks)
             self.speed = cmd*frame
             # cap movement
             if self.last_cmd == self.desired:
@@ -165,23 +181,18 @@ class Servo:
             if self.device.fake:
                 self.angle = self.last_cmd
                 return None
-            if self.invert:
-                return self.neutral - (self.last_cmd/self.rad_per_tick)
-            else:
-                return self.neutral + (self.last_cmd/self.rad_per_tick)
+            return int(ticks)
         else:
             return None
 
     def setControl(self, position):
         """ Set the position that controller is moving to. 
             Returns output value in ticks. """
-        self.desired = position
-        self.last_cmd = position
-        if self.invert:
-            return self.neutral - (self.last_cmd/self.rad_per_tick)
-        else:
-            return self.neutral + (self.last_cmd/self.rad_per_tick)
-    
+        ticks = self.angleToTicks(position)
+        self.desired = self.ticksToAngle(ticks)
+        self.last_cmd = self.ticksToAngle(ticks)
+        return int(ticks)
+
     def getDiagnostics(self):
         """ Get a diagnostics status. """
         msg = DiagnosticStatus()
