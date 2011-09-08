@@ -15,6 +15,10 @@
 
   <!-- hardware -->
   <depend package="arbotix_python"/>
+  <depend package="turtlebot_bringup"/>
+
+  <!-- arm -->
+  <depend package="simple_arm_server"/>
 
 </package>
 
