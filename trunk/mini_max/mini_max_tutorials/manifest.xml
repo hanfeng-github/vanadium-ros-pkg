@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/mini_max_tutorials</url>
   <depend package="mini_max_defs"/>
   <depend package="arbotix_msgs"/>
+  <depend package="simple_arm_server"/>
   <depend package="rospy"/>
 
 </package>
