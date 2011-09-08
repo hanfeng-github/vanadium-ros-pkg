@@ -31,10 +31,9 @@ if __name__=="__main__":
 
     # announce move, and publish the message
     rospy.loginfo("About to be moving forward!")
-    p.publish(twist)
-
-    # wait a bit
-    rospy.sleep(3.0)
+    for i in range(30):
+        p.publish(twist)
+        rospy.sleep(0.1) # 30*0.1 = 3.0
 
     # create a new message
     twist = Twist()
