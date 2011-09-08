@@ -94,7 +94,7 @@ class Servo:
         """ Convert an ticks to angle, applying limits. """
         angle = (ticks - self.neutral) * self.rad_per_tick
         if self.invert:
-            ticks = -1.0 * ticks
+            angle = -1.0 * angle
         if angle > self.max_angle:
             return self.max_angle
         if angle < self.min_angle:
