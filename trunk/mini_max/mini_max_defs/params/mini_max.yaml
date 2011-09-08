@@ -16,5 +16,5 @@ digital_sensors: {
     yellow_button: {pin: 2, value: 1, rate: 5}
 }
 controllers: {
-    arm_controller: {type: follow_controller, joints: [arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint] }
+    arm_controller: {type: follow_controller, joints: [arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint], onboard: False }
 }
