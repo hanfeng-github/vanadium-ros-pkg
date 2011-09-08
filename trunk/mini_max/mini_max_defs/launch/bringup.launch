@@ -3,7 +3,11 @@
   <include file="$(find mini_max_defs)/launch/upload.launch" />
 
   <!-- bring up a create, arbotix -->
-  <include file="$(find turtlebot_bringup)/driver.launch" />
+  <node pkg="turtlebot_node" type="turtlebot_node.py" name="turtlebot_node" output="screen" respawn="true" args="--respawnable">
+    <param name="bonus" value="false" />
+    <param name="update_rate" value="30.0" />
+    <remap from="turtlebot_node/cmd_vel" to="cmd_vel" />
+  </node>
   <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
     <rosparam file="$(find mini_max_defs)/params/mini_max.yaml" command="load" />
   </node>
