@@ -13,7 +13,7 @@ from arbotix_msgs.msg import *
 class ButtonTest:
     
     def buttonCb(self, msg):
-        # the message is a Digital message, value tells us the state of the button
+        # msg is arbotix_msgs.Digital, value == state of the button
         if msg.value == 0:
             print "Button pressed!"
 
@@ -27,7 +27,8 @@ class ButtonTest:
         # everything will be handled in the callback, just spin
         rospy.spin()
 
-# this quick check means that the following code runs ONLY if this is in the main 
-#  file -- if we "import button_test" in another file, this code will not execute
+# this quick check means that the following code runs ONLY if this is 
+#  in the main file -- if we "import button_test" in another file, 
+#  this code will not execute
 if __name__ == "__main__":
     bt = ButtonTest()
