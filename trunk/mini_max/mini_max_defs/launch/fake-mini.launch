@@ -4,18 +4,13 @@
   <!-- bring up a create, arbotix -->
   <node name="arbotix" pkg="arbotix_python" type="fake-driver.py" output="screen">
     <rosparam file="$(find mini_max_defs)/params/mini_max.yaml" command="load" />
-    <param name="base/rate" value="10"/>
-  </node>
-  <node name="head_traj_controller" pkg="arbotix_controllers" type="traj_controller.py">
-      <rosparam param="joints">[head_pan_joint, head_tilt_joint]</rosparam>
-  </node>
-  <node name="arm_controller" pkg="arbotix_controllers" type="traj_controller.py" output="screen">
-      <rosparam param="joints">[arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint]</rosparam>
+    <param name="sim" value="true"/>
   </node>
   <node name="gripper_controller" pkg="arbotix_controllers" type="one_side_gripper_controller.py" output="screen">
       <param name="invert" value="true"/>
       <param name="pad_width" value="0.0254"/>
   </node>
+  <!--<node name="gripper_controller" pkg="arbotix_controllers" type="parallel_single_servo_controller.py" output="screen" />-->
 
   <!-- Monitoring and Diagnostics -->
   <node pkg="mini_max_core" type="laptop_battery.py" name="laptop_battery" />

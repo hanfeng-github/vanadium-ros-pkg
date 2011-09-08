@@ -3,16 +3,9 @@
   <include file="$(find mini_max_defs)/launch/upload.launch" />
 
   <!-- bring up a create, arbotix -->
-  <!--<param name="brown/irobot_create_2_1/port" value="/dev/create" />-->
-  <node name="create" pkg="irobot_create_2_1" type="driver.py" />
+  <include file="$(find turtlebot_bringup)/driver.launch" />
   <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
     <rosparam file="$(find mini_max_defs)/params/mini_max.yaml" command="load" />
-  </node>
-  <node name="head_traj_controller" pkg="arbotix_controllers" type="traj_controller.py">
-      <rosparam param="joints">[head_pan_joint, head_tilt_joint]</rosparam>
-  </node>
-  <node name="arm_controller" pkg="arbotix_controllers" type="traj_controller.py">
-      <rosparam param="joints">[arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint]</rosparam>
   </node>
   <node name="gripper_controller" pkg="arbotix_controllers" type="one_side_gripper_controller.py">
       <param name="invert" value="true"/>
