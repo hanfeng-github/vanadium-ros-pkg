@@ -28,15 +28,10 @@ Has been moved to [http://www.ros.org/wiki/mini_max/Tutorials Mini Maxwell Tutor
 
 == Software Roadmap ==
 The following need to be addressed:
- * mini_max_core
-   * modified version of turtlebot create/gryo drivers (Note: turtlebot drivers are currently not playing well with arbotix drivers, causes both to lock up)
- * mini_max_defs 
-   * ~~create URDF -- base, arm, head, gripper. STL files: body, kinect~~
-   * ~~arm kinematics launch file~~
- * mini_max_nav
-   * launch files for navigation
  * mini_max_apps
-   * ~~tuck_arm~~
+   * tuck_arm needs to be updated
+   * create launch file for nav
+ * merge mini_max_core into defs
 
 == Documentation Roadmap ==
  * How to build, wire robot
@@ -74,3 +69,5 @@ Revision History:
    * Holes in base are now rounded squares (better USB cable access)
  * V0.4 Revisions (HMC?)
    * Move left-most Kinect mount just a bit for better alignment. 
+ * V0.5 Revisions (Forthcoming)
+    * Add USB slots (HMC upgrade)
