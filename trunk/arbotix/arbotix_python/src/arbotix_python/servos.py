@@ -105,6 +105,7 @@ class Servo:
         """ Turn off servo torque, so that it is pose-able. """
         if not self.device.fake:
             self.device.disableTorque(self.id)
+        self.dirty = False
         self.relaxed = True
         return RelaxResponse()
 
