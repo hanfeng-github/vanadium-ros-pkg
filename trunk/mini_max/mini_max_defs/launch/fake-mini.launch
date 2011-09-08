@@ -2,7 +2,7 @@
   <include file="$(find mini_max_defs)/launch/upload.launch" />
 
   <!-- bring up a create, arbotix -->
-  <node name="arbotix" pkg="arbotix_python" type="fake-driver.py" output="screen">
+  <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
     <rosparam file="$(find mini_max_defs)/params/mini_max.yaml" command="load" />
     <param name="sim" value="true"/>
   </node>
@@ -10,7 +10,6 @@
       <param name="invert" value="true"/>
       <param name="pad_width" value="0.0254"/>
   </node>
-  <!--<node name="gripper_controller" pkg="arbotix_controllers" type="parallel_single_servo_controller.py" output="screen" />-->
 
   <!-- Monitoring and Diagnostics -->
   <node pkg="mini_max_core" type="laptop_battery.py" name="laptop_battery" />
@@ -20,4 +19,3 @@
 
   <node pkg="robot_state_publisher" type="state_publisher" name="rob_st_pub" />
 </launch>
-
