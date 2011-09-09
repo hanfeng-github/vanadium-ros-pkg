@@ -31,7 +31,6 @@ The following need to be addressed:
  * mini_max_apps
    * tuck_arm needs to be updated
    * create launch file for nav
- * merge mini_max_core into defs
 
 == Documentation Roadmap ==
  * How to build, wire robot
