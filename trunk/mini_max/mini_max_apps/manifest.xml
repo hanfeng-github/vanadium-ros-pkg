@@ -5,7 +5,9 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mini_max_apps</url>
   <depend package="rospy"/>
-  <depend package="trajectory_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="actionlib_msgs"/>
+  <depend package="control_msgs"/>
 </package>
 
 
