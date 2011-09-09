@@ -1,6 +1,7 @@
 <launch>
   <param name="use_sim_time" value="false" />
   <include file="$(find mini_max_defs)/launch/upload.launch" />
+  <include file="$(find mini_max_defs)/launch/calibration.launch" />
 
   <!-- bring up a create, arbotix -->
   <node pkg="turtlebot_node" type="turtlebot_node.py" name="turtlebot_node" output="screen" respawn="true" args="--respawnable">
