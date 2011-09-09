@@ -1,0 +1,43 @@
+<launch>
+
+  <node pkg="nodelet" type="nodelet" name="laser_nodelet_manager" output="screen" respawn="true" args="manager"/>
+
+  <!-- throttling -->
+  <node pkg="nodelet" type="nodelet" name="pointcloud_throttle" args="load pointcloud_to_laserscan/CloudThrottle laser_nodelet_manager" respawn="true">
+    <param name="max_rate" value="20.0"/>
+    <remap from="cloud_in" to="/camera/depth/points"/>
+    <remap from="cloud_out" to="cloud_throttled"/>
+  </node>
+
+  <!-- Fake Laser -->
+  <node pkg="nodelet" type="nodelet" name="kinect_laser" args="load pointcloud_to_laserscan/CloudToScan laser_nodelet_manager" respawn="true">
+    <param name="output_frame_id" value="/kinect_depth_frame"/>
+    <!-- heights are in the (optical?) frame of the kinect -->
+    <param name="min_height" value="-0.15"/>
+    <param name="max_height" value="0.15"/>
+    <remap from="cloud" to="/cloud_throttled"/>
+  </node>
+
+  <!-- Fake Laser (narrow one, for localization -->
+  <node pkg="nodelet" type="nodelet" name="kinect_laser_narrow" args="load pointcloud_to_laserscan/CloudToScan laser_nodelet_manager" respawn="true">
+    <param name="output_frame_id" value="/kinect_depth_frame"/>
+    <!-- heights are in the (optical?) frame of the kinect -->
+    <param name="min_height" value="-0.025"/>
+    <param name="max_height" value="0.025"/>
+    <remap from="cloud" to="/cloud_throttled"/>
+    <remap from="scan" to="/narrow_scan"/>
+  </node>
+</launch>
+
+  <node pkg="turtlebot_calibration" type="scan_to_angle.py" name="scan_to_angle" >
+    <param name="min_angle" value="-0.3" />
+    <param name="max_angle" value="0.3" />
+  </node>
+
+  <node pkg="turtlebot_calibration" type="calibrate.py" name="turtlebot_calibration" output="screen" >
+    <remap from="imu" to="imu/raw" />
+    <remap from="scan_angle" to="scan_angle" />
+    <remap from="odom" to="odom" />
+  </node>
+
+</launch>
