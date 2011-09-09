@@ -30,7 +30,7 @@
 import roslib; roslib.load_manifest('mini_max_apps')
 import rospy
 
-from std_msgs import Float64
+from std_msgs.msg import Float64
 
 if __name__ == '__main__':
     rospy.init_node('lock_head')
