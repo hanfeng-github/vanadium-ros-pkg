@@ -86,7 +86,7 @@ class Terminal(ArbotiX):
                             print h
 
                 elif kmd[0] == "ls":       # list servos
-                    self.ser.timeout = 0.25
+                    self._ser.timeout = 0.25
                     if len(kmd) > 2:
                         self.write(253, P_BAUD_RATE, [self.convertBaud(int(kmd[1]))])
                         self.query()
