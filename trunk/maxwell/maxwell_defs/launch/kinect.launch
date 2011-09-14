@@ -1,0 +1,12 @@
+<launch>
+
+  <node pkg="openni_camera" type="openni_node" name="openni_camera"  output="screen" >
+    <param name="registration_type" value="2" />
+    <param name="image_input_format" value="6" />
+    <param name="point_cloud_resolution" value="1" />
+    <rosparam command="load" file="$(find openni_camera)/info/openni_params.yaml" />
+  </node>
+  <include file="$(find openni_camera)/launch/kinect_frames.launch"/>
+  <node pkg="tf" type="static_transform_publisher" name="kinect_link" args="0 0 0 0 0 0 /head_sensor_frame /openni_camera 100" /> 
+
+</launch>
