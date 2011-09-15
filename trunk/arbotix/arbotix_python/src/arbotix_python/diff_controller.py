@@ -51,6 +51,7 @@ class DiffController:
 
         # parameters: rates and geometry
         self.rate = rospy.get_param('~controllers/'+name+'/rate',10.0)
+        self.timeout = rospy.get_param('~controllers/'+name+'/timeout',1.0)
         self.t_delta = rospy.Duration(1.0/self.rate)
         self.t_next = rospy.Time.now() + self.t_delta
         self.ticks_meter = float(rospy.get_param('~controllers/'+name+'/ticks_meter'))
@@ -167,7 +168,7 @@ class DiffController:
             odom.twist.twist.angular.z = self.dr
             self.odomPub.publish(odom)
 
-            if now > (self.last_cmd + rospy.Duration(0.5)):
+            if now > (self.last_cmd + rospy.Duration(self.timeout)):
                 self.v_des_left = 0
                 self.v_des_right = 0
 
