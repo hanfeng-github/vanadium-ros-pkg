@@ -206,8 +206,8 @@ class DiffController:
             self.dr = req.angular.z       # rad/s
         else:
             # set motor speeds in ticks per 1/30s
-            self.v_des_left = int( ((self.req.linear.x - (self.req.angular.z * self.base_width/2.0)) * self.ticks_meter) / 30.0)
-            self.v_des_right = int( ((self.req.linear.x + (self.req.angular.z * self.base_width/2.0)) * self.ticks_meter) / 30.0)
+            self.v_des_left = int( ((req.linear.x - (req.angular.z * self.base_width/2.0)) * self.ticks_meter) / 30.0)
+            self.v_des_right = int( ((req.linear.x + (req.angular.z * self.base_width/2.0)) * self.ticks_meter) / 30.0)
 
     def getDiagnostics(self):
         """ Get a diagnostics status. """
