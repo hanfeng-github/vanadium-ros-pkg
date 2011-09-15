@@ -119,8 +119,12 @@ class DiffController:
                 rospy.logdebug("Encoders: " + str(left) +","+ str(right))
 
                 # calculate odometry
-                d_left = (left - self.enc_left)/self.ticks_meter
-                d_right = (right - self.enc_right)/self.ticks_meter
+                if self.enc_left == None:
+                    d_left = 0
+                    d_right = 0
+                else:
+                    d_left = (left - self.enc_left)/self.ticks_meter
+                    d_right = (right - self.enc_right)/self.ticks_meter
                 self.enc_left = left
                 self.enc_right = right
 
