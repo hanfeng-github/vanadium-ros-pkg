@@ -76,8 +76,8 @@ class DiffController:
         self.v_right = 0
         self.v_des_left = 0             # cmd_vel setpoint
         self.v_des_right = 0
-        self.enc_left = 0               # encoder readings
-        self.enc_right = 0
+        self.enc_left = None            # encoder readings
+        self.enc_right = None
         self.x = 0                      # position in xy plane
         self.y = 0
         self.th = 0
@@ -163,7 +163,7 @@ class DiffController:
             odom.twist.twist.angular.z = self.dr
             self.odomPub.publish(odom)
 
-            if rospy.Time.now() > self.last_cmd + rospy.Duration(0.5):
+            if now > (self.last_cmd + rospy.Duration(0.5)):
                 self.v_des_left = 0
                 self.v_des_right = 0
 
@@ -200,10 +200,10 @@ class DiffController:
         if self.fake:
             self.dx = req.linear.x        # m/s
             self.dr = req.angular.z       # rad/s
-
-        # set motor speeds in ticks per 1/30s
-        self.v_des_left = int( ((self.dx - (self.dr * self.base_width/2.0)) * self.ticks_meter) / 30.0)
-        self.v_des_right = int( ((self.dx + (self.dr * self.base_width/2.0)) * self.ticks_meter) / 30.0)
+        else:
+            # set motor speeds in ticks per 1/30s
+            self.v_des_left = int( ((self.req.linear.x - (self.req.angular.z * self.base_width/2.0)) * self.ticks_meter) / 30.0)
+            self.v_des_right = int( ((self.req.linear.x + (self.req.angular.z * self.base_width/2.0)) * self.ticks_meter) / 30.0)
 
     def getDiagnostics(self):
         """ Get a diagnostics status. """
