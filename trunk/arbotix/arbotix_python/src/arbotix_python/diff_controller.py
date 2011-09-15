@@ -47,6 +47,7 @@ class DiffController:
         self.name = name
         self.device = device
         self.fake = device.fake
+        self.last_cmd = rospy.Time.now()
 
         # parameters: rates and geometry
         self.rate = rospy.get_param('~controllers/'+name+'/rate',10.0)
@@ -126,7 +127,7 @@ class DiffController:
                 d = (d_left+d_right)/2
                 th = (d_right-d_left)/self.base_width
                 self.dx = d / elapsed
-                self.dth = th / elapsed
+                self.dr = th / elapsed
 
                 if (d != 0):
                     x = cos(th)*d
@@ -162,6 +163,10 @@ class DiffController:
             odom.twist.twist.angular.z = self.dr
             self.odomPub.publish(odom)
 
+            if rospy.Time.now() > self.last_cmd + rospy.Duration(0.5):
+                self.v_des_left = 0
+                self.v_des_right = 0
+
             # update motors
             if not self.fake:
                 if self.v_left < self.v_des_left:
@@ -191,8 +196,10 @@ class DiffController:
 
     def cmdVelCb(self,req):
         """ Handle movement requests. """
-        self.dx = req.linear.x        # m/s
-        self.dr = req.angular.z       # rad/s
+        self.last_cmd = rospy.Time.now()
+        if self.fake:
+            self.dx = req.linear.x        # m/s
+            self.dr = req.angular.z       # rad/s
 
         # set motor speeds in ticks per 1/30s
         self.v_des_left = int( ((self.dx - (self.dr * self.base_width/2.0)) * self.ticks_meter) / 30.0)
