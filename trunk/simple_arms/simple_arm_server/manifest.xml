@@ -5,17 +5,14 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/simple_arm_server</url>
   <depend package="rospy"/>
+  <depend package="actionlib"/>
 
   <!-- messages -->
-  <depend package="actionlib"/>
   <depend package="trajectory_msgs"/>
   <depend package="kinematics_msgs"/>
   <depend package="control_msgs"/>
   <depend package="sensor_msgs"/>
   <depend package="std_srvs"/>
-
-  <!-- ik -->
-  <depend package="arm_kinematics"/>
 </package>
 
 
