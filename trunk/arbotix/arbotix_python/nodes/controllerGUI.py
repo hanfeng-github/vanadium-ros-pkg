@@ -184,7 +184,7 @@ class controllerGUI(wx.Frame):
                 p.publish(d)
         # send base updates
         t = Twist()
-        t.linear.x = self.forward/200.0; t.linear.y = 0; t.linear.z = 0
+        t.linear.x = self.forward/150.0; t.linear.y = 0; t.linear.z = 0
         if self.forward > 0:
             t.angular.x = 0; t.angular.y = 0; t.angular.z = -self.turn/50.0
         else:
