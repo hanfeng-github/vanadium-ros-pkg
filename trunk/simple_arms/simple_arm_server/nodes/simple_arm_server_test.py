@@ -37,18 +37,14 @@ import tf
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from simple_arm_server.msg import *
 
-
 if __name__ == '__main__':
     if len(sys.argv) > 4:     
         rospy.init_node('simple_arm_server_test')
 
         client = actionlib.SimpleActionClient('move_arm', MoveArmAction)
         client.wait_for_server()
-        #rospy.wait_for_service('simple_arm_server/move')
-        #move_srv = rospy.ServiceProxy('simple_arm_server/move', MoveArm) 
 
         goal = MoveArmGoal()
-        #req = MoveArmRequest()  
         goal.header.frame_id = "base_link"
         if len(sys.argv) > 7:
             goal.header.frame_id = sys.argv[7]
