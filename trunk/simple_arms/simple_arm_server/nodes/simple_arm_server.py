@@ -164,7 +164,7 @@ class SimpleArmServer:
         goal.trajectory = traj
         rospy.loginfo("Sending action with " + str(len(traj.points)) + " points.")
         self._client.send_goal(goal)
-        while self._client.get_state() == GoalStatus.SUCCEEDED:
+        while self._client.get_state() != GoalStatus.SUCCEEDED:
             if self.server.is_preempt_requested():
                 self._client.cancel_goal()
                 self.server.set_preempted( MoveArmResult(False) )
