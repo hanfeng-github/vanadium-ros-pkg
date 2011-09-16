@@ -19,6 +19,7 @@
 
   <!-- arm -->
   <depend package="simple_arm_server"/>
+  <depend package="arm_kinematics"/>
 
 </package>
 
