@@ -71,8 +71,11 @@ class Servo:
         self.velocity = 0.0                     # moving speed
         self.relaxed = True                     # are we not under torque control?
         self.last = rospy.Time.now()
-        self.reads = 1.0                        # number of reads
+
+        self.reads = 0.0                        # number of reads
         self.errors = 0                         # number of failed reads
+        self.total_reads = 0.0                  
+        self.total_errors = [0.0]
 
         self.voltage = 0.0
         self.temperature = 0.0
@@ -126,6 +129,7 @@ class Servo:
                 reading = self.device.getPosition(self.id)
         if reading > -1 and reading < self.ticks:     # check validity
             self.reads += 1
+            self.total_reads += 1
             last_angle = self.angle
             self.angle = self.ticksToAngle(reading)
             # update velocity estimate
@@ -135,6 +139,7 @@ class Servo:
         else:
             rospy.logdebug("Invalid read of servo: id " + str(self.id) + ", value " + str(reading))
             self.errors += 1
+            self.total_reads += 1
             return
         if self.relaxed:
             self.last_cmd = self.angle
@@ -207,8 +212,14 @@ class Servo:
         msg.values.append(KeyValue("Position", str(self.angle)))
         msg.values.append(KeyValue("Temperature", str(self.temperature)))
         msg.values.append(KeyValue("Voltage", str(self.voltage)))
-        msg.values.append(KeyValue("Reads", str(self.reads+self.errors)))
-        msg.values.append(KeyValue("Error Rate", str((self.errors*100.0)/(self.reads+self.errors))+"%" ))
+        if self.reads + self.errors > 100:
+            self.total_errors.append((self.errors*100.0)/(self.reads+self.errors))
+            if len(self.total_errors) > 10:
+                self.total_errors = self.total_errors[-10:]
+            self.reads = 0
+            self.errors = 0
+        msg.values.append(KeyValue("Reads", str(self.total_reads)))
+        msg.values.append(KeyValue("Error Rate", str(sum(self.total_errors)/len(self.total_errors))+"%" ))
         if self.relaxed:
             msg.values.append(KeyValue("Torque", "OFF"))
         else:
