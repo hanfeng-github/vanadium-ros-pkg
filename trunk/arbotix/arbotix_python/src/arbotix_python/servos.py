@@ -71,6 +71,8 @@ class Servo:
         self.velocity = 0.0                     # moving speed
         self.relaxed = True                     # are we not under torque control?
         self.last = rospy.Time.now()
+        self.reads = 1.0                        # number of reads
+        self.errors = 0                         # number of failed reads
 
         self.voltage = 0.0
         self.temperature = 0.0
@@ -123,6 +125,7 @@ class Servo:
             if self.readable and not self.device.fake:
                 reading = self.device.getPosition(self.id)
         if reading > -1 and reading < self.ticks:     # check validity
+            self.reads += 1
             last_angle = self.angle
             self.angle = self.ticksToAngle(reading)
             # update velocity estimate
@@ -130,7 +133,8 @@ class Servo:
             self.velocity = (self.angle - last_angle)/((t - self.last).to_nsec()/1000000000.0)
             self.last = t
         else:
-            rospy.logerr("Invalid read of servo: id " + str(self.id) + ", value " + str(reading))
+            rospy.logdebug("Invalid read of servo: id " + str(self.id) + ", value " + str(reading))
+            self.errors += 1
             return
         if self.relaxed:
             self.last_cmd = self.angle
@@ -203,6 +207,8 @@ class Servo:
         msg.values.append(KeyValue("Position", str(self.angle)))
         msg.values.append(KeyValue("Temperature", str(self.temperature)))
         msg.values.append(KeyValue("Voltage", str(self.voltage)))
+        msg.values.append(KeyValue("Reads", str(self.reads+self.errors)))
+        msg.values.append(KeyValue("Error Rate", str((self.errors*100.0)/(self.reads+self.errors))+"%" ))
         if self.relaxed:
             msg.values.append(KeyValue("Torque", "OFF"))
         else:
@@ -378,7 +384,7 @@ class Servos(dict):
                         servo.voltage = val[0]
                         servo.temperature = val[1]
         except:
-            rospy.loginfo("Error in updating stats.")  
+            rospy.logdebug("Error in updating stats.")  
             return           
 
     def interpolate(self, sync=True):

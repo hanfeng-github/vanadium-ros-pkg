@@ -111,7 +111,7 @@ class FollowController:
                     rospy.sleep(0.01)
                 positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
                 t = ((start + point.time_from_start) - rospy.Time.now()).to_sec()
-                rospy.loginfo(self.name + ": Sending Point," + str(positions) + " " + str(t))
+                rospy.logdebug(self.name + ": Sending Point," + str(positions) + " " + str(t))
                 self.write(positions, t)
                 self.interpolating = 1
             else:
@@ -121,7 +121,7 @@ class FollowController:
                 while rospy.Time.now() + rospy.Duration(0.01) < endtime:
                     err = [ (d-c) for d,c in zip(desired,last) ]
                     velocity = [ abs(x / (self.rate * (endtime - rospy.Time.now()).to_sec())) for x in err ]   
-                    rospy.loginfo(err)
+                    rospy.logdebug(err)
                     for i in range(len(self.joints)):
                         if err[i] > 0.01 or err[i] < -0.01:
                             cmd = err[i] 
