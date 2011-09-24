@@ -1,0 +1,14 @@
+<package>
+  <description brief="Basic controllers for ArbotiX connected devices">
+    Extends the arbotix_node package with a number of more sophisticated ROS wrappers for common devices. 
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/arbotix_controllers</url>
+
+  <depend package="arbotix_python"/>
+  <depend package="trajectory_msgs"/>
+  <depend package="tf"/>
+</package>
