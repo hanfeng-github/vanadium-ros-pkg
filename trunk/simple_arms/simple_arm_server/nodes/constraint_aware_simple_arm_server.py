@@ -117,7 +117,7 @@ class SimpleArmServer:
     def actionCb(self, req):
         """ Given pose to move gripper to, do it. """ 
         self.arm_solver_info = self._get_ik_solver_info_proxy() 
-        print self._setPlanningDiff(SetPlanningSceneDiffRequest())
+        self._setPlanningDiff(SetPlanningSceneDiffRequest())
         computed_actions = list()       
 
         # compute trajectories
@@ -220,7 +220,6 @@ class SimpleArmServer:
         # get IK, wiggle if needed
         tries = 0
         pitch = e[1]
-        print "roll", e[0]
         while tries < 80:
             try:
                 response = self._get_ik_proxy(request)
@@ -237,9 +236,8 @@ class SimpleArmServer:
                     request.ik_request.pose_stamped.pose.orientation.z = q[2]
                     request.ik_request.pose_stamped.pose.orientation.w = q[3]
             except rospy.ServiceException, e:
-                print "Service did not process request: %s"%str(e)
+                rospy.logerr("Service did not process request: %s"%str(e))
 
-        print response
         if response.error_code.val == response.error_code.SUCCESS:
             arm_solver_info = self._get_ik_solver_info_proxy()     
             msg = JointTrajectory()
