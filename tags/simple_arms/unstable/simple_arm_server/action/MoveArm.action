@@ -1,6 +1,0 @@
-std_msgs/Header header
-ArmAction[] motions
----
-bool success
----
-duration time_to_completion
