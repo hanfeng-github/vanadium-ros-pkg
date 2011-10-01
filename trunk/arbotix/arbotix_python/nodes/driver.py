@@ -45,6 +45,8 @@ from arbotix_python.io import *
 class ArbotixROS(ArbotiX):
     
     def __init__(self):
+        pause = False
+
         # load configurations    
         port = rospy.get_param("~port", "/dev/ttyUSB0")
         baud = int(rospy.get_param("~baud", "115200"))
@@ -64,15 +66,8 @@ class ArbotixROS(ArbotiX):
             ArbotiX.__init__(self, port, baud)        
             rospy.sleep(1.0)
             rospy.loginfo("Started ArbotiX connection on port " + port + ".")
-            # wait for arbotix to start up (especially after reset)
-            if rospy.has_param("~controllers") or rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
-                while self.getDigital(1) == -1:
-                    rospy.loginfo("Waiting for response...")
-                    rospy.sleep(0.25)
-                rospy.loginfo("ArbotiX connected.")
-        if self.fake:
+        else:
             rospy.loginfo("ArbotiX being simulated.")
-        
 
         # initialize dynamixel & hobby servos
         self.servos = Servos(self)
@@ -83,12 +78,27 @@ class ArbotixROS(ArbotiX):
         for name, params in controllers.items():
             if params["type"] == "follow_controller":
                 self.controllers.append(FollowController(self, name))
+                if self.controllers[-1].onboard:
+                    pause = True
             elif params["type"] == "diff_controller":
                 self.controllers.append(DiffController(self, name))
+                pause = True
 #           elif params["type"] == "omni_controller":
 #               self.controllers.append(OmniController(self, name))
+#               pause = True
             else:
                 rospy.logerr("Unrecognized controller: " + params["type"])
+
+        # wait for arbotix to start up (especially after reset)
+        if not self.fake:
+            if rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
+                pause = True
+            if pause:
+                while self.getDigital(1) == -1:
+                    rospy.loginfo("Waiting for response...")
+                    rospy.sleep(0.25)
+            rospy.loginfo("ArbotiX connected.")
+
         for controller in self.controllers:
             controller.startup()
 
