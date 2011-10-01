@@ -100,10 +100,10 @@ class Servo:
         angle = (ticks - self.neutral) * self.rad_per_tick
         if self.invert:
             angle = -1.0 * angle
-        if angle > self.max_angle:
-            return self.max_angle
-        if angle < self.min_angle:
-            return self.min_angle
+        #if angle > self.max_angle:
+        #    return self.max_angle
+        #if angle < self.min_angle:
+        #    return self.min_angle
         return angle        
 
     def relaxCb(self, req):
@@ -357,7 +357,7 @@ class Servos(dict):
                 else:
                     # direct connection, or other hardware with no sync_read capability
                     for servo in self.dynamixels.values():
-                        servo.update(-1)
+                        servo.update(None)
             #except:
             #    rospy.loginfo("Error in updating positions.")  
             #    return           
