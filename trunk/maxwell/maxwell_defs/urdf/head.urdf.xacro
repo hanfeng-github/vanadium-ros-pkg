@@ -1,73 +1,115 @@
 <?xml version="1.0"?>
 <robot>
 
-  <!-- origin is center of head tilt rotation -->
+  <property name="M_PI" value="3.14159"/>
+  <property name="AX12_WIDTH" value="0.038"/>
+  <property name="AX12_HEIGHT" value="0.0385"/>
+  <property name="F10_HEIGHT" value="0.004"/>
 
+  <include filename="$(find maxwell_defs)/urdf/hardware/bioloid_ax12.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/hardware/bioloid_F2_revolute.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/hardware/bioloid_F3_revolute.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/hardware/bioloid_F3_fixed.xacro" />
+
+  <!-- origin is center of head tilt rotation -->
   <macro name="maxwell_head" params="name parent *origin">
 
     <!-- Head pan -->
-    <joint name="${name}_pan_joint" type="revolute">
-      <axis xyz="0 0 1" />      
+    <joint name="${name}_pan_servo_joint" type="fixed">
       <insert_block name="origin" />
-      <parent link="${parent}_link"/>
-      <child link="${name}_pan_link"/>
-      <limit lower="-2.617" upper="2.617" effort="1" velocity="1" />
+      <parent link="${parent}"/>
+      <child link="${name}_pan_servo_link" />
     </joint>
-    <link name="${name}_pan_link">
+    <link name="${name}_pan_servo_link">
+      <inertial>
+        <mass value="0.00001" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
       <visual>
-        <origin xyz="0 0 ${0.0635/2}" rpy="0 0 0 " />
+        <origin xyz="0 0 0" rpy="1.57 0 1.57" />
         <geometry>
-          <box size="${ax12_depth} ${ax12_width} ${ax12_height+0.00635}"/>
+          <mesh filename="package://maxwell_defs/meshes/ax12_box.stl" scale="0.001 0.001 0.001"/>
         </geometry>
-        <material name="Black" />
+        <material name="Black"/>
       </visual>
       <collision>
-        <origin xyz="0 0 ${0.0635/2}" rpy="0 0 0 " />
+        <origin xyz="-0.01241 0.0 0.0" rpy="1.57 0 1.57" />
         <geometry>
-          <box size="${ax12_depth} ${ax12_width} ${ax12_height+0.00635}"/>
+          <box size="0.025 0.038 0.04762"/>
         </geometry>
       </collision>
     </link>
 
-    <!-- Head tilt -->
-    <joint name="${name}_tilt_joint" type="revolute">
-      <axis xyz="0 1 0" />
-      <limit lower="-1.57" upper="1.57" effort="5.0" velocity="5" />
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <parent link="${name}_pan_link"/>
-      <child link="${name}_tilt_link"/>
+    <joint name="${name}_pan_joint" type="revolute">
+      <origin xyz="0 0 ${AX12_WIDTH/2}"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="30" velocity="1.0" lower="-2.61799388" upper="2.61799388" />
+      <parent link="${name}_pan_servo_link"/>
+      <child link="${name}_pan_link" />
     </joint>
-    <link name="${name}_tilt_link">
+    <link name="${name}_pan_link">
+      <inertial>
+        <mass value="0.00001" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
       <visual>
-        <origin xyz="0 0 ${0.0381/2}" rpy="0.0 0.0 0.0" />
+        <origin xyz=" 0 0 0 " rpy="3.14 0 0" />
         <geometry>
-          <box size=".0381 .0381 .0381"/>
+          <mesh filename="package://maxwell_defs/meshes/F3.stl" scale="0.001 0.001 0.001"/>
         </geometry>
-        <material name="Orange" />
+        <material name="Black"/>
       </visual>
       <collision>
-        <origin xyz="0 0 ${0.0381/2}" rpy="0.0 0.0 0.0" />
+        <origin xyz="0.0 0.0 0.0045" rpy="0 0 0" />
         <geometry>
-          <box size=".0381 .0381 .0381"/>
+          <box size="0.025 0.038 0.009"/>
         </geometry>
       </collision>
     </link>
+    <bioloid_F3_fixed parent="${name}_pan_servo_link" name="${name}_tilt_left_side" joint_name="${name}_tilt_left_joint" color="Black">
+      <origin xyz="-0.015 ${-AX12_WIDTH/2} 0" rpy="1.57 0 0"/>
+    </bioloid_F3_fixed>
+    <bioloid_F3_fixed parent="${name}_pan_servo_link" name="${name}_tilt_right_side" joint_name="${name}_tilt_right_joint" color="Black">
+      <origin xyz="-0.015 ${AX12_WIDTH/2} 0" rpy="-1.57 0 0"/>
+    </bioloid_F3_fixed>
+
+    <!-- Head tilt -->
+    <bioloid_ax12 parent="${name}_pan_link" name="${name}_tilt_servo" color="Black">
+      <origin xyz="0 0 ${AX12_HEIGHT+F10_HEIGHT-0.001}" rpy="0 0 0"/>
+    </bioloid_ax12>
+    <bioloid_F2_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" joint_name="${name}_tilt_joint" color="Orange">
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+    </bioloid_F2_revolute>
 
     <!-- Head sensor frame -->
     <joint name="${name}_sensor_frame_joint" type="fixed">
-      <origin xyz="${calib_cam_x} ${calib_cam_y} ${calib_cam_z}" rpy="${calib_cam_rr} ${calib_cam_rp} ${calib_cam_ry}" />
+      <origin xyz="0 0 0.0425"/>
       <parent link="${name}_tilt_link"/>
       <child link="${name}_sensor_frame"/>
     </joint>
     <link name="${name}_sensor_frame">
       <visual>
-        <origin xyz="${-calib_cam_x-0.0254} 0 0" rpy="0 0 -1.57" />
+        <origin xyz="-0.03 0 0" rpy="0 0 -1.57" />
         <geometry>
           <mesh filename="package://maxwell_defs/meshes/kinect.stl" />
         </geometry>
         <material name="Black" />
       </visual>
-    </link> <!-- comment this link out for calibration -->
+    </link>
+
+    <!-- Openni Link -->
+    <joint name="openni_camera_joint" type="fixed">
+      <origin xyz="${calib_cam_x} ${calib_cam_y} ${calib_cam_z}" rpy="${calib_cam_rr} ${calib_cam_rp} ${calib_cam_ry}" />
+      <parent link="${name}_sensor_frame"/>
+      <child link="openni_camera"/>
+    </joint>
+    <link name="openni_camera"/>
 
   </macro>
 

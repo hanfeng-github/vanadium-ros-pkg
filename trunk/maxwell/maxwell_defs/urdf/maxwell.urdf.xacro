@@ -1,26 +1,10 @@
 <?xml version="1.0"?>
 <robot name="maxwell" >
 
-  <!-- Calibration from 8/7
-  <property name='calib_cam_x' value='-0.000859868' />
-  <property name='calib_cam_y' value='0.0171667' />
-  <property name='calib_cam_z' value='0.0192186' />
-  <property name='calib_cam_rr' value='-0.0432624' />
-  <property name='calib_cam_rp' value='-0.0226177' />
-  <property name='calib_cam_ry' value='0.00714413' />
-  -->
-  <!-- Calibration from 8/8
-  <property name='calib_cam_x' value='-0.00515338' />
-  <property name='calib_cam_y' value='0.0131489' />
-  <property name='calib_cam_z' value='0.0169829' />
-  <property name='calib_cam_rr' value='-0.0397998' />
-  <property name='calib_cam_rp' value='-0.0241423' />
-  <property name='calib_cam_ry' value='0.00627637' />
-  -->
-
   <property name='calib_cam_x' value='0.00468423' />
   <property name='calib_cam_y' value='0.0060704' />
-  <property name='calib_cam_z' value='0.0118428' />
+  <property name='calib_cam_z' value='-0.0306572' />
+  <!--<property name='calib_cam_z' value='0.0118428' />-->
   <property name='calib_cam_rr' value='-0.024976' />
   <property name='calib_cam_rp' value='-0.0119664' />
   <property name='calib_cam_ry' value='0.0228755' />
@@ -40,9 +24,12 @@
   <property name="ax12_center" value="0.0385" />
 
   <!-- height properties -->
-  <!--<property name="arm_height" value="0.911225" />-->
-  <property name="arm_height" value="0.885825" /><!-- height to shoulder lift rotation -->
-  <property name="column_height" value="1.397" /> <!-- height to neck tilt rotation -->
+  <!--<property name="arm_height" value="0.885825" /> height to shoulder lift rotation -->
+   <!--<property name="column_height" value="1.397" /> height to neck tilt rotation -->
+
+  <property name="arm_height" value="0.5921375" /> <!-- deck to bottom of arm mount TODO: update this -->
+  <property name="column_height" value="1.171575" /> <!-- deck to top of 80/20: 46-1/8" -->
+  
   
   <!-- The following included files set up definitions of parts of the robot body -->
   <include filename="$(find maxwell_defs)/urdf/base.urdf.xacro" />
@@ -57,12 +44,12 @@
 
   <!-- Add Torso Upright -->
   <maxwell_torso name="torso" parent="base">
-    <origin xyz="-0.00635 0 ${arm_height}"/>
+    <origin xyz="-0.00635 0 ${base_size_z}"/>
   </maxwell_torso>
 
   <!-- Arm -->
   <maxwell_arm name="arm" parent="torso">
-    <origin xyz="0.0608 0 0"/>
+    <origin xyz="0.0608 0 ${arm_height+.15}"/>
   </maxwell_arm>
 
   <!-- Gripper -->
@@ -71,9 +58,10 @@
   </maxwell_gripper>
 
   <!-- Kinect head -->
-  <maxwell_head name="head" parent="base">
+  <maxwell_head name="head" parent="torso_link">
     <!--<origin xyz="0.0157 0 ${column_height}"/>-->
-    <origin xyz="${0.0157+0.05715/2} -0.005 ${column_height}"/>
+    <!--<origin xyz="${0.0157+0.05715/2} -0.005 ${column_height+0.0460375}"/>-->
+    <origin xyz="0 0 ${column_height+0.0270375}"/>
   </maxwell_head>
 
 </robot>

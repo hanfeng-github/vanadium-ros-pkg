@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<robot>
+
+  <macro name="bioloid_ax12" params="parent name color *origin">
+    <joint name="${name}_joint" type="fixed">
+      <insert_block name="origin" />
+      <parent link="${parent}"/>
+      <child link="${name}_link" />
+    </joint>
+
+    <link name="${name}_link">
+      <inertial>
+        <mass value="0.00001" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
+      <visual>
+        <origin xyz=" 0 0 0 " rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://maxwell_defs/meshes/ax12_box.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <material name="${color}"/>
+      </visual>
+      <collision>
+        <origin xyz="0.0 0.0 -0.01241" rpy="0 0 0" />
+        <geometry>
+          <box size="0.025 0.038 0.04762"/>
+        </geometry>
+      </collision>
+    </link>
+  </macro>
+
+</robot>
