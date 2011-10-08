@@ -4,19 +4,9 @@
   <property name='calib_cam_x' value='0.00468423' />
   <property name='calib_cam_y' value='0.0060704' />
   <property name='calib_cam_z' value='-0.0306572' />
-  <!--<property name='calib_cam_z' value='0.0118428' />-->
   <property name='calib_cam_rr' value='-0.024976' />
   <property name='calib_cam_rp' value='-0.0119664' />
   <property name='calib_cam_ry' value='0.0228755' />
-
-  <!--
-  <property name="calib_cam_x" value="0" />
-  <property name="calib_cam_y" value="0" />
-  <property name="calib_cam_z" value="0" />
-  <property name="calib_cam_rr" value="0" />
-  <property name="calib_cam_rp" value="0" />
-  <property name="calib_cam_ry" value="0" />
-  -->
 
   <property name="arm_height" value="0.6619375 " /> <!-- deck to arm_link -->
   <property name="column_height" value="1.171575" /> <!-- deck to top of 80/20: 46-1/8" -->
@@ -28,7 +18,7 @@
   <include filename="$(find maxwell_defs)/urdf/base.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/torso.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/arm.urdf.xacro" />
-  <!--<include filename="$(find maxwell_defs)/urdf/gripper.urdf.xacro" />-->
+  <include filename="$(find maxwell_defs)/urdf/gripper.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/head.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/materials.urdf.xacro" />
 
@@ -42,18 +32,16 @@
 
   <!-- Arm -->
   <maxwell_arm name="arm" parent="torso">
-    <origin xyz="0.0608 0 ${arm_height}"/>
+    <origin xyz="0.0611 0 ${arm_height}"/>
   </maxwell_arm>
 
   <!-- Gripper -->
-  <!--<maxwell_gripper name="gripper" parent="arm_wrist_roll">
-    <origin xyz="0.150 0 0" /> 
-  </maxwell_gripper>-->
+  <maxwell_gripper name="gripper" parent="arm_wrist_roll">
+    <origin xyz="0 0 0" /> 
+  </maxwell_gripper>
 
   <!-- Kinect head -->
   <maxwell_head name="head" parent="torso_link">
-    <!--<origin xyz="0.0157 0 ${column_height}"/>-->
-    <!--<origin xyz="${0.0157+0.05715/2} -0.005 ${column_height+0.0460375}"/>-->
     <origin xyz="0 0 ${column_height+0.0270375}"/>
   </maxwell_head>
 

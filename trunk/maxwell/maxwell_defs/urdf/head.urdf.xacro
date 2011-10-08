@@ -21,7 +21,7 @@
 
     <!-- Head tilt -->
     <dynamixel_ax12_tilt parent="${name}_pan_link" name="${name}_tilt_servo" color="Black">
-      <origin xyz="0 0 ${AX12_HEIGHT+F10_HEIGHT-0.001}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${AX12_HEIGHT+0.003}" rpy="0 0 0"/>
     </dynamixel_ax12_tilt>
     <ax12_hinge_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" color="Orange">
      <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -41,6 +41,12 @@
         </geometry>
         <material name="Black" />
       </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.064 0.28 0.04"/>
+        </geometry>
+      </collision>
     </link>
 
     <!-- Openni Link -->

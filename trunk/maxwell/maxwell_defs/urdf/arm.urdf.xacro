@@ -26,6 +26,29 @@
     </link>
   </macro>
 
+  <!-- cosmetics -->
+  <macro name="arm_mount" params="name parent *origin">
+    <joint name="${name}_joint" type="fixed">
+      <insert_block name="origin" />
+      <parent link="${parent}"/>
+      <child link="${name}_link" />
+    </joint>
+    <link name="${name}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="1.57 3.14 0" />
+        <geometry>
+          <mesh filename="package://maxwell_defs/meshes/arm_mount.stl" scale="1 1 1"/>
+        </geometry>
+        <material name="Black"/>
+      </visual>
+      <collision>
+        <origin xyz="0.03055 ${-0.0047625/2} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.0865 0.0047625 0.038"/>
+        </geometry>
+      </collision>
+    </link>
+  </macro>
 
   <!-- the actual arm -->
   <macro name="maxwell_arm" params="name parent *origin">
@@ -36,8 +59,13 @@
       <parent link="${parent}_link"/>
       <child link="${name}_link"/>
     </joint>
-
     <link name="${name}_link"/>
+    <arm_mount name="${name}_left_mount" parent="${name}_link">
+      <origin xyz="-0.0611 0.0254 0" rpy="0 0 0"/>
+    </arm_mount>
+    <arm_mount name="${name}_right_mount" parent="${name}_link">
+      <origin xyz="-0.0611 ${-0.0254+0.0047625} 0" rpy="0 0 0"/>
+    </arm_mount>
 
     <!-- Shoulder pan -->
     <dynamixel_rx64_pan parent="${name}_link" name="${name}_shoulder_pan_servo" color="Black">
@@ -84,7 +112,7 @@
     <joint name="${name}_wrist_roll_joint" type="revolute">
       <axis xyz="1 0 0" />
       <limit effort="30" velocity="1.0" lower="-2.617" upper="2.617"/>
-      <origin xyz="0.030 0 0" rpy="0 0 0" />
+      <origin xyz="0.031 0 0" rpy="0 0 0" />
       <parent link="${name}_wrist_flex_link"/>
       <child link="${name}_wrist_roll_link"/>
     </joint>
@@ -97,16 +125,16 @@
           izz="1.0" />
       </inertial>
       <visual>
-        <origin xyz="${0.0425/2} 0 0" rpy="0 0 1.57" />
+        <origin xyz="${0.0381/2} 0 0" rpy="0 0 1.57" />
         <geometry>
           <mesh filename="package://maxwell_defs/meshes/ax12.stl" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="Black"/>
       </visual>
       <collision>
-        <origin xyz="${0.0425/2} 0.0 -0.01241 " rpy="0 0 0" />
+        <origin xyz="${0.0381/2} 0.0 -0.01241 " rpy="0 0 0" />
         <geometry>
-          <box size="0.038 0.028 0.04762"/>
+          <box size="0.0381 0.028 0.04762"/>
         </geometry>
       </collision>
     </link>

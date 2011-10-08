@@ -10,8 +10,8 @@ dynamixels: {
   arm_elbow_flex_joint: {id: 5, invert: 1, ticks: 4096, neutral: 2416, range: 250, max_speed: 25},
   arm_wrist_flex_joint: {id: 6, invert: 1, max_speed: 45},
   arm_wrist_roll_joint: {id: 7, max_speed: 45},
-  l_finger_joint: {id: 8, max_speed: 10},
-  r_finger_joint: {id: 9, max_speed: 10}
+  l_gripper_joint: {id: 8, max_speed: 10},
+  r_gripper_joint: {id: 9, max_speed: 10}
 }
 controllers: {
   head_controller: {type: follow_controller, joints: [head_pan_joint, head_tilt_joint], action_name: head_controller/follow_joint_trajectory },
