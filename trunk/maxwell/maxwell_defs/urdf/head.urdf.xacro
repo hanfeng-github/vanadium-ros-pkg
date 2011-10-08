@@ -1,91 +1,31 @@
 <?xml version="1.0"?>
 <robot>
 
-  <property name="M_PI" value="3.14159"/>
-  <property name="AX12_WIDTH" value="0.038"/>
-  <property name="AX12_HEIGHT" value="0.0385"/>
-  <property name="F10_HEIGHT" value="0.004"/>
-
-  <include filename="$(find maxwell_defs)/urdf/hardware/bioloid_ax12.xacro" />
-  <include filename="$(find maxwell_defs)/urdf/hardware/bioloid_F2_revolute.xacro" />
-  <include filename="$(find maxwell_defs)/urdf/hardware/bioloid_F3_revolute.xacro" />
-  <include filename="$(find maxwell_defs)/urdf/hardware/bioloid_F3_fixed.xacro" />
-
   <!-- origin is center of head tilt rotation -->
   <macro name="maxwell_head" params="name parent *origin">
 
     <!-- Head pan -->
-    <joint name="${name}_pan_servo_joint" type="fixed">
+    <dynamixel_ax12_pan parent="${parent}" name="${name}_pan_servo" color="Black">
       <insert_block name="origin" />
-      <parent link="${parent}"/>
-      <child link="${name}_pan_servo_link" />
-    </joint>
-    <link name="${name}_pan_servo_link">
-      <inertial>
-        <mass value="0.00001" />
-        <origin xyz="0 0 0" />
-        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-          iyy="1.0" iyz="0.0"
-          izz="1.0" />
-      </inertial>
-      <visual>
-        <origin xyz="0 0 0" rpy="1.57 0 1.57" />
-        <geometry>
-          <mesh filename="package://maxwell_defs/meshes/ax12_box.stl" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="Black"/>
-      </visual>
-      <collision>
-        <origin xyz="-0.01241 0.0 0.0" rpy="1.57 0 1.57" />
-        <geometry>
-          <box size="0.025 0.038 0.04762"/>
-        </geometry>
-      </collision>
-    </link>
+    </dynamixel_ax12_pan>
+    <ax12_side_revolute parent="${name}_pan_servo_link" name="${name}_pan" llimit="-2.617" ulimit="2.617" color="Orange">
+      <origin xyz="0 0 ${AX12_WIDTH/2}" rpy="0 0 0"/>
+    </ax12_side_revolute>
 
-    <joint name="${name}_pan_joint" type="revolute">
-      <origin xyz="0 0 ${AX12_WIDTH/2}"/>
-      <axis xyz="0 0 1"/>
-      <limit effort="30" velocity="1.0" lower="-2.61799388" upper="2.61799388" />
-      <parent link="${name}_pan_servo_link"/>
-      <child link="${name}_pan_link" />
-    </joint>
-    <link name="${name}_pan_link">
-      <inertial>
-        <mass value="0.00001" />
-        <origin xyz="0 0 0" />
-        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-          iyy="1.0" iyz="0.0"
-          izz="1.0" />
-      </inertial>
-      <visual>
-        <origin xyz=" 0 0 0 " rpy="3.14 0 0" />
-        <geometry>
-          <mesh filename="package://maxwell_defs/meshes/F3.stl" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="Black"/>
-      </visual>
-      <collision>
-        <origin xyz="0.0 0.0 0.0045" rpy="0 0 0" />
-        <geometry>
-          <box size="0.025 0.038 0.009"/>
-        </geometry>
-      </collision>
-    </link>
-    <bioloid_F3_fixed parent="${name}_pan_servo_link" name="${name}_tilt_left_side" joint_name="${name}_tilt_left_joint" color="Black">
+    <ax12_side_fixed parent="${name}_pan_servo_link" name="${name}_tilt_left_side" color="Black">
       <origin xyz="-0.015 ${-AX12_WIDTH/2} 0" rpy="1.57 0 0"/>
-    </bioloid_F3_fixed>
-    <bioloid_F3_fixed parent="${name}_pan_servo_link" name="${name}_tilt_right_side" joint_name="${name}_tilt_right_joint" color="Black">
+    </ax12_side_fixed>
+    <ax12_side_fixed parent="${name}_pan_servo_link" name="${name}_tilt_right_side" color="Black">
       <origin xyz="-0.015 ${AX12_WIDTH/2} 0" rpy="-1.57 0 0"/>
-    </bioloid_F3_fixed>
+    </ax12_side_fixed>
 
     <!-- Head tilt -->
-    <bioloid_ax12 parent="${name}_pan_link" name="${name}_tilt_servo" color="Black">
+    <dynamixel_ax12_tilt parent="${name}_pan_link" name="${name}_tilt_servo" color="Black">
       <origin xyz="0 0 ${AX12_HEIGHT+F10_HEIGHT-0.001}" rpy="0 0 0"/>
-    </bioloid_ax12>
-    <bioloid_F2_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" joint_name="${name}_tilt_joint" color="Orange">
+    </dynamixel_ax12_tilt>
+    <ax12_hinge_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" color="Orange">
      <origin xyz="0 0 0" rpy="0 0 0"/>
-    </bioloid_F2_revolute>
+    </ax12_hinge_revolute>
 
     <!-- Head sensor frame -->
     <joint name="${name}_sensor_frame_joint" type="fixed">

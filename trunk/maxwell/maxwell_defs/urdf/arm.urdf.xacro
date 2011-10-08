@@ -1,6 +1,33 @@
 <?xml version="1.0"?>
 <robot>
   
+  <!-- standoffs -->
+  <macro name="standoffs" params="name parent *origin">
+    <joint name="${name}_joint" type="fixed">
+      <insert_block name="origin" />
+      <parent link="${parent}"/>
+      <child link="${name}_link" />
+    </joint>
+
+    <link name="${name}_link">
+      <visual>
+        <origin xyz="${0.0381/2} 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.0381 0.037 0.030"/>
+        </geometry>
+        <material name="Black"/>
+      </visual>
+      <collision>
+        <origin xyz="${0.0381/2} 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.0381 0.037 0.030"/>
+        </geometry>
+      </collision>
+    </link>
+  </macro>
+
+
+  <!-- the actual arm -->
   <macro name="maxwell_arm" params="name parent *origin">
 
     <!-- Arm Link -->
@@ -13,130 +40,73 @@
     <link name="${name}_link"/>
 
     <!-- Shoulder pan -->
-    <joint name="${name}_shoulder_pan_joint" type="revolute">
-      <axis xyz="0 0 1" />
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <parent link="${name}_link"/>
-      <child link="${name}_shoulder_pan_link"/>
-      <limit lower="-1.57"  upper="1.57" effort="5.0" velocity="5" />
-    </joint>
-
-    <link name="${name}_shoulder_pan_link">
-      <visual name="${name}_shoulder_pan_visual">
-        <origin xyz="${-0.065/2+0.0127} 0 0.040" rpy="0 0 0" />
-        <geometry name="${name}_shoulder_pan_visual_geom">
-          <box size="0.065 0.057 0.120"/>
-        </geometry>
-        <material name="Black" />
-      </visual>
-      <collision>
-        <origin xyz="${-0.065/2+0.0127} 0 0.040" rpy="0 0 0" />
-        <geometry>
-          <box size="0.065 0.057 0.120"/>
-        </geometry>
-      </collision>
-    </link>
+    <dynamixel_rx64_pan parent="${name}_link" name="${name}_shoulder_pan_servo" color="Black">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </dynamixel_rx64_pan>
+    <rx64_side_revolute parent="${name}_shoulder_pan_servo_link" name="${name}_shoulder_pan" llimit="-1.57" ulimit="1.57" color="Grey">
+      <origin xyz="0 0 0.0235" rpy="0 -1.57 0"/>
+    </rx64_side_revolute>
 
     <!-- Shoulder lift -->
-    <joint name="${name}_shoulder_lift_joint" type="revolute">
-      <axis xyz="0 1 0"/>
-      <origin xyz="0 0 0" rpy="0 -1.57 0" />
-      <!--<origin xyz="0 0 0.0759" rpy="0 -1.57 0" />-->
-      <limit lower="-0.2" upper="2.617" effort="5.0" velocity="5" />
-      <parent link="${name}_shoulder_pan_link"/>
-      <child link="${name}_shoulder_lift_link"/>
-    </joint>
-
-    <link name="${name}_shoulder_lift_link">
-      <visual name="${name}_shoulder_lift_visual">
-        <origin xyz="${0.165/2} 0 0" rpy="0 0 0" />
-        <geometry name="${name}_shoulder_lift_visual_geom">
-          <box size="0.165 0.057 0.040"/>
-        </geometry>
-        <material name="Grey" />
-      </visual>
-      <collision>
-        <origin xyz="${0.165/2} 0 0" rpy="0 0 0" />
-        <geometry>
-          <box size="0.165 0.057 0.040"/>
-        </geometry>
-      </collision>
-    </link>
+    <dynamixel_rx64_tilt parent="${name}_shoulder_pan_link" name="${name}_shoulder_lift_servo" color="Black">
+      <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
+    </dynamixel_rx64_tilt>
+    <rx64_hinge_hxl parent="${name}_shoulder_lift_servo_link" name="${name}_shoulder_lift" llimit="-0.2" ulimit="2.617" color="Grey">
+      <origin xyz="0 0 0.0" rpy="0 0 0"/>
+    </rx64_hinge_hxl>
+    <standoffs parent="${name}_shoulder_lift_link" name="${name}_shoulder_standoff">
+      <origin xyz="${0.048+0.0235} 0 0.0" rpy="0 0 0"/>
+    </standoffs>
 
     <!-- Elbow -->
-    <joint name="${name}_elbow_flex_joint" type="revolute">
-      <axis xyz="0 1 0" />
-      <limit lower="-1.57" upper="2.617" effort="5.0" velocity="5" />
-      <origin xyz="0.165 0 0" rpy="0 0 0" />
-      <parent link="${name}_shoulder_lift_link"/>
-      <child link="${name}_elbow_flex_link"/>
-    </joint>
-
-    <link name="${name}_elbow_flex_link">
-      <visual name="${name}_elbow_flex_visual">
-        <origin xyz="${0.125/2} 0 0" rpy="0 0 0" />
-        <geometry>
-          <!--<mesh filename="package://pr2_defs/meshes/shoulder_yaw.stl" />-->
-          <box size="0.125 0.057 0.040"/>
-        </geometry>
-        <material name="Black" />
-      </visual>
-      <collision>
-        <origin xyz="${0.125/2} 0 0" rpy="0 0 0" />
-        <geometry>
-          <box size="0.125 0.057 0.040"/>
-        </geometry>
-      </collision>
-    </link>
+    <rx64_side_fixed parent="${name}_shoulder_standoff_link" name="${name}_elbow_flex_fixed" color="Grey">
+      <origin xyz="0.0381 0 0" rpy="0 0 0"/>
+    </rx64_side_fixed>
+    <dynamixel_rx64_tilt parent="${name}_elbow_flex_fixed_link" name="${name}_eblow_flex_servo" color="Black">
+      <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
+    </dynamixel_rx64_tilt>
+    <rx64_hinge_hxl parent="${name}_eblow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.57" ulimit="2.617" color="Grey">
+      <origin xyz="0 0 0.0" rpy="0 0 0"/>
+    </rx64_hinge_hxl>
 
     <!-- Wrist flex -->
-    <joint name="${name}_wrist_flex_joint" type="revolute">
-      <axis xyz="0 1 0" />
-      <limit lower="-1.57" upper="1.57" effort="5.0" velocity="5" />
-      <origin xyz="0.125 0 0" rpy="0 0 0" />
-      <parent link="${name}_elbow_flex_link"/>
-      <child link="${name}_wrist_flex_link"/>
-    </joint>
-
-    <link name="${name}_wrist_flex_link">
-      <visual name="${name}_wrist_flex_visual">
-        <origin xyz="${0.030/2} 0 0" rpy="0 0 0" />
-        <geometry name="${name}_wrist_flex_visual_geom">
-          <!--<mesh filename="package://pr2_defs/meshes/wrist_flex.stl" />-->
-          <box size="0.030 0.057 0.040"/>
-        </geometry>
-        <material name="Grey" />
-      </visual>
-      <collision>
-        <origin xyz="${0.030/2} 0 0" rpy="0 0 0" />
-        <geometry>
-          <box size="0.030 0.057 0.040"/>
-        </geometry>
-      </collision>
-    </link>
+    <rx64_side_fixed parent="${name}_elbow_flex_link" name="${name}_wrist_flex_fixed" color="Grey">
+      <origin xyz="${0.048+0.0235} 0 0" rpy="0 0 0"/>
+    </rx64_side_fixed>
+    <dynamixel_rx64_tilt parent="${name}_wrist_flex_fixed_link" name="${name}_wrist_flex_servo" color="Black">
+      <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
+    </dynamixel_rx64_tilt>
+    <rx64_hinge parent="${name}_wrist_flex_servo_link" name="${name}_wrist_flex" llimit="-1.57" ulimit="1.57" color="Grey">
+      <origin xyz="0 0 0.0" rpy="0 0 0"/>
+    </rx64_hinge>
 
     <!-- Wrist roll -->
     <joint name="${name}_wrist_roll_joint" type="revolute">
       <axis xyz="1 0 0" />
-      <limit lower="-2.617" upper="2.617" effort="5.0" velocity="5" />
+      <limit effort="30" velocity="1.0" lower="-2.617" upper="2.617"/>
       <origin xyz="0.030 0 0" rpy="0 0 0" />
       <parent link="${name}_wrist_flex_link"/>
       <child link="${name}_wrist_roll_link"/>
     </joint>
-
     <link name="${name}_wrist_roll_link">
-      <visual name="${name}_wrist_roll_visual">
-        <origin xyz="0.05 0 0" rpy="0 0 0" />
-        <geometry name="${name}_wrist_roll_visual_geom">
-          <!--<mesh filename="package://pr2_defs/meshes/wrist_roll.stl" />-->
-          <box size="0.100 0.065 0.050"/>
+      <inertial>
+        <mass value="0.00001" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
+      <visual>
+        <origin xyz="${0.0425/2} 0 0" rpy="0 0 1.57" />
+        <geometry>
+          <mesh filename="package://maxwell_defs/meshes/ax12.stl" scale="0.001 0.001 0.001"/>
         </geometry>
-        <material name="Black" />
+        <material name="Black"/>
       </visual>
       <collision>
-        <origin xyz="0.05 0 0" rpy="0 0 0" />
+        <origin xyz="-0.01241 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <box size="0.100 0.065 0.050"/>
+          <box size="0.04762 0.028 0.038"/>
         </geometry>
       </collision>
     </link>
