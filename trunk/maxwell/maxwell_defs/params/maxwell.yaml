@@ -1,7 +1,6 @@
 ---
 port: /dev/ttyUSB0
 write_rate: 20.0
-read_rate: 5.0
 # REX motors: 31750 cpr = 0.3888105m travel
 dynamixels: {
   head_pan_joint: {id: 1},
