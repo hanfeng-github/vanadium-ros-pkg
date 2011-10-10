@@ -6,14 +6,17 @@
   <license>BSD,</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/maxwell</url>
-
   <depend stack="arbotix" /> <!-- arbotix_python -->
-  <depend stack="common" /> <!-- xacro -->
-  <depend stack="common_msgs" /> <!-- trajectory_msgs, sensor_msgs, diagnostic_msgs -->
-  <depend stack="kinematics" /> <!-- kinematics_msgs -->
-  <depend stack="robot_model" /> <!-- ivcon, urdf, resource_retriever -->
+  <depend stack="arm_navigation" /> <!-- move_arm, trajectory_filter_server, planning_environment, robot_self_filter, constraint_aware_spline_smoother, arm_kinematics_constraint_aware, ompl_ros_interface -->
+  <depend stack="arm_navigation_experimental" /> <!-- collider -->
+  <depend stack="common_msgs" /> <!-- sensor_msgs, diagnostic_msgs -->
+  <depend stack="geometry" /> <!-- tf -->
+  <depend stack="laser_drivers" /> <!-- hokuyo_node -->
+  <depend stack="navigation" /> <!-- move_base -->
+  <depend stack="rharmony" /> <!-- pocketsphinx -->
+  <depend stack="robot_model" /> <!-- ivcon, urdf -->
   <depend stack="ros" />
-  <depend stack="ros_comm" /> <!-- rospy, std_srvs, roscpp -->
-  <depend stack="urdf_tools" /> <!-- arm_kinematics -->
+  <depend stack="ros_comm" /> <!-- roscpp -->
+  <depend stack="xacro" /> <!-- xacro -->
 
 </stack>
