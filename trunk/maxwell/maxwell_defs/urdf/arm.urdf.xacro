@@ -90,10 +90,10 @@
     <rx64_side_fixed parent="${name}_shoulder_standoff_link" name="${name}_elbow_flex_fixed" color="Grey">
       <origin xyz="0.0381 0 0" rpy="0 0 0"/>
     </rx64_side_fixed>
-    <dynamixel_rx64_tilt parent="${name}_elbow_flex_fixed_link" name="${name}_eblow_flex_servo" color="Black">
+    <dynamixel_rx64_tilt parent="${name}_elbow_flex_fixed_link" name="${name}_elbow_flex_servo" color="Black">
       <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
     </dynamixel_rx64_tilt>
-    <rx64_hinge_hxl parent="${name}_eblow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.57" ulimit="2.617" color="Grey">
+    <rx64_hinge_hxl parent="${name}_elbow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.57" ulimit="2.617" color="Grey">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
     </rx64_hinge_hxl>
 

@@ -1,6 +1,7 @@
 ---
 port: /dev/ttyUSB0
 write_rate: 20.0
+read_rate: 5.0
 # REX motors: 31750 cpr = 0.3888105m travel
 dynamixels: {
   head_pan_joint: {id: 1},
@@ -10,7 +11,7 @@ dynamixels: {
   arm_elbow_flex_joint: {id: 5, invert: 1, ticks: 4096, neutral: 2416, range: 250, max_speed: 25},
   arm_wrist_flex_joint: {id: 6, invert: 1, max_speed: 45},
   arm_wrist_roll_joint: {id: 7, max_speed: 45},
-  l_gripper_joint: {id: 8, max_speed: 10},
+  l_gripper_joint: {id: 8, max_speed: 10, invert: true},
   r_gripper_joint: {id: 9, max_speed: 10}
 }
 controllers: {
