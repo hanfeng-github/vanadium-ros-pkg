@@ -1,0 +1,4 @@
+<launch>
+  <include file="$(find maxwell_defs)/launch/upload_maxwell.launch" />
+  <rosparam command="load" ns="robot_description_planning" file="$(find maxwell_arm_navigation)/config/maxwell_planning_description.yaml" />
+</launch>
