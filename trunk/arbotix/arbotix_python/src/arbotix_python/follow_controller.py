@@ -103,6 +103,7 @@ class FollowController:
         time = rospy.Time.now()
         start = traj.header.stamp
         r = rospy.Rate(self.rate)
+        last = [ self.device.servos[joint].angle for joint in self.joints ]
         for point in traj.points:
             while rospy.Time.now() + rospy.Duration(0.01) < start:
                 rospy.sleep(0.01)
@@ -111,16 +112,17 @@ class FollowController:
                     rospy.sleep(0.01)
                 positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
                 t = ((start + point.time_from_start) - rospy.Time.now()).to_sec()
+                if t < 1/30.0:
+                    continue
                 rospy.logdebug(self.name + ": Sending Point," + str(positions) + " " + str(t))
                 self.write(positions, t)
                 self.interpolating = 1
             else:
-                last = [ self.device.servos[joint].angle for joint in self.joints ]
                 desired = [ point.positions[k] for k in indexes ]
-                endtime = rospy.Time.now() + point.time_from_start # let controller fall behind
+                endtime = start + point.time_from_start
                 while rospy.Time.now() + rospy.Duration(0.01) < endtime:
                     err = [ (d-c) for d,c in zip(desired,last) ]
-                    velocity = [ abs(x / (self.rate * (endtime - rospy.Time.now()).to_sec())) for x in err ]   
+                    velocity = [ abs(x / (self.rate * (endtime - rospy.Time.now()).to_sec())) for x in err ]
                     rospy.logdebug(err)
                     for i in range(len(self.joints)):
                         if err[i] > 0.01 or err[i] < -0.01:
@@ -131,9 +133,9 @@ class FollowController:
                             elif cmd < -top:
                                 cmd = -top
                             last[i] += cmd
-                            self.device.servos[self.joints[i]].desired = last[i]
-                            self.device.servos[self.joints[i]].relaxed = False
                             self.device.servos[self.joints[i]].dirty = True
+                            self.device.servos[self.joints[i]].relaxed = False
+                            self.device.servos[self.joints[i]].desired = last[i]
                         else:
                             velocity[i] = 0
                     r.sleep()
