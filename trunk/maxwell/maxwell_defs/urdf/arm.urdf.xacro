@@ -71,7 +71,7 @@
     <dynamixel_rx64_pan parent="${name}_link" name="${name}_shoulder_pan_servo" color="Black">
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </dynamixel_rx64_pan>
-    <rx64_side_revolute parent="${name}_shoulder_pan_servo_link" name="${name}_shoulder_pan" llimit="-1.57" ulimit="1.57" color="Grey">
+    <rx64_side_revolute parent="${name}_shoulder_pan_servo_link" name="${name}_shoulder_pan" llimit="-1.57" ulimit="1.57" vlimit="0.524" color="Grey">
       <origin xyz="0 0 0.0235" rpy="0 -1.57 0"/>
     </rx64_side_revolute>
 
@@ -79,7 +79,7 @@
     <dynamixel_rx64_tilt parent="${name}_shoulder_pan_link" name="${name}_shoulder_lift_servo" color="Black">
       <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
     </dynamixel_rx64_tilt>
-    <rx64_hinge_hxl parent="${name}_shoulder_lift_servo_link" name="${name}_shoulder_lift" llimit="-0.2" ulimit="2.617" color="Grey">
+    <rx64_hinge_hxl parent="${name}_shoulder_lift_servo_link" name="${name}_shoulder_lift" llimit="-0.2" ulimit="2.617" vlimit="0.524" color="Grey">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
     </rx64_hinge_hxl>
     <standoffs parent="${name}_shoulder_lift_link" name="${name}_shoulder_standoff">
@@ -93,7 +93,7 @@
     <dynamixel_rx64_tilt parent="${name}_elbow_flex_fixed_link" name="${name}_elbow_flex_servo" color="Black">
       <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
     </dynamixel_rx64_tilt>
-    <rx64_hinge_hxl parent="${name}_elbow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.57" ulimit="2.617" color="Grey">
+    <rx64_hinge_hxl parent="${name}_elbow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.57" ulimit="2.617" vlimit="0.524" color="Grey">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
     </rx64_hinge_hxl>
 
@@ -104,14 +104,14 @@
     <dynamixel_rx64_tilt parent="${name}_wrist_flex_fixed_link" name="${name}_wrist_flex_servo" color="Black">
       <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
     </dynamixel_rx64_tilt>
-    <rx64_hinge parent="${name}_wrist_flex_servo_link" name="${name}_wrist_flex" llimit="-1.57" ulimit="1.57" color="Grey">
+    <rx64_hinge parent="${name}_wrist_flex_servo_link" name="${name}_wrist_flex" llimit="-1.57" ulimit="1.57" vlimit="0.785" color="Grey">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
     </rx64_hinge>
 
     <!-- Wrist roll -->
     <joint name="${name}_wrist_roll_joint" type="revolute">
       <axis xyz="1 0 0" />
-      <limit effort="30" velocity="1.0" lower="-2.617" upper="2.617"/>
+      <limit effort="30" velocity="0.785" lower="-2.617" upper="2.617"/>
       <origin xyz="0.031 0 0" rpy="0 0 0" />
       <parent link="${name}_wrist_flex_link"/>
       <child link="${name}_wrist_roll_link"/>

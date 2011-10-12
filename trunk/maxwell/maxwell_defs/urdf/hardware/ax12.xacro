@@ -66,11 +66,11 @@
     </link>
   </macro>
 
-  <macro name="ax12_side_revolute" params="name parent llimit ulimit color *origin" >
+  <macro name="ax12_side_revolute" params="name parent llimit ulimit vlimit color *origin" >
     <joint name="${name}_joint" type="revolute">
       <insert_block name="origin" />
       <axis xyz="0 0 1"/>
-      <limit effort="30" velocity="1.0" lower="${llimit}" upper="${ulimit}" />
+      <limit effort="30" velocity="${vlimit}" lower="${llimit}" upper="${ulimit}" />
       <parent link="${parent}"/>
       <child link="${name}_link" />
     </joint>
@@ -129,11 +129,11 @@
     </link>
   </macro>
 
-  <macro name="ax12_hinge_revolute" params="parent name color *origin">
+  <macro name="ax12_hinge_revolute" params="parent name color llimit ulimit vlimit *origin">
     <joint name="${name}_joint" type="revolute">
       <insert_block name="origin" />
        <axis xyz="0 1 0"/>
-      <limit effort="30" velocity="1.0" lower="-2.61799388" upper="2.61799388" />
+      <limit effort="30" velocity="${vlimit}" lower="${llimit}" upper="${ulimit}" />
       <parent link="${parent}"/>
       <child link="${name}_link" />
     </joint>
@@ -162,11 +162,11 @@
     </link>
   </macro>
 
-  <macro name="ax12_F1_revolute" params="name parent color llimit ulimit *origin">
+  <macro name="ax12_F1_revolute" params="name parent color llimit ulimit vlimit *origin">
     <joint name="${name}_joint" type="revolute">
       <insert_block name="origin" />
        <axis xyz="0 0 1"/>
-      <limit effort="30" velocity="1.0" lower="${llimit}" upper="${ulimit}" />
+      <limit effort="30" velocity="${vlimit}" lower="${llimit}" upper="${ulimit}" />
       <parent link="${parent}"/>
       <child link="${name}_link" />
     </joint>
