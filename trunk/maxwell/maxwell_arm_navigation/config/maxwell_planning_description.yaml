@@ -6,7 +6,7 @@ multi_dof_joints:
 groups:
   - name: arm
     base_link: arm_link
-    tip_link: gripper_link
+    tip_link: arm_wrist_roll_link
 default_collision_operations:
   - object1: base_link
     object2: base_l_wheel_link
