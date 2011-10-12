@@ -5,9 +5,9 @@ write_rate: 25.0
 dynamixels: {
   head_pan_joint: {id: 1},
   head_tilt_joint: {id: 2, invert: true},
-  arm_shoulder_pan_joint: {id: 3, max_speed: 25},
-  arm_shoulder_lift_joint: {id: 4, invert: 1, ticks: 4096, neutral: 2416, range: 250, max_speed: 15},
-  arm_elbow_flex_joint: {id: 5, invert: 1, ticks: 4096, neutral: 2416, range: 250, max_speed: 25},
+  arm_shoulder_pan_joint: {id: 3, max_speed: 30},
+  arm_shoulder_lift_joint: {id: 4, invert: 1, ticks: 4096, neutral: 2416, range: 250, max_speed: 30},
+  arm_elbow_flex_joint: {id: 5, invert: 1, ticks: 4096, neutral: 2416, range: 250, max_speed: 30},
   arm_wrist_flex_joint: {id: 6, invert: 1, max_speed: 45},
   arm_wrist_roll_joint: {id: 7, max_speed: 45},
   l_gripper_joint: {id: 8, max_speed: 10, invert: true},
