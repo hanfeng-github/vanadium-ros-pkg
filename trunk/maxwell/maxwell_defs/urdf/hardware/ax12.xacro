@@ -27,9 +27,9 @@
         <material name="${color}"/>
       </visual>
       <collision>
-        <origin xyz="-0.01241 0.0 0.0" rpy="0 0 0" />
+        <origin xyz="${-0.0501/2+0.0116} 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <box size="0.04762 0.028 0.038"/>
+          <box size="0.0501 0.032 0.040"/>
         </geometry>
       </collision>
     </link>
@@ -58,9 +58,9 @@
         <material name="${color}"/>
       </visual>
       <collision>
-        <origin xyz="0.0 0.0 -0.01241" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 ${-0.0501/2+0.0116}" rpy="0 0 0" />
         <geometry>
-          <box size="0.028 0.038 0.04762"/>
+          <box size="0.032 0.040 0.0501"/>
         </geometry>
       </collision>
     </link>

@@ -132,9 +132,9 @@
         <material name="Black"/>
       </visual>
       <collision>
-        <origin xyz="${0.0381/2} 0.0 -0.01241 " rpy="0 0 0" />
+        <origin xyz="${0.040/2} 0.0 ${-(0.0506-0.024)/2} " rpy="0 0 0" />
         <geometry>
-          <box size="0.0381 0.028 0.04762"/>
+          <box size="0.040 0.032 0.0501"/>
         </geometry>
       </collision>
     </link>
