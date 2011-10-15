@@ -1,0 +1,19 @@
+port: /dev/ttyUSB1
+read_rate: 20
+write_rate: 30
+dynamixels: {
+    arm_shoulder_pan_joint: {id: 1, max_angle: 90, min_angle: -90, max_speed: 90},
+    arm_shoulder_lift_joint: {id: 2, max_angle: 100, min_angle: -100, max_speed: 90},
+    arm_elbow_flex_joint: {id: 3, max_angle: 120, min_angle: -120, max_speed: 90},
+    arm_wrist_flex_joint: {id: 4, max_angle: 90, min_angle: -90, max_speed: 90},
+    gripper_joint: {id: 5, max_speed: 90},
+    head_pan_joint: {id: 6, max_speed: 90},
+    head_tilt_joint: {id: 7, max_angle: 100, min_angle: -100, max_speed: 45}
+}
+digital_sensors: { 
+    green_button: {pin: 1, value: 1, rate: 5},
+    yellow_button: {pin: 2, value: 1, rate: 5}
+}
+controllers: {
+    arm_controller: {type: follow_controller, joints: [arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint], action_name: arm_controller/follow_joint_trajectory, onboard: False }
+}
