@@ -1,0 +1,25 @@
+<launch>
+  <!-- Playing around with the effects of a live torso -->
+
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find live_torso)/urdf/live_torso.xacro'" />
+
+  <!-- ArbotiX -->
+  <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
+      <rosparam file="$(find live_torso)/params/live_torso.yaml" command="load" />
+      <param name="sim" value="true"/>
+  </node>
+  <node name="gripper" pkg="arbotix_controllers" type="parallel_gripper_controller.py">
+      <param name="pad_width" value="0.0381" />
+      <param name="finger_length" value="0.08255" />
+      <param name="center_left" value="0.18" />
+      <param name="center_right" value="0.18" />
+      <param name="invert_left" value="True" />
+  </node>
+  <node name="statepub" pkg="robot_state_publisher" type="state_publisher" />
+
+  <!-- Monitoring and Diagnostics -->
+  <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+    <rosparam command="load" file="$(find maxwell_defs)/params/diagnostics.yaml" />
+  </node>
+
+</launch>

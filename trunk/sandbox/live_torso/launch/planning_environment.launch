@@ -1,0 +1,4 @@
+<launch>
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find live_torso)/urdf/live_torso.xacro'" />
+    <rosparam command="load" ns="robot_description_planning" file="$(find live_torso)/params/planning_description.yaml" />
+</launch>

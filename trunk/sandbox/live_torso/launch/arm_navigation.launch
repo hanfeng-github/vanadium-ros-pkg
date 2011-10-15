@@ -1,0 +1,11 @@
+<launch>
+    <include file="$(find live_torso)/launch/planning_environment.launch" />
+    <include file="$(find planning_environment)/launch/environment_server.launch">
+        <arg name="use_monitor" value="true" />
+        <arg name="use_collision_map" value="false" />
+    </include>
+    <include file="$(find live_torso)/launch/constraint_aware_kinematics.launch" />
+    <include file="$(find live_torso)/launch/ompl_planning.launch" />
+    <include file="$(find live_torso)/launch/trajectory_filter_server.launch" />
+    <include file="$(find live_torso)/launch/move_arm.launch" />
+</launch>

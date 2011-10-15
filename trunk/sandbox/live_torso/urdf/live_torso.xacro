@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<robot name="maxwell" >
+
+  <property name='calib_cam_x' value='0.00259672' />
+  <property name='calib_cam_y' value='0.0307021' />
+  <property name='calib_cam_z' value='0.0133213' />
+  <property name='calib_cam_rr' value='-0.0829819' />
+  <property name='calib_cam_rp' value='0.00482693' />
+  <property name='calib_cam_ry' value='0.0643122' />
+
+  <property name="arm_height" value="0.6619375 " /> <!-- deck to arm_link -->
+  <property name="column_height" value="1.171575" /> <!-- deck to top of 80/20: 46-1/8" -->
+  
+  <include filename="$(find maxwell_defs)/urdf/hardware/ax12.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/hardware/rx64.xacro" />
+  
+  <!-- The following included files set up definitions of parts of the robot body -->
+  <include filename="$(find maxwell_defs)/urdf/base.urdf.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/torso.urdf.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/arm.urdf.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/gripper.urdf.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/head.urdf.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/materials.urdf.xacro" />
+
+  <!-- Now we can start using the macros included above to define the actual Maxwell -->
+  <armadillo_base name="base"/>
+
+  <!-- Add Torso Upright -->
+  <maxwell_torso name="torso" parent="base">
+    <origin xyz="-0.00635 0 ${base_size_z}"/>
+  </maxwell_torso>
+
+  <!-- Live joint between torso and arm -->
+  <joint name="arm_lift_joint" type="prismatic">
+    <axis xyz="0 0 1" />
+    <limit lower="-0.45" upper="0.05" effort="30" velocity="0.013"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="torso_link"/>
+    <child link="arm_lift_link"/>
+  </joint>
+  <link name="arm_lift_link"/>
+
+  <!-- Arm -->
+  <maxwell_arm name="arm" parent="arm_lift">
+    <origin xyz="0.0611 0 ${arm_height}"/>
+  </maxwell_arm>
+
+  <!-- Gripper -->
+  <maxwell_gripper name="gripper" parent="arm_wrist_roll">
+    <origin xyz="0 0 0" /> 
+  </maxwell_gripper>
+
+  <!-- Head -->
+  <maxwell_head name="head" parent="torso">
+    <origin xyz="0 0 ${column_height}"/>
+  </maxwell_head>
+
+</robot>
