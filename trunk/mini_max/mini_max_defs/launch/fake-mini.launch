@@ -1,5 +1,7 @@
 <launch>
-  <include file="$(find mini_max_defs)/launch/upload.launch" />
+
+  <!-- send mini_max urdf to param server -->
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find mini_max_defs)/urdf/mini_max.urdf.xacro'" />
 
   <!-- bring up a create, arbotix -->
   <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
@@ -12,7 +14,6 @@
   </node>
 
   <!-- Monitoring and Diagnostics -->
-  <node pkg="turtlebot_node" type="laptop_battery.py" name="turtlebot_laptop_battery" />
   <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
     <rosparam command="load" file="$(find mini_max_defs)/params/diagnostics.yaml" />
   </node>

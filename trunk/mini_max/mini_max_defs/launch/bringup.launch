@@ -1,7 +1,7 @@
 <launch>
+
   <param name="use_sim_time" value="false" />
-  <include file="$(find mini_max_defs)/launch/upload.launch" />
-  <include file="$(find mini_max_defs)/launch/calibration.launch" />
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find mini_max_defs)/urdf/mini_max.urdf.xacro'" />
 
   <!-- bring up a create, arbotix -->
   <node pkg="turtlebot_node" type="turtlebot_node.py" name="turtlebot_node" output="screen" respawn="true" args="--respawnable">
@@ -34,5 +34,6 @@
   <node pkg="tf" type="static_transform_publisher" name="kinect_link" args="0 0 0 0 0 0 /head_sensor_frame /openni_camera 100" />
 
   <node pkg="robot_state_publisher" type="state_publisher" name="rob_st_pub" />
+
 </launch>
 

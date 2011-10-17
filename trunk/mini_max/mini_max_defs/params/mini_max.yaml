@@ -1,4 +1,3 @@
----
 port: /dev/ttyUSB1
 read_rate: 20
 write_rate: 30

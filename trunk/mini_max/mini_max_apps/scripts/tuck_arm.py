@@ -68,10 +68,11 @@ if __name__ == '__main__':
         point = JointTrajectoryPoint()
         point.positions = tucked
         point.velocities = [ 0.0 for servo in msg.joint_names ]
-        point.time_from_start = rospy.Duration(3.0)
+        point.time_from_start = rospy.Duration(8.0)
         msg.points.append(point)
     
     # execute
+    msg.header.stamp = rospy.Time.now()
     goal = FollowJointTrajectoryGoal()
     goal.trajectory = msg
     client.send_goal(goal)

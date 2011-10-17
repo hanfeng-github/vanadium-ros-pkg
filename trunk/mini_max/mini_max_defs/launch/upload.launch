@@ -1,4 +1,0 @@
-<launch>
-    <!-- send mini_max urdf to param server -->
-    <param name="robot_description" command="$(find xacro)/xacro.py '$(find mini_max_defs)/urdf/mini_max.urdf.xacro'" />
-</launch>
