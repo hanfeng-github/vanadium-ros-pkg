@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <robot name="mini_max">
 
-  <property name="calib_cam_x" value="0.025" />
-  <property name="calib_cam_y" value="0.000" />
-  <property name="calib_cam_z" value="0.010" />
-  <property name="calib_cam_rr" value="0.000" />
-  <property name="calib_cam_rp" value="0.080" />
-  <property name="calib_cam_ry" value="0.000" />
+  <property name="calib_cam_x" value="0.0" />
+  <property name="calib_cam_y" value="0.0" />
+  <property name="calib_cam_z" value="0.0" />
+  <property name="calib_cam_rr" value="0.0" />
+  <property name="calib_cam_rp" value="0.0" />
+  <property name="calib_cam_ry" value="0.0" />
 
-  <property name="shoulder_pan_offset" value="0.000" />
-  <property name="shoulder_lift_offset" value="0.100" />
-  <property name="elbow_flex_offset" value="0.050" />
-  <property name="wrist_flex_offset" value="0.000" />
+  <property name="shoulder_pan_offset" value="0.0" />
+  <property name="shoulder_lift_offset" value="0.0" />
+  <property name="elbow_flex_offset" value="0.0" />
+  <property name="wrist_flex_offset" value="0.0" />
 
-  <property name="head_pan_offset" value="0.000" />
-  <property name="head_tilt_offset" value="0.000" />
+  <property name="head_pan_offset" value="0.0" />
+  <property name="head_tilt_offset" value="0.0" />
 
 </robot>
