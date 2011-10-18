@@ -162,6 +162,7 @@ class SimpleArmServer:
         """ Execute a trajectory. """
         goal = FollowJointTrajectoryGoal()
         goal.trajectory = traj
+        traj.header.stamp = rospy.Time.now()
         rospy.loginfo("Sending action with " + str(len(traj.points)) + " points.")
         self._client.send_goal(goal)
         while self._client.get_state() != GoalStatus.SUCCEEDED:
