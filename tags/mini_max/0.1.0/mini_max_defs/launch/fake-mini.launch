@@ -1,0 +1,22 @@
+<launch>
+
+  <!-- send mini_max urdf to param server -->
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find mini_max_defs)/urdf/mini_max.urdf.xacro'" />
+
+  <!-- bring up a create, arbotix -->
+  <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
+    <rosparam file="$(find mini_max_defs)/params/mini_max.yaml" command="load" />
+    <param name="sim" value="true"/>
+  </node>
+  <node name="gripper_controller" pkg="arbotix_controllers" type="one_side_gripper_controller.py" output="screen">
+      <param name="invert" value="true"/>
+      <param name="pad_width" value="0.0254"/>
+  </node>
+
+  <!-- Monitoring and Diagnostics -->
+  <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+    <rosparam command="load" file="$(find mini_max_defs)/params/diagnostics.yaml" />
+  </node>
+
+  <node pkg="robot_state_publisher" type="state_publisher" name="rob_st_pub" />
+</launch>

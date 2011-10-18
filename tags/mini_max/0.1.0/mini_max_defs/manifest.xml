@@ -1,0 +1,26 @@
+<package>
+  <description brief="URDF/YAML definition, bringup info for Mini Maxwell"/>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mini_max_defs</url>
+
+  <!-- definitions -->
+  <depend package="urdf" />
+  <depend package="xacro"/>
+  <depend package="ivcon"/>
+
+  <!-- diagnostics -->
+  <depend package="diagnostic_msgs"/>
+
+  <!-- hardware -->
+  <depend package="arbotix_python"/>
+  <depend package="turtlebot_bringup"/>
+
+  <!-- arm -->
+  <depend package="simple_arm_server"/>
+  <depend package="arm_kinematics"/>
+
+</package>
+
+
