@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="mini_max">
 
-  <property name="calib_cam_x" value="0.0" />
+  <property name="calib_cam_x" value="0.025" />
   <property name="calib_cam_y" value="0.0" />
   <property name="calib_cam_z" value="0.0" />
   <property name="calib_cam_rr" value="0.0" />
