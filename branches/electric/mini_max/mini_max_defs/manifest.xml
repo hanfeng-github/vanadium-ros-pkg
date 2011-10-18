@@ -9,6 +9,7 @@
   <depend package="urdf" />
   <depend package="xacro"/>
   <depend package="ivcon"/>
+  <depend package="turtlebot_arm_description"/>
 
   <!-- diagnostics -->
   <depend package="diagnostic_msgs"/>
@@ -16,7 +17,6 @@
   <!-- hardware -->
   <depend package="arbotix_python"/>
   <depend package="turtlebot_bringup"/>
-  <depend package="turtlebot_arm"/>
 
   <!-- arm -->
   <depend package="simple_arm_server"/>
