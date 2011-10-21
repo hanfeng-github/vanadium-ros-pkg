@@ -1,15 +1,8 @@
 <package>
-  <description brief="live_torso">
-
-     live_torso
-
-  </description>
+  <description brief="Experiments with a live torso."/>
   <author>Michael Ferguson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/live_torso</url>
   <depend package="maxwell_defs"/>
-
 </package>
-
-
