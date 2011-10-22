@@ -27,7 +27,7 @@
 
 
   <!-- origin is center of head tilt rotation -->
-  <macro name="maxwell_head" params="name parent *origin">
+  <macro name="maxwell_head" params="name parent color *origin">
 
     <joint name="${name}_joint" type="fixed">
       <insert_block name="origin" />
@@ -46,7 +46,7 @@
     <dynamixel_ax12_pan parent="${name}_link" name="${name}_pan_servo" color="Black">
       <origin xyz="0.010 0 0.0254" rpy="0 0 0"/>
     </dynamixel_ax12_pan>
-    <ax12_side_revolute parent="${name}_pan_servo_link" name="${name}_pan" llimit="-2.617" ulimit="2.617" vlimit="1.0" color="Orange">
+    <ax12_side_revolute parent="${name}_pan_servo_link" name="${name}_pan" llimit="-2.617" ulimit="2.617" vlimit="1.0" color="${color}">
       <origin xyz="0 0 ${AX12_WIDTH/2}" rpy="0 0 0"/>
     </ax12_side_revolute>
 
@@ -61,7 +61,7 @@
     <dynamixel_ax12_tilt parent="${name}_pan_link" name="${name}_tilt_servo" color="Black">
       <origin xyz="0 0 ${AX12_HEIGHT+0.003}" rpy="0 0 0"/>
     </dynamixel_ax12_tilt>
-    <ax12_hinge_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" llimit="-2.617" ulimit="2.617" vlimit="1.0" color="Orange">
+    <ax12_hinge_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" llimit="-2.617" ulimit="2.617" vlimit="1.0" color="${color}">
      <origin xyz="0 0 0" rpy="0 0 0"/>
     </ax12_hinge_revolute>
 

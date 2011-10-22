@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot name="maxwell" >
+<robot name="max_lite" >
 
   <property name='calib_cam_x' value='0.00259672' />
   <property name='calib_cam_y' value='0.0307021' />
@@ -12,18 +12,18 @@
   <property name="column_height" value="1.171575" /> <!-- deck to top of 80/20: 46-1/8" -->
   
   <include filename="$(find maxwell_defs)/urdf/hardware/ax12.xacro" />
-  <include filename="$(find maxwell_defs)/urdf/hardware/rx64.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/hardware/rx28.xacro" />
   
   <!-- The following included files set up definitions of parts of the robot body -->
   <include filename="$(find maxwell_defs)/urdf/base.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/torso.urdf.xacro" />
-  <include filename="$(find maxwell_defs)/urdf/arm.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/gripper.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/head.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/materials.urdf.xacro" />
+  <include filename="$(find max_lite)/urdf/arm_lite.urdf.xacro" />
 
-  <!-- Now we can start using the macros included above to define the actual Maxwell -->
-  <armadillo_base name="base" color="Orange"/>
+  <!-- Now we can start using the macros included above to define the actual Max Lite -->
+  <armadillo_base name="base" color="Blue"/>
 
   <!-- Add Torso Upright -->
   <maxwell_torso name="torso" parent="base">
@@ -31,17 +31,17 @@
   </maxwell_torso>
 
   <!-- Arm -->
-  <maxwell_arm name="arm" parent="torso">
-    <origin xyz="0.0611 0 ${arm_height}"/>
-  </maxwell_arm>
+  <max_lite_arm name="arm" parent="torso">
+    <origin xyz="0.0513 0 ${arm_height}"/>
+  </max_lite_arm>
 
   <!-- Gripper -->
-  <maxwell_gripper name="gripper" parent="arm_wrist_roll" color="Orange">
+  <maxwell_gripper name="gripper" parent="arm_wrist_roll" color="Blue">
     <origin xyz="0 0 0" /> 
   </maxwell_gripper>
 
   <!-- Head -->
-  <maxwell_head name="head" parent="torso" color="Orange">
+  <maxwell_head name="head" parent="torso" color="Blue">
     <origin xyz="0 0 ${column_height}"/>
   </maxwell_head>
 

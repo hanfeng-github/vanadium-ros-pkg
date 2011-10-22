@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot>
 
-  <macro name="maxwell_gripper" params="name parent *origin">
+  <macro name="maxwell_gripper" params="name parent color *origin">
     <ax12_F6_fixed parent="${parent}_link" name="${name}_F6_1" color="Black">
       <origin xyz="${0.0381/2} 0.017 -0.014" rpy="0 0 0"/>
     </ax12_F6_fixed>
@@ -29,10 +29,10 @@
       <origin xyz="0 0 -0.042" rpy="1.57 1.57 0"/>
     </dynamixel_ax12_pan>
 
-    <ax12_F1_revolute parent="left_${name}_servo_link" name="l_${name}" llimit="-1.57" ulimit="1.57" vlimit="0.5" color="Orange">
+    <ax12_F1_revolute parent="left_${name}_servo_link" name="l_${name}" llimit="-1.57" ulimit="1.57" vlimit="0.5" color="${color}">
       <origin xyz="0 0 0" rpy="3.14 0 1.57"/>
     </ax12_F1_revolute>
-    <ax12_F1_revolute parent="right_${name}_servo_link" name="r_${name}" llimit="-1.57" ulimit="1.57" vlimit="0.5" color="Orange">
+    <ax12_F1_revolute parent="right_${name}_servo_link" name="r_${name}" llimit="-1.57" ulimit="1.57" vlimit="0.5" color="${color}">
       <origin xyz="0 0 0" rpy="0 0 -1.57"/>
     </ax12_F1_revolute>
 
