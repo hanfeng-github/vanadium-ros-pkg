@@ -71,7 +71,7 @@
     <dynamixel_rx28_pan parent="${name}_link" name="${name}_shoulder_pan_servo" color="Black">
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </dynamixel_rx28_pan>
-    <rx28_side_revolute parent="${name}_shoulder_pan_servo_link" name="${name}_shoulder_pan" llimit="-1.57" ulimit="1.57" vlimit="0.524" color="Black">
+    <rx28_side_revolute parent="${name}_shoulder_pan_servo_link" name="${name}_shoulder_pan" llimit="-2.5" ulimit="2.5" vlimit="0.524" color="Black">
       <origin xyz="0 0 0.0205" rpy="0 -1.57 0"/>
     </rx28_side_revolute>
 
@@ -79,7 +79,7 @@
     <dynamixel_rx28_tilt parent="${name}_shoulder_pan_link" name="${name}_shoulder_lift_servo" color="Black">
       <origin xyz="${0.0513-0.013+0.0035} 0 0" rpy="0 0 0"/>
     </dynamixel_rx28_tilt>
-    <rx28_hinge parent="${name}_shoulder_lift_servo_link" name="${name}_shoulder_lift" llimit="-0.2" ulimit="2.617" vlimit="0.524" color="Black">
+    <rx28_hinge parent="${name}_shoulder_lift_servo_link" name="${name}_shoulder_lift" llimit="-0.2" ulimit="1.92" vlimit="0.524" color="Black">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
     </rx28_hinge>
     <standoffs parent="${name}_shoulder_lift_link" name="${name}_shoulder_standoff" length="0.0762" >
@@ -93,7 +93,7 @@
     <dynamixel_rx28_tilt parent="${name}_elbow_flex_fixed_link" name="${name}_elbow_flex_servo" color="Black">
       <origin xyz="${0.0513-0.013+0.0045} 0 0" rpy="0 0 0"/>
     </dynamixel_rx28_tilt>
-    <rx28_hinge parent="${name}_elbow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.57" ulimit="2.617" vlimit="0.524" color="Black">
+    <rx28_hinge parent="${name}_elbow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.92" ulimit="1.92" vlimit="0.524" color="Black">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
     </rx28_hinge>
     <standoffs parent="${name}_elbow_flex_link" name="${name}_elbow_standoff" length="0.0762" >
@@ -107,7 +107,7 @@
     <dynamixel_ax12_tilt parent="${name}_wrist_flex_fixed_link" name="${name}_wrist_flex_servo" color="Black">
       <origin xyz="0 0 ${-0.0513+0.013-0.0045}" rpy="0 -3.14 0"/>
     </dynamixel_ax12_tilt>
-    <ax12_hinge_revolute parent="${name}_wrist_flex_servo_link" name="${name}_wrist_flex" llimit="-1.57" ulimit="1.57" vlimit="0.785" color="Black">
+    <ax12_hinge_revolute parent="${name}_wrist_flex_servo_link" name="${name}_wrist_flex" llimit="-1.65" ulimit="1.65" vlimit="0.785" color="Black">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
     </ax12_hinge_revolute>
 

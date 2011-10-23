@@ -61,7 +61,7 @@
     <dynamixel_ax12_tilt parent="${name}_pan_link" name="${name}_tilt_servo" color="Black">
       <origin xyz="0 0 ${AX12_HEIGHT+0.003}" rpy="0 0 0"/>
     </dynamixel_ax12_tilt>
-    <ax12_hinge_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" llimit="-2.617" ulimit="2.617" vlimit="1.0" color="${color}">
+    <ax12_hinge_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" llimit="-1.57" ulimit="1.57" vlimit="1.0" color="${color}">
      <origin xyz="0 0 0" rpy="0 0 0"/>
     </ax12_hinge_revolute>
 
