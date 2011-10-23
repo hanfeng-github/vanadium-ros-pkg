@@ -49,12 +49,18 @@ class Servo:
         n = "~dynamixels/"+name+"/"
         
         self.id = int(rospy.get_param(n+"id"))
-        self.neutral = rospy.get_param(n+"neutral",512)
-        self.ticks = rospy.get_param(n+"ticks",1024)
-        self.rad_per_tick = radians(rospy.get_param(n+"range",300.0))/self.ticks
+        self.ticks = rospy.get_param(n+"ticks", 1024)
+        self.neutral = rospy.get_param(n+"neutral", self.ticks/2)
+        if self.ticks == 4096:
+            self.range = 360.0
+        else:
+            self.range = 300.0
+        self.range = rospy.get_param(n+"range", self.range)
+        self.rad_per_tick = radians(self.range)/self.ticks
 
-        self.max_angle = radians(rospy.get_param(n+"max_angle",150))
-        self.min_angle = radians(rospy.get_param(n+"min_angle",-150))
+        # TODO: load these from URDF
+        self.max_angle = radians(rospy.get_param(n+"max_angle",self.range/2.0))
+        self.min_angle = radians(rospy.get_param(n+"min_angle",-self.range/2.0))
         self.max_speed = radians(rospy.get_param(n+"max_speed",684.0)) 
                                                 # max speed = 114 rpm - 684 deg/s
         self.invert = rospy.get_param(n+"invert",False)
