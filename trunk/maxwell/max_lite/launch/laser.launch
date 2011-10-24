@@ -1,0 +1,12 @@
+<launch>
+
+  <node pkg="nodelet" type="nodelet" name="laser_manager" output="screen" respawn="true" args="manager"/>
+
+  <node pkg="nodelet" type="nodelet" name="kinect_laser" args="load pointcloud_to_laserscan/CloudToScan laser_manager" respawn="true">
+    <param name="output_frame_id" value="/openni_rgb_frame"/>
+    <param name="min_height" value="-0.15"/>
+    <param name="max_height" value="0.15"/>
+    <remap from="cloud" to="/camera/rgb/points"/>
+  </node>
+
+</launch>
