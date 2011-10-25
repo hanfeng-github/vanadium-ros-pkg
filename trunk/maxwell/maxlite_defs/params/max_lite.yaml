@@ -1,7 +1,6 @@
 ---
 port: /dev/ttyUSB0
 write_rate: 25.0
-# REX motors: 31750 cpr = 0.3888105m travel
 dynamixels: {
   head_pan_joint: {id: 1},
   head_tilt_joint: {id: 2, invert: true, min_angle: -90, max_angle: 90},
@@ -16,5 +15,5 @@ dynamixels: {
 controllers: {
   head_controller: {type: follow_controller, joints: [head_pan_joint, head_tilt_joint], action_name: head_controller/follow_joint_trajectory, onboard: False },
   arm_controller: {type: follow_controller, joints: [arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint, arm_wrist_roll_joint], action_name: arm_controller/follow_joint_trajectory, onboard: False },
-  base_controller: {type: diff_controller, base_width: 0.381, ticks_meter: 81807, Kp: 15, Kd: 15, Ki: 0, Ko: 200, accel_limit: 1.0 }
+  base_controller: {type: diff_controller, base_width: 0.381, ticks_meter: 66468, Kp: 15, Kd: 15, Ki: 0, Ko: 200, accel_limit: 1.0 }
 }
