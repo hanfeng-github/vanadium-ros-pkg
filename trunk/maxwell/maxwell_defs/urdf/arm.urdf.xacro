@@ -15,7 +15,7 @@
         <geometry>
           <box size="${length} 0.037 0.030"/>
         </geometry>
-        <material name="Black"/>
+        <material name="Grey"/>
       </visual>
       <collision>
         <origin xyz="${length/2} 0 0" rpy="0 0 0" />
@@ -101,8 +101,8 @@
     </standoffs>
 
     <!-- Wrist flex -->
-    <rx64_side_fixed parent="${name}_elbow_flex_link" name="${name}_wrist_flex_fixed" color="Grey">
-      <origin xyz="${0.048+0.0235} 0 0" rpy="0 0 0"/>
+    <rx64_side_fixed parent="${name}_elbow_standoff_link" name="${name}_wrist_flex_fixed" color="Grey">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
     </rx64_side_fixed>
     <dynamixel_rx64_tilt parent="${name}_wrist_flex_fixed_link" name="${name}_wrist_flex_servo" color="Black">
       <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
