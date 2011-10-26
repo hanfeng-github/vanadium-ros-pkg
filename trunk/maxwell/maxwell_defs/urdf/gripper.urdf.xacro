@@ -53,7 +53,7 @@
     <!-- Gripper Joint for Grasping -->
     <joint name="${name}_joint" type="fixed">
       <axis xyz="0 0 1" />
-      <origin xyz="0.16 0 0" rpy="0 0 0"/>
+      <origin xyz="0.15 0 -0.015" rpy="0 0 0"/>
       <parent link="${parent}_link"/>
       <child link="${name}_link"/>
     </joint>
