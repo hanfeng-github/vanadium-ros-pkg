@@ -106,7 +106,7 @@ class SimpleArmNavigationServer
 
                 // wiggle if needed
                 int tries;
-                for( tries = 0; tries < 40; tries++ ){
+                for( tries = 1; tries < 60; tries++ ){
                     // construct the representation of a pose goal (define the position of the end effector)
                     arm_navigation_msgs::MoveArmGoal goal;
                     
@@ -131,16 +131,16 @@ class SimpleArmNavigationServer
                     desired_pose.pose.position.y = pose.pose.position.y;
                     desired_pose.pose.position.z = pose.pose.position.z;
 
-                    q.setRPY(roll, pitch+((-1^tries)*((tries+1)/2)*0.025), yaw);
+                    double attempt = pitch+(pow(-1.0,tries)*(tries/2)*0.05);
+                    q.setRPY(roll, attempt, yaw);
 
                     desired_pose.pose.orientation.x = (double) q.getX();
                     desired_pose.pose.orientation.y = (double) q.getY();
                     desired_pose.pose.orientation.z = (double) q.getZ();
                     desired_pose.pose.orientation.w = (double) q.getW();
-                    ROS_INFO("%f, %f, %f", roll, pitch, yaw);
+                    ROS_INFO("%d: (%f, %f, %f)", tries, roll, attempt, yaw);
 
                     arm_navigation_msgs::addGoalConstraintToMoveArmGoal(desired_pose, goal);
-                    goal.motion_plan_request.goal_constraints.position_constraints[0].target_point_offset.z = 0.02;
 
                     // send request
                     client.sendGoal(goal);
