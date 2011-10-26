@@ -20,7 +20,7 @@
   <include filename="$(find maxwell_defs)/urdf/gripper.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/head.urdf.xacro" />
   <include filename="$(find maxwell_defs)/urdf/materials.urdf.xacro" />
-  <include filename="$(find max_lite)/urdf/arm_lite.urdf.xacro" />
+  <include filename="$(find maxlite_defs)/urdf/arm_lite.urdf.xacro" />
 
   <!-- Now we can start using the macros included above to define the actual Max Lite -->
   <armadillo_base name="base" color="Blue"/>

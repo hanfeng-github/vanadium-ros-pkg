@@ -3,11 +3,11 @@
        This launch file brings him to life. -->
 
   <param name="/use_sim_time" value="false"/>
-  <param name="robot_description" command="$(find xacro)/xacro.py '$(find max_lite)/urdf/max_lite.urdf.xacro'" />
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find maxlite_defs)/urdf/max_lite.urdf.xacro'" />
 
   <!-- ArbotiX and Controllers -->
   <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
-      <rosparam file="$(find max_lite)/params/max_lite.yaml" command="load" />
+      <rosparam file="$(find maxlite_defs)/params/max_lite.yaml" command="load" />
       <param name="sim" value="false"/>
   </node>
   <node name="gripper_controller" pkg="arbotix_controllers" type="parallel_gripper_controller.py">

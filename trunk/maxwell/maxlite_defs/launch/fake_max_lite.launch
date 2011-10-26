@@ -2,11 +2,11 @@
   <!-- Maxwell is an awesome mobile manipulator. Max Lite is a lower cost version.
        This launch file brings a slightly less awesome simulated version to life. -->
 
-  <param name="robot_description" command="$(find xacro)/xacro.py '$(find max_lite)/urdf/max_lite.urdf.xacro'" />
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find maxlite_defs)/urdf/max_lite.urdf.xacro'" />
 
   <!-- ArbotiX -->
   <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
-      <rosparam file="$(find max_lite)/params/max_lite.yaml" command="load" />
+      <rosparam file="$(find maxlite_defs)/params/max_lite.yaml" command="load" />
       <param name="sim" value="true"/>
   </node>
   <node name="gripper" pkg="arbotix_controllers" type="parallel_gripper_controller.py">
