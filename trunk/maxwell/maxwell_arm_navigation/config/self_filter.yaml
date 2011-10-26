@@ -18,6 +18,8 @@ self_see_links:
     padding: .03
   - name: arm_elbow_flex_link
     padding: .03
+  - name: arm_elbow_standoff_link
+    padding: .03
   - name: arm_wrist_flex_fixed_link
     padding: .03
   - name: arm_wrist_flex_servo_link
