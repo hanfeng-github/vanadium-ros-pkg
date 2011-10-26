@@ -15,7 +15,7 @@ class SimpleArmNavigationServer
 {
   private:
     ros::NodeHandle nh;
-    tf::TransformListener tf_listener;
+    tf::TransformListener listener;
 
     // ROS interface
     actionlib::SimpleActionServer<simple_arm_server::MoveArmAction> server;
@@ -30,11 +30,13 @@ class SimpleArmNavigationServer
     int arm_dof_;
     std::string root_name_;
     std::string tip_name_;
+    std::string pan_link_;
     double timeout_;
+    double x_offset_;
 
   public:
     
-    SimpleArmNavigationServer() : nh("~"), server(nh, "move_arm", false), client("move_arm", true)
+    SimpleArmNavigationServer() : nh("~"), listener(nh), server(nh, "move_arm", false), client("move_arm", true)
     {
         ROS_INFO("Starting simple_arm_navigation_server.");
         // configuration
@@ -42,6 +44,20 @@ class SimpleArmNavigationServer
         nh.param<std::string>("root_name", root_name_, "arm_link");
         nh.param<std::string>("tip_name", tip_name_, "gripper_link");
         nh.param<double>("timeout", timeout_, 5.0);
+
+        // lookup X offset of pan_link from root_name
+        nh.param<std::string>("pan_link", pan_link_, "arm_link");
+        if( !listener.waitForTransform(root_name_, pan_link_, ros::Time(0), ros::Duration(10.0)) ){
+            ROS_ERROR("Cannot lookup transfrom from %s to %s", pan_link_.c_str(), root_name_.c_str());
+        }
+        tf::StampedTransform transform;
+        try{
+            listener.lookupTransform(root_name_, pan_link_, ros::Time(0), transform);
+        }catch(tf::TransformException ex){
+            ROS_ERROR("%s",ex.what());
+        }
+        x_offset_ = transform.getOrigin().x();
+        ROS_INFO("X offset %f", x_offset_);
 
         // output for arm movement
         client.waitForServer();
@@ -66,69 +82,85 @@ class SimpleArmNavigationServer
 
             if( action.type == simple_arm_server::ArmAction::MOVE_ARM )
             {
-                // construct the representation of a pose goal (define the position of the end effector)
-                arm_navigation_msgs::MoveArmGoal goal;
-    
-                goal.motion_plan_request.group_name = "arm";
-                goal.motion_plan_request.num_planning_attempts = 1;
-                goal.motion_plan_request.planner_id = std::string("");
-                goal.planner_service_name = std::string("ompl_planning/plan_kinematic_path");
-                goal.motion_plan_request.allowed_planning_time = ros::Duration(timeout_);
-    
-                arm_navigation_msgs::SimplePoseConstraint desired_pose;
-                desired_pose.header.frame_id = root_name_; // TODO: goal_.header.frame_id?
-                desired_pose.link_name = tip_name_;
-                desired_pose.pose.position.x = action.goal.position.x;
-                desired_pose.pose.position.y = action.goal.position.y;
-                desired_pose.pose.position.z = action.goal.position.z;
-
-                desired_pose.absolute_position_tolerance.x = 0.05;
-                desired_pose.absolute_position_tolerance.y = 0.05;
-                desired_pose.absolute_position_tolerance.z = 0.05;
-        
+                // transform goal
+                geometry_msgs::PoseStamped in, pose;
+                in.header = goal_->header;
+                in.pose = action.goal;
+                try{
+                    listener.transformPose(root_name_, in, pose);
+                }catch(tf::TransformException ex){
+                    ROS_ERROR("%s",ex.what());
+                }
+                // our hacks for low DOF
                 double roll, pitch, yaw;
-                btQuaternion q(action.goal.orientation.x, action.goal.orientation.y, action.goal.orientation.z, action.goal.orientation.w);
+                btQuaternion q(pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w);
                 btMatrix3x3(q).getRPY(roll, pitch, yaw);
                 if( arm_dof_ < 6 ){
                     // 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
-                    yaw = atan2(action.goal.position.y, action.goal.position.x);
+                    yaw = atan2(pose.pose.position.y, pose.pose.position.x-x_offset_);
                     if( arm_dof_ < 5 ){
                         // 4 DOF, so yaw as above AND no roll
                         roll = 0.0;
                     }
                 }
-                q.setRPY(roll, pitch, yaw);
 
-                desired_pose.pose.orientation.x = (double) q.getX();
-                desired_pose.pose.orientation.y = (double) q.getY();
-                desired_pose.pose.orientation.z = (double) q.getZ();
-                desired_pose.pose.orientation.w = (double) q.getW();
-                ROS_INFO("%f, %f, %f", roll, pitch, yaw);
+                // wiggle if needed
+                int tries;
+                for( tries = 0; tries < 40; tries++ ){
+                    // construct the representation of a pose goal (define the position of the end effector)
+                    arm_navigation_msgs::MoveArmGoal goal;
+                    
+                    goal.motion_plan_request.group_name = "arm";
+                    goal.motion_plan_request.num_planning_attempts = 1;
+                    goal.motion_plan_request.planner_id = std::string("");
+                    goal.planner_service_name = std::string("ompl_planning/plan_kinematic_path");
+                    goal.motion_plan_request.allowed_planning_time = ros::Duration(timeout_);
 
-                desired_pose.absolute_roll_tolerance = 0.1;
-                desired_pose.absolute_pitch_tolerance = 0.1;
-                desired_pose.absolute_yaw_tolerance = 0.1;
-    
-                arm_navigation_msgs::addGoalConstraintToMoveArmGoal(desired_pose, goal);
+                    arm_navigation_msgs::SimplePoseConstraint desired_pose;
+                    desired_pose.absolute_position_tolerance.x = 0.05;
+                    desired_pose.absolute_position_tolerance.y = 0.05;
+                    desired_pose.absolute_position_tolerance.z = 0.05;
+                    desired_pose.absolute_roll_tolerance = 0.1;
+                    desired_pose.absolute_pitch_tolerance = 0.1;
+                    desired_pose.absolute_yaw_tolerance = 0.1;
 
-                // send request
-                client.sendGoal(goal);
-                bool finished_within_time = client.waitForResult(ros::Duration(1.5*timeout_));
-                if( !finished_within_time )
-                {
-                    client.cancelGoal();
-                    ROS_INFO("Timed out");
-                }
-                else
-                {
-                    ROS_INFO("Goal returned");
-                    actionlib::SimpleClientGoalState state = client.getState();
-	                if( state != actionlib::SimpleClientGoalState::SUCCEEDED )
+                    desired_pose.header.frame_id = pose.header.frame_id;
+                    desired_pose.link_name = tip_name_;
+
+                    desired_pose.pose.position.x = pose.pose.position.x;
+                    desired_pose.pose.position.y = pose.pose.position.y;
+                    desired_pose.pose.position.z = pose.pose.position.z;
+
+                    q.setRPY(roll, pitch+((-1^tries)*((tries+1)/2)*0.025), yaw);
+
+                    desired_pose.pose.orientation.x = (double) q.getX();
+                    desired_pose.pose.orientation.y = (double) q.getY();
+                    desired_pose.pose.orientation.z = (double) q.getZ();
+                    desired_pose.pose.orientation.w = (double) q.getW();
+                    ROS_INFO("%f, %f, %f", roll, pitch, yaw);
+
+                    arm_navigation_msgs::addGoalConstraintToMoveArmGoal(desired_pose, goal);
+                    goal.motion_plan_request.goal_constraints.position_constraints[0].target_point_offset.z = 0.02;
+
+                    // send request
+                    client.sendGoal(goal);
+                    bool finished_within_time = client.waitForResult(ros::Duration(1.5*timeout_));
+                    if( !finished_within_time )
                     {
-                        result_.success = false;
-                        server.setAborted(result_);
-                        return;                    
+                        client.cancelGoal();
+                        ROS_INFO("Timed out");
                     }
+                    else
+                    {
+                        ROS_INFO("Goal returned");
+                        actionlib::SimpleClientGoalState state = client.getState();
+	                    if( state == actionlib::SimpleClientGoalState::SUCCEEDED ) break;
+                    }
+                }                            
+                if( tries == 40 ){
+                    result_.success = false;
+                    server.setAborted(result_);
+                    return;                    
                 }
             }
             else if( action.type == simple_arm_server::ArmAction::MOVE_GRIPPER )
@@ -162,41 +194,4 @@ int main(int argc, char **argv)
     
     return 0;
 }
-/*
-
-
-        if (!turnOdom(goal_->turn_distance))
-        { 
-          as_.setAborted(result_);
-          return;
-        }
-        
-        if (driveForwardOdom(goal_->forward_distance))
-          as_.setSucceeded(result_);
-        else
-          as_.setAborted(result_);
-
-    
-    // send the request to the action server
-    if (nh.ok())
-    {
-	bool finished_within_time = false;
-	move_arm.sendGoal(goal);
-	finished_within_time = move_arm.waitForResult(ros::Duration(200.0));
-	if (!finished_within_time)
-	{
-	    move_arm.cancelGoal();
-	    ROS_INFO("Timed out achieving goal");
-	}
-	else
-	{
-	    actionlib::SimpleClientGoalState state = move_arm.getState();
-	    bool success = (state == actionlib::SimpleClientGoalState::SUCCEEDED);
-	    if(success)
-		ROS_INFO("Action finished: %s",state.toString().c_str());
-	    else
-		ROS_INFO("Action failed: %s",state.toString().c_str());
-	}
-    }
-*/
 
