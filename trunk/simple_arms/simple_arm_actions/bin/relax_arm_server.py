@@ -43,7 +43,7 @@ class RelaxArmServer:
             self.joints = rospy.get_param("/simple_arms/joints")
 
         self.services = [rospy.ServiceProxy(name+'/relax',Relax) for name in self.joints]
-        self.server = actionlib.SimpleActionServer("relax_arm", ResetArmAction, execute_cb=self.actionCb, auto_start=False)
+        self.server = actionlib.SimpleActionServer("relax_arm", RelaxArmAction, execute_cb=self.actionCb, auto_start=False)
         self.server.start()
         rospy.spin()
 
