@@ -1,4 +1,40 @@
-/* Michael E Ferguson */
+/* 
+ * Software License Agreement (BSD License)
+ *
+ * Copyright (c) 2011, Vanadium Labs LLC.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above
+ *    copyright notice, this list of conditions and the following
+ *    disclaimer in the documentation and/or other materials provided
+ *    with the distribution.
+ *  * Neither the name of Vanadium Labs LLC nor the names of its
+ *    contributors may be used to endorse or promote prducts derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * author: Michael Ferguson
+ */
 
 #include <ros/ros.h>
 #include <tf/tf.h>
@@ -33,6 +69,7 @@ class SimpleArmNavigationServer
     std::string pan_link_;
     double timeout_;
     double x_offset_;
+    int max_tries_;
 
   public:
     
@@ -44,6 +81,7 @@ class SimpleArmNavigationServer
         nh.param<std::string>("root_name", root_name_, "arm_link");
         nh.param<std::string>("tip_name", tip_name_, "gripper_link");
         nh.param<double>("timeout", timeout_, 5.0);
+        max_tries_ = 60;
 
         // lookup X offset of pan_link from root_name
         nh.param<std::string>("pan_link", pan_link_, "arm_link");
@@ -106,7 +144,7 @@ class SimpleArmNavigationServer
 
                 // wiggle if needed
                 int tries;
-                for( tries = 1; tries < 60; tries++ ){
+                for( tries = 1; tries < max_tries_; tries++ ){
                     // construct the representation of a pose goal (define the position of the end effector)
                     arm_navigation_msgs::MoveArmGoal goal;
                     
@@ -157,7 +195,7 @@ class SimpleArmNavigationServer
 	                    if( state == actionlib::SimpleClientGoalState::SUCCEEDED ) break;
                     }
                 }                            
-                if( tries == 40 ){
+                if( tries == max_tries_ ){
                     result_.success = false;
                     server.setAborted(result_);
                     return;                    
