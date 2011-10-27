@@ -152,9 +152,6 @@ default_collision_operations:
   - object1: arm_right_mount_link
     object2: arm_shoulder_pan_servo_link
     operation: disable  # Always in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: torso_link
-    operation: disable  # Always in collision
   - object1: head_left_mount_link
     object2: head_tilt_right_side_link
     operation: disable  # Always in collision
@@ -167,9 +164,9 @@ default_collision_operations:
   - object1: r_gripper_link
     object2: right_gripper_finger_link
     operation: disable  # Always in collision
-  - object1: arm_elbow_flex_fixed_link
+  - object1: arm_wrist_flex_fixed_link
     object2: arm_elbow_flex_link
-    operation: disable  # Never in collision
+    operation: disable  # Default in collision
   - object1: arm_elbow_flex_fixed_link
     object2: arm_elbow_standoff_link
     operation: disable  # Never in collision
@@ -284,11 +281,8 @@ default_collision_operations:
   - object1: arm_elbow_flex_fixed_link
     object2: right_gripper_servo_link
     operation: disable  # Never in collision
-  - object1: arm_elbow_flex_link
-    object2: arm_left_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_elbow_flex_link
-    object2: arm_right_mount_link
+  - object1: arm_elbow_flex_fixed_link
+    object2: torso_link
     operation: disable  # Never in collision
   - object1: arm_elbow_flex_link
     object2: arm_shoulder_lift_link
@@ -300,13 +294,7 @@ default_collision_operations:
     object2: arm_shoulder_pan_link
     operation: disable  # Never in collision
   - object1: arm_elbow_flex_link
-    object2: arm_shoulder_pan_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_elbow_flex_link
     object2: arm_shoulder_standoff_link
-    operation: disable  # Never in collision
-  - object1: arm_elbow_flex_link
-    object2: arm_wrist_flex_fixed_link
     operation: disable  # Never in collision
   - object1: arm_elbow_flex_link
     object2: arm_wrist_flex_link
@@ -626,32 +614,17 @@ default_collision_operations:
   - object1: arm_elbow_standoff_link
     object2: right_gripper_servo_link
     operation: disable  # Never in collision
+  - object1: arm_elbow_standoff_link
+    object2: torso_link
+    operation: disable  # Never in collision
   - object1: arm_left_mount_link
     object2: arm_right_mount_link
     operation: disable  # Never in collision
   - object1: arm_left_mount_link
-    object2: arm_shoulder_lift_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
     object2: arm_shoulder_lift_servo_link
     operation: disable  # Never in collision
   - object1: arm_left_mount_link
     object2: arm_shoulder_pan_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: arm_shoulder_standoff_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: arm_wrist_flex_fixed_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: arm_wrist_flex_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: arm_wrist_flex_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: arm_wrist_roll_link
     operation: disable  # Never in collision
   - object1: arm_left_mount_link
     object2: base_l_wheel_link
@@ -664,18 +637,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_left_mount_link
     object2: base_r_wheel_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: gripper_F6_1_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: gripper_F6_2_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: gripper_F6_3_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: gripper_F6_4_link
     operation: disable  # Never in collision
   - object1: arm_left_mount_link
     object2: head_left_mount_link
@@ -705,16 +666,7 @@ default_collision_operations:
     object2: head_tilt_servo_link
     operation: disable  # Never in collision
   - object1: arm_left_mount_link
-    object2: left_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
-    object2: right_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_left_mount_link
     object2: torso_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: arm_shoulder_lift_link
     operation: disable  # Never in collision
   - object1: arm_right_mount_link
     object2: arm_shoulder_lift_servo_link
@@ -723,21 +675,6 @@ default_collision_operations:
     object2: arm_shoulder_pan_link
     operation: disable  # Never in collision
   - object1: arm_right_mount_link
-    object2: arm_shoulder_standoff_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: arm_wrist_flex_fixed_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: arm_wrist_flex_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: arm_wrist_flex_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: arm_wrist_roll_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
     object2: base_l_wheel_link
     operation: disable  # Never in collision
   - object1: arm_right_mount_link
@@ -748,18 +685,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_right_mount_link
     object2: base_r_wheel_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: gripper_F6_1_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: gripper_F6_2_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: gripper_F6_3_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: gripper_F6_4_link
     operation: disable  # Never in collision
   - object1: arm_right_mount_link
     object2: head_left_mount_link
@@ -787,23 +712,11 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_right_mount_link
     object2: head_tilt_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: left_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_right_mount_link
-    object2: right_gripper_mount_link
     operation: disable  # Never in collision
   - object1: arm_right_mount_link
     object2: torso_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_link
-    object2: arm_shoulder_pan_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: arm_shoulder_pan_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
     object2: arm_wrist_flex_fixed_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_link
@@ -811,9 +724,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_link
     object2: arm_wrist_flex_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: arm_wrist_roll_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_link
     object2: base_l_wheel_link
@@ -826,18 +736,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_link
     object2: base_r_wheel_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: gripper_F6_1_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: gripper_F6_2_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: gripper_F6_3_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: gripper_F6_4_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_link
     object2: head_left_mount_link
@@ -867,34 +765,7 @@ default_collision_operations:
     object2: head_tilt_servo_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_link
-    object2: l_gripper_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: left_gripper_F9_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: left_gripper_finger_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: left_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: left_gripper_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: r_gripper_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: right_gripper_F9_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: right_gripper_finger_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: right_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_link
-    object2: right_gripper_servo_link
+    object2: torso_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_servo_link
     object2: arm_shoulder_pan_servo_link
@@ -912,9 +783,6 @@ default_collision_operations:
     object2: arm_wrist_flex_servo_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_servo_link
-    object2: arm_wrist_roll_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
     object2: base_l_wheel_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_servo_link
@@ -925,18 +793,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_servo_link
     object2: base_r_wheel_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: gripper_F6_1_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: gripper_F6_2_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: gripper_F6_3_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: gripper_F6_4_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_servo_link
     object2: head_left_mount_link
@@ -964,30 +820,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_servo_link
     object2: head_tilt_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: l_gripper_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: left_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: left_gripper_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: r_gripper_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: right_gripper_F9_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: right_gripper_finger_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: right_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_lift_servo_link
-    object2: right_gripper_servo_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_lift_servo_link
     object2: torso_link
@@ -999,13 +831,7 @@ default_collision_operations:
     object2: arm_wrist_flex_fixed_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_link
-    object2: arm_wrist_flex_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
     object2: arm_wrist_flex_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: arm_wrist_roll_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_link
     object2: base_l_wheel_link
@@ -1018,18 +844,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_link
     object2: base_r_wheel_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: gripper_F6_1_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: gripper_F6_2_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: gripper_F6_3_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: gripper_F6_4_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_link
     object2: head_left_mount_link
@@ -1057,30 +871,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_link
     object2: head_tilt_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: l_gripper_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: left_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: left_gripper_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: r_gripper_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: right_gripper_F9_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: right_gripper_finger_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: right_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_link
-    object2: right_gripper_servo_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_link
     object2: torso_link
@@ -1089,18 +879,6 @@ default_collision_operations:
     object2: arm_shoulder_standoff_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_servo_link
-    object2: arm_wrist_flex_fixed_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: arm_wrist_flex_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: arm_wrist_flex_servo_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: arm_wrist_roll_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
     object2: base_l_wheel_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_servo_link
@@ -1111,18 +889,6 @@ default_collision_operations:
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_servo_link
     object2: base_r_wheel_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: gripper_F6_1_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: gripper_F6_2_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: gripper_F6_3_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: gripper_F6_4_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_servo_link
     object2: head_left_mount_link
@@ -1152,10 +918,7 @@ default_collision_operations:
     object2: head_tilt_servo_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_pan_servo_link
-    object2: left_gripper_mount_link
-    operation: disable  # Never in collision
-  - object1: arm_shoulder_pan_servo_link
-    object2: right_gripper_mount_link
+    object2: torso_link
     operation: disable  # Never in collision
   - object1: arm_shoulder_standoff_link
     object2: arm_wrist_flex_fixed_link
@@ -1250,6 +1013,9 @@ default_collision_operations:
   - object1: arm_shoulder_standoff_link
     object2: right_gripper_servo_link
     operation: disable  # Never in collision
+  - object1: arm_shoulder_standoff_link
+    object2: torso_link
+    operation: disable  # Never in collision
   - object1: arm_wrist_flex_fixed_link
     object2: arm_wrist_flex_link
     operation: disable  # Never in collision
@@ -2190,16 +1956,10 @@ default_collision_operations:
     object2: head_tilt_servo_link
     operation: disable  # Never in collision
   - object1: head_pan_servo_link
-    object2: l_gripper_link
-    operation: disable  # Never in collision
-  - object1: head_pan_servo_link
     object2: left_gripper_mount_link
     operation: disable  # Never in collision
   - object1: head_pan_servo_link
     object2: left_gripper_servo_link
-    operation: disable  # Never in collision
-  - object1: head_pan_servo_link
-    object2: r_gripper_link
     operation: disable  # Never in collision
   - object1: head_pan_servo_link
     object2: right_gripper_mount_link
