@@ -1,0 +1,19 @@
+<package>
+  <description brief="simple_arm_server"/>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/simple_arm_server</url>
+  <depend package="rospy"/>
+  <depend package="actionlib"/>
+
+  <!-- messages -->
+  <depend package="trajectory_msgs"/>
+  <depend package="kinematics_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="control_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="std_srvs"/>
+
+  <depend package="tf"/>
+</package>
