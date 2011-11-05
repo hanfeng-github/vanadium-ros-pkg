@@ -411,6 +411,7 @@ class ArbotiX:
     ## uses 2 bytes (L, then H), pulse width (0, 1000-2000ms) (Write only)
     SERVO_BASE = 26
     # Address 46 is Moving, just like an AX-12
+    DIG_BASE2 = 50
 
     ## @brief Force the ArbotiX2 to rescan the Dynamixel busses.
     def rescan(self):
@@ -458,15 +459,20 @@ class ArbotiX:
     ##
     ## @return -1 if error.
     def setDigital(self, index, value, direction=0xff):
-        if index > 7: return -1
+        print index, value, direction
+        if index > 15: return -1
+        reg = self.DIG_BASE
+        if index > 7:
+            reg = self.DIG_BASE2
+            index = index - 8        
         if value == 0 and direction > 0:
-            self.write(253, self.DIG_BASE + int(index), [1])
+            self.write(253, reg + int(index), [1])
         elif value > 0 and direction > 0:
-            self.write(253, self.DIG_BASE + int(index), [3])
+            self.write(253, reg + int(index), [3])
         elif value > 0 and direction == 0:
-            self.write(253, self.DIG_BASE + int(index), [2])
+            self.write(253, reg + int(index), [2])
         else:
-            self.write(253, self.DIG_BASE + int(index), [0])
+            self.write(253, reg + int(index), [0])
         return 0
 
     ## @brief Set the position of a hobby servo.
@@ -482,6 +488,6 @@ class ArbotiX:
         if value != 0 and (value < 500 or value > 2500):
             print "ArbotiX Error: Servo value out of range:",val
         else:
-            self.write(253, self._serVO_BASE + 2*index, [value%256, value>>8])
+            self.write(253, self._SERVO_BASE + 2*index, [value%256, value>>8])
         return 0
 
