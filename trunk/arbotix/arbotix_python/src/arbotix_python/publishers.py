@@ -38,28 +38,25 @@ class DiagnosticsPublisher:
         self.t_delta = rospy.Duration(1.0/rospy.get_param("~diagnostic_rate", 1.0))
         self.t_next = rospy.Time.now() + self.t_delta
         self.pub = rospy.Publisher('diagnostics', DiagnosticArray)
-        self.iter = 0
 
-    def update(self, servos, controllers):
+    def update(self, joints, controllers):
         """ Publish diagnostics. """    
         now = rospy.Time.now()
-        if now > self.t_next:    
-            # update status of servos
-            if self.iter % 5 == 0:
-                servos.updateStats()
-
+        if now > self.t_next:
             # create message
             msg = DiagnosticArray()
             msg.header.stamp = now
-            for servo in servos.values():
-                msg.status.append(servo.getDiagnostics())
             for controller in controllers:
-                msg.status.append(controller.getDiagnostics())
-
+                d = controller.getDiagnostics()
+                if d:
+                    msg.status.append(d)
+            for joint in joints:
+                d = joint.getDiagnostics()
+                if d:
+                    msg.status.append(d)
             # publish and update stats
             self.pub.publish(msg)
             self.t_next = now + self.t_delta
-            self.iter += 1
         
 
 class JointStatePublisher:
@@ -74,7 +71,7 @@ class JointStatePublisher:
         # subscriber
         self.pub = rospy.Publisher('joint_states', JointState)
 
-    def update(self, servos, controllers):
+    def update(self, joints, controllers):
         """ publish joint states. """
         if rospy.Time.now() > self.t_next:   
             msg = JointState()
@@ -82,10 +79,10 @@ class JointStatePublisher:
             msg.name = list()
             msg.position = list()
             msg.velocity = list()
-            for servo in servos.values():
-                msg.name.append(servo.name)
-                msg.position.append(servo.angle)
-                msg.velocity.append(servo.velocity)
+            for joint in joints:
+                msg.name.append(joint.name)
+                msg.position.append(joint.position)
+                msg.velocity.append(joint.velocity)
             for controller in controllers:
                 msg.name += controller.joint_names
                 msg.position += controller.joint_positions

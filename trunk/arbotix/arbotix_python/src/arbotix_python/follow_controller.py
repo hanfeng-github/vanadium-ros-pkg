@@ -32,31 +32,21 @@ from control_msgs.msg import FollowJointTrajectoryAction
 from diagnostic_msgs.msg import *
 
 from ax12 import *
+from controllers import *
 
-class FollowController:
+class FollowController(Controller):
     """ A controller for joint chains, exposing a FollowJointTrajectory action. """
 
     def __init__(self, device, name):
-        self.name = name
-        self.device = device   
-        self.fake = device.fake
+        Controller.__init__(self, device, name)
         self.interpolating = 0
 
         # parameters: rates and joints
         self.rate = rospy.get_param('~controllers/'+name+'/rate',50.0)
         self.joints = rospy.get_param('~controllers/'+name+'/joints')
         self.index = rospy.get_param('~controllers/'+name+'/index', len(device.controllers))
-        self.onboard = rospy.get_param('~controllers/'+name+'/onboard', True)
-        if self.fake:
-            self.onboard = False
         for joint in self.joints:
-            self.device.servos[joint].controller = self
-        self.ids = [self.device.servos[joint].id for joint in self.joints]
-        
-        # output for joint states publisher
-        self.joint_names = []
-        self.joint_positions = []
-        self.joint_velocities = []
+            self.device.joints[joint].controller = self
 
         # action server
         name = rospy.get_param('~controllers/'+name+'/action_name','follow_joint_trajectory')
@@ -65,15 +55,7 @@ class FollowController:
         rospy.loginfo("Started FollowController ("+self.name+"). Joints: " + str(self.joints) + " on C" + str(self.index))
 
     def startup(self):
-        if not self.fake:
-            self.setup()
         self.server.start()
-
-    def update(self):
-        self.status()
-    
-    def shutdown(self):
-        pass
 
     def actionCb(self, goal):
         rospy.loginfo(self.name + ": Action goal recieved.")
@@ -103,52 +85,36 @@ class FollowController:
         time = rospy.Time.now()
         start = traj.header.stamp
         r = rospy.Rate(self.rate)
-        last = [ self.device.servos[joint].angle for joint in self.joints ]
+        last = [ self.device.joints[joint].position for joint in self.joints ]
         for point in traj.points:
             while rospy.Time.now() + rospy.Duration(0.01) < start:
                 rospy.sleep(0.01)
-            if self.onboard:
-                while self.interpolating > 0: 
-                    rospy.sleep(0.01)
-                positions = [ self.device.servos[self.joints[k]].setControl(point.positions[indexes[k]]) for k in range(len(indexes)) ]
-                t = ((start + point.time_from_start) - rospy.Time.now()).to_sec()
-                if t < 1/30.0:
-                    continue
-                rospy.logdebug(self.name + ": Sending Point," + str(positions) + " " + str(t))
-                self.write(positions, t)
-                self.interpolating = 1
-            else:
-                desired = [ point.positions[k] for k in indexes ]
-                endtime = start + point.time_from_start
-                while rospy.Time.now() + rospy.Duration(0.01) < endtime:
-                    err = [ (d-c) for d,c in zip(desired,last) ]
-                    velocity = [ abs(x / (self.rate * (endtime - rospy.Time.now()).to_sec())) for x in err ]
-                    rospy.logdebug(err)
-                    for i in range(len(self.joints)):
-                        if err[i] > 0.01 or err[i] < -0.01:
-                            cmd = err[i] 
-                            top = velocity[i]
-                            if cmd > top:
-                                cmd = top
-                            elif cmd < -top:
-                                cmd = -top
-                            last[i] += cmd
-                            self.device.servos[self.joints[i]].dirty = True
-                            self.device.servos[self.joints[i]].relaxed = False
-                            self.device.servos[self.joints[i]].desired = last[i]
-                        else:
-                            velocity[i] = 0
-                    r.sleep()
-
-        while self.onboard and self.interpolating != 0:
-            rospy.sleep(0.01)
+            desired = [ point.positions[k] for k in indexes ]
+            endtime = start + point.time_from_start
+            while rospy.Time.now() + rospy.Duration(0.01) < endtime:
+                err = [ (d-c) for d,c in zip(desired,last) ]
+                velocity = [ abs(x / (self.rate * (endtime - rospy.Time.now()).to_sec())) for x in err ]
+                rospy.loginfo(err)
+                for i in range(len(self.joints)):
+                    if err[i] > 0.001 or err[i] < -0.001:
+                        cmd = err[i] 
+                        top = velocity[i]
+                        if cmd > top:
+                            cmd = top
+                        elif cmd < -top:
+                            cmd = -top
+                        last[i] += cmd
+                        self.device.joints[self.joints[i]].setControlOutput(last[i])
+                    else:
+                        velocity[i] = 0
+                r.sleep()
 
         rospy.loginfo(self.name + ": Done.")
         self.server.set_succeeded()
 
     def active(self):
         """ Is controller overriding servo internal control? """
-        return self.onboard and self.server.is_active()
+        return self.server.is_active()
 
     def getDiagnostics(self):
         """ Get a diagnostics status. """
@@ -161,35 +127,4 @@ class FollowController:
         else:
             msg.values.append(KeyValue("State", "Not Active"))
         return msg
-
-    ###
-    ### Controller Specification: 
-    ###
-    ###  setup: list of controller ids
-    ###
-    ###  write: position of each servo (2 bytes), number of frames
-    ###
-    ###  status: interpolation status
-    ### 
-    
-    def setup(self):
-        params = [self.index] + self.ids
-        success = self.device.execute(253, AX_CONTROL_SETUP, params)
-
-    def write(self, positions, time):
-        """ Write a movement to occur in time (s). """
-        self.interpolating = 1
-        params = [self.index]
-        for p in positions:
-            params.append( int(p)%256 )
-            params.append( (int(p)>>8)%256 )
-        params.append(int(time*30)%256)
-        success = self.device.execute(253, AX_CONTROL_WRITE, params)
-
-    def status(self):
-        if self.onboard and self.interpolating != 0:
-            try:
-                self.interpolating = self.device.execute(253, AX_CONTROL_STAT, [self.index])[0]
-            except:
-                pass
 

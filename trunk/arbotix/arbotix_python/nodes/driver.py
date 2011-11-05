@@ -36,9 +36,16 @@ from arbotix_msgs.srv import *
 from arbotix_python.arbotix import ArbotiX
 from arbotix_python.diff_controller import DiffController
 from arbotix_python.follow_controller import FollowController
+from arbotix_python.servo_controller import *
+from arbotix_python.linear_controller import *
 from arbotix_python.publishers import *
-from arbotix_python.servos import *
 from arbotix_python.io import *
+
+# name: [ControllerClass, pause]
+controller_types = { "follow_controller" : [FollowController,False],
+                     "diff_controller"   : [DiffController,True],
+#                    "omni_controller"   : [OmniController,True],
+                     "linear_controller" : [LinearController,False] }
 
 ###############################################################################
 # Main ROS interface
@@ -69,25 +76,26 @@ class ArbotixROS(ArbotiX):
         else:
             rospy.loginfo("ArbotiX being simulated.")
 
-        # initialize dynamixel & hobby servos
-        self.servos = Servos(self)
+        # setup joints
+        self.joints = dict()
+        controller = ServoController(self, "servos")
+        for name in rospy.get_param("~dynamixels", dict()).keys():
+            self.joints[name] = DynamixelServo(self, name)
+            controller.dynamixels.append(self.joints[name])
+        for name in rospy.get_param("~servos", dict()).keys():
+            self.joints[name] = HobbyServo(self, name)
+            controller.hobbyservos.append(self.joint[name])
 
-        # setup controllers
+        # setup controller
         self.controllers = list()
         controllers = rospy.get_param("~controllers", dict())
         for name, params in controllers.items():
-            if params["type"] == "follow_controller":
-                self.controllers.append(FollowController(self, name))
-                if self.controllers[-1].onboard:
-                    pause = True
-            elif params["type"] == "diff_controller":
-                self.controllers.append(DiffController(self, name))
-                pause = True
-#           elif params["type"] == "omni_controller":
-#               self.controllers.append(OmniController(self, name))
-#               pause = True
-            else:
+            try:
+                self.controllers.append( controller_types[params["type"]][0](self, name) )
+                pause = pause or controller_types[params["type"]][1]
+            except:
                 rospy.logerr("Unrecognized controller: " + params["type"])
+        self.controllers.append(controller)
 
         # wait for arbotix to start up (especially after reset)
         if not self.fake:
@@ -126,24 +134,19 @@ class ArbotixROS(ArbotiX):
             for controller in self.controllers:
                 controller.update()
 
-            # update servo positions (via sync_write)
-            self.servos.update(self.use_sync_write)
-
             # update io
             for io in self.io.values():
                 io.update()
 
-            # publish
-            self.servos.interpolate(self.use_sync_read)
-            self.joint_state_publisher.update(self.servos, self.controllers)
-            self.diagnostics.update(self.servos, self.controllers)
+            # publish feedback
+            self.joint_state_publisher.update(self.joints.values(), self.controllers)
+            self.diagnostics.update(self.joints.values(), self.controllers)
 
             r.sleep()
 
         # do shutdown
         for controller in self.controllers:
             controller.shutdown()
-
 
     def analogInCb(self, req):
         # TODO: Add check, only 1 service per pin
