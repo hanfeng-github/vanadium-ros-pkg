@@ -38,9 +38,10 @@ from diagnostic_msgs.msg import *
 from tf.broadcaster import TransformBroadcaster
 
 from ax12 import *
+from controllers import *
 from struct import unpack
 
-class DiffController:
+class DiffController(Controller):
     """ Controller to handle movement & odometry feedback for a differential 
             drive mobile base. """
     def __init__(self, device, name):
