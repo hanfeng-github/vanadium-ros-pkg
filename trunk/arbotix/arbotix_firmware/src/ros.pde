@@ -86,7 +86,7 @@ void scan(){
     if(ax12GetRegister(i+1, AX_ID, 1) != (i+1)){
       dynamixel_bus_config[i] = 0;
     }
-  }  
+  }
 }
 #endif
 void setup(){
@@ -169,7 +169,21 @@ unsigned char handleWrite(){
         }
       }
     }else{
-      return INSTRUCTION_ERROR;
+      // write higher ID digitals
+      int pin = addr - REG_DIGITAL2;
+      if(pin < 8){
+        pin = 31 - pin;
+        if(params[k] & 0x02)    // high
+          digitalWrite(pin, HIGH);
+        else
+          digitalWrite(pin, LOW);
+        if(params[k] & 0x01)    // output
+          pinMode(pin, OUTPUT);
+        else
+          pinMode(pin, INPUT);
+      }else{
+        return INSTRUCTION_ERROR;
+      }
     }
     addr++;k++;bytes--;
   }
@@ -206,7 +220,7 @@ int handleRead(){
     #ifdef SERVO_STIK
         v = (PINB>>1);
     #else
-        v = PIND;
+        v = PINA;  // was previously PIND
     #endif        
       }else{
         // 16-23

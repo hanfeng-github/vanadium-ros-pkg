@@ -51,10 +51,7 @@
 #define REG_ANA_BASE        18  // First Analog Port
 #define REG_SERVO_BASE      26  // Up to 10 servos, each uses 2 bytes (L, then H), pulse width (0, 1000-2000ms)
 #define REG_MOVING          46
-#define REG_LM_SIGN         47  // Raw motor pwm (-255 to 255), 1 byte sign + 1 byte speed per side
-#define REG_LM_PWM          48
-#define REG_RM_SIGN         49
-#define REG_RM_PWM          50
+#define REG_DIGITAL2        50
 
 /* Packet Decoding */
 int mode = 0;                   // where we are in the frame
