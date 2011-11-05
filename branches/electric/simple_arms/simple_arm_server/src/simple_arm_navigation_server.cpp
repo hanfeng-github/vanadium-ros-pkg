@@ -155,12 +155,12 @@ class SimpleArmNavigationServer
                     goal.motion_plan_request.allowed_planning_time = ros::Duration(timeout_);
 
                     arm_navigation_msgs::SimplePoseConstraint desired_pose;
-                    desired_pose.absolute_position_tolerance.x = 0.05;
-                    desired_pose.absolute_position_tolerance.y = 0.05;
-                    desired_pose.absolute_position_tolerance.z = 0.05;
-                    desired_pose.absolute_roll_tolerance = 0.1;
-                    desired_pose.absolute_pitch_tolerance = 0.1;
-                    desired_pose.absolute_yaw_tolerance = 0.1;
+                    desired_pose.absolute_position_tolerance.x = 0.005;
+                    desired_pose.absolute_position_tolerance.y = 0.005;
+                    desired_pose.absolute_position_tolerance.z = 0.005;
+                    desired_pose.absolute_roll_tolerance = 0.05;
+                    desired_pose.absolute_pitch_tolerance = 0.05;
+                    desired_pose.absolute_yaw_tolerance = 0.05;
 
                     desired_pose.header.frame_id = pose.header.frame_id;
                     desired_pose.link_name = tip_name_;
