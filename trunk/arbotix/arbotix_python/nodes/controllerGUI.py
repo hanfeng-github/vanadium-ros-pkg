@@ -37,7 +37,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
 from arbotix_msgs.srv import Relax
-from arbotix_python.servos import *
+from arbotix_python.joints import *
 
 width = 325
 
@@ -87,7 +87,7 @@ class controllerGUI(wx.Frame):
         servoBox = wx.StaticBoxSizer(servo,orient=wx.VERTICAL) 
         servoSizer = wx.GridBagSizer(5,5)
 
-        joint_defaults = getServosFromURDF()
+        joint_defaults = getJointsFromURDF()
         
         i = 0
         dynamixels = rospy.get_param("/arbotix/dynamixels", dict())
@@ -97,7 +97,7 @@ class controllerGUI(wx.Frame):
         # create sliders and publishers
         for name in sorted(dynamixels.keys()):
             # pull angles
-            min_angle, max_angle = getServoLimits(name, joint_defaults)
+            min_angle, max_angle = getJointLimits(name, joint_defaults)
             # create publisher
             self.publishers.append(rospy.Publisher(name+'/command', Float64))
             self.relaxers.append(rospy.ServiceProxy(name+'/relax', Relax))
