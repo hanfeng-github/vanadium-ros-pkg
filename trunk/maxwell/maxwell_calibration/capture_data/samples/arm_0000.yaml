@@ -1,0 +1,16 @@
+camera_measurements:
+- {cam_id: kinect_rect, config: small_cb_4x5}
+joint_commands:
+- controller: head_traj_controller
+  segments:
+  - duration: 2.0
+    positions: [-0.76699039394282065, 0.57779943010359158]
+- controller: arm_controller
+  segments:
+  - duration: 2.0
+    positions: [-0.96129462707500191, 1.8748654074157838, -0.66259447921171455, -0.44996769777978812, 1.7180584824319183]
+joint_measurements:
+- {chain_id: head_chain, config: tight_tol}
+- {chain_id: arm_chain, config: tight_tol}
+sample_id: arm_0000
+target: {chain_id: arm_chain, target_id: small_cb_4x5}
