@@ -28,9 +28,12 @@
 """
 
 import rospy, actionlib
+
 from control_msgs.msg import FollowJointTrajectoryAction
+from trajectory_msgs.msg import JointTrajectory
 from diagnostic_msgs.msg import *
 
+#from controller import Controller
 from ax12 import *
 from controllers import *
 
@@ -51,6 +54,10 @@ class FollowController(Controller):
         # action server
         name = rospy.get_param('~controllers/'+name+'/action_name','follow_joint_trajectory')
         self.server = actionlib.SimpleActionServer(name, FollowJointTrajectoryAction, execute_cb=self.actionCb, auto_start=False)
+
+        # good old trajectory
+        rospy.Subscriber(self.name+'/command', JointTrajectory, self.commandCb)
+        self.executing = False
 
         rospy.loginfo("Started FollowController ("+self.name+"). Joints: " + str(self.joints) + " on C" + str(self.index))
 
@@ -79,9 +86,32 @@ class FollowController(Controller):
             msg = "Trajectory invalid."
             rospy.logerr(msg)
             self.server.set_aborted(text=msg)
-            return    
+            return
 
+        if self.executeTrajectory(traj):   
+            self.server.set_succeeded() 
+        else:
+            self.server.set_aborted(text="Execution failed.")
+
+        rospy.loginfo(self.name + ": Done.")
+    
+    def commandCb(self, msg):
+        # don't execute if executing an action
+        if self.server.is_active():
+            rospy.loginfo(self.name+": Received trajectory, but action is active")
+            return
+        self.executing = True
+        self.executeTrajectory(msg)
+        self.executing = False    
+
+    def executeTrajectory(self, traj):
+        rospy.loginfo("Executing trajectory")
+        rospy.loginfo(traj)
         # carry out trajectory
+        try:
+            indexes = [traj.joint_names.index(joint) for joint in self.joints]
+        except ValueError as val:
+            return False
         time = rospy.Time.now()
         start = traj.header.stamp
         r = rospy.Rate(self.rate)
@@ -108,13 +138,11 @@ class FollowController(Controller):
                     else:
                         velocity[i] = 0
                 r.sleep()
-
-        rospy.loginfo(self.name + ": Done.")
-        self.server.set_succeeded()
+        return True
 
     def active(self):
         """ Is controller overriding servo internal control? """
-        return self.server.is_active()
+        return self.server.is_active() or self.executing
 
     def getDiagnostics(self):
         """ Get a diagnostics status. """
@@ -122,7 +150,7 @@ class FollowController(Controller):
         msg.name = self.name
         msg.level = DiagnosticStatus.OK
         msg.message = "OK"
-        if self.server.is_active():
+        if self.active():
             msg.values.append(KeyValue("State", "Active"))
         else:
             msg.values.append(KeyValue("State", "Not Active"))
