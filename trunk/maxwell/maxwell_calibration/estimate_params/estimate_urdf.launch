@@ -1,0 +1,8 @@
+<launch>
+
+  <include file="$(find maxwell_calibration)/estimate_params/estimation_config.launch" />
+
+  <node pkg="pr2_calibration_estimation" type="multi_step_cov_estimator.py" name="cal_cov_estimator" output="screen"
+        args="/tmp/maxwell_calibration/cal_measurements.bag /tmp/maxwell_calibration/" respawn="False"/>
+
+</launch>

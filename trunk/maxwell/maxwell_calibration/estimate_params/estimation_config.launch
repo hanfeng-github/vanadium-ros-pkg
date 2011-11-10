@@ -1,0 +1,48 @@
+<launch>
+
+  <group ns="calibration_config" clear_params="true">
+
+    <group ns="sensors">
+      <param name="all"    textfile="$(find maxwell_calibration)/estimate_params/config/sensors.yaml" />
+    </group>
+
+    <group ns="cal_steps">
+
+      <group ns="SE - 00 - Estimating Checkerboard Locations">
+        <param name="free_params" textfile="$(find maxwell_calibration)/estimate_params/config/free_cb_locations.yaml" />
+        <param name="use_cov" type="bool" value="False" />
+        <rosparam>
+          sensors:
+          - arm_chain
+        </rosparam>
+        <param name="output_filename" type="string" value="config_0" />
+      </group>
+
+      <group ns="SE - 01 - Adding Camera Locations">
+        <param name="free_params" textfile="$(find maxwell_calibration)/estimate_params/config/free_cameras.yaml" />
+        <param name="use_cov" type="bool" value="True" />
+        <rosparam>
+          sensors:
+          - kinect_rect
+        </rosparam>
+        <param name="output_filename" type="string" value="config_1" />
+      </group>
+
+      <group ns="SE - 02 - Locking Head Sensors. Estimating Arm Joint Offsets">
+        <param name="free_params" textfile="$(find maxwell_calibration)/estimate_params/config/free_arms.yaml" />
+        <param name="use_cov" type="bool" value="True" />
+        <rosparam>
+          sensors:
+          - kinect_rect
+          - arm_chain
+        </rosparam>
+        <param name="output_filename" type="string" value="system_calibrated" />
+      </group>
+
+    </group>
+
+    <param name="initial_system" textfile="$(find maxwell_calibration)/estimate_params/config/system.yaml" />
+
+  </group>
+
+</launch>

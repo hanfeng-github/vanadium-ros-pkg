@@ -1,0 +1,61 @@
+
+  dh_chains:
+    arm_chain:
+     dh:
+     - [   0,  -pi/2, .1, 0      ]    # r_shoulder_pan_joint
+     - [ pi/2,  pi/2,  0, 0      ]    # r_shoulder_lift_joint
+     - [   0,  -pi/2,  0, .4     ]    # r_upper_arm_joint
+     - [   0,   pi/2,  0, 0      ]    # r_elbow_flex_joint
+     - [   0,  -pi/2,  0, .321   ]    # r_forearm_roll_joint
+     - [   0,   pi/2,  0, 0      ]    # r_wrist_flex_joint
+     - [   0,    0,    0, 0      ]    # r_wrist_roll_joint
+     cov:
+       joint_angles: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
+     gearing: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+    head_chain:
+     dh:
+     - [ 0, -pi/2, .068, 0 ]          # head_pan_joint
+     - [ 0,    0,    0,  0 ]          # head_tilt_joint
+     cov:
+      joint_angles: [0.0002, 0.0002]
+     gearing: [1.0, 1.0]
+
+  transforms:
+    arm_shoulder_pan_joint:                     [ 0, 0, 0.0235, 0, 0, 0]            # arm_link -> r_shoulder_pan_joint
+    head_pan_joint:                             [ 0, 0, 0.019, 0, 0, 0]             # arm_link -> head_pan_joint
+
+    head_chain_tip_adj:                         [   0, 0, 0, pi/2, 0, 0]            # Doesn't correspond to URDF! From dh head_chain to head_pan_link frame
+
+    head_sensor_frame_joint:                    [   0, 0, 0.0425, 0, 0, 0]          # head_tilt_link -> head_sensor_frame
+
+    arm_tip_adj:                                [   0, 0, 0, 0, -pi/2, 0]           # Doesn't correspond to URDF! From tip of right arm chain to a more natural coordinate frame (x forward, y left, z up)
+    arm_cb:                                     [   .25, 0, 0, -pi/2, 0, 0]         # Doesn't correspond to URDF! From r_wrist_roll joint to checkerboard in hand
+
+    # Head mount spoiler
+    head_kinect_frame_joint:                    [   0, 0, 0, 0, 0, 0]               #  head_sensor_frame -> head_kinect_frame_joint
+    
+    # Head mount Kinect Frames
+    head_mount_kinect_ir_joint:                 [ -0.032267, 0.0125, 0.136453, 0, 0, 0]
+    head_mount_kinect_rgb_joint:                [ 0, -0.03, 0, 0, 0, 0]             # TODO this initial value was plucked from thin air... or worse.
+    head_mount_kinect_rgb_optical_frame_joint:  [0, 0, 0, -1.2091995761561452, 1.2091995761561452, -1.2091995761561452]
+    
+  rectified_cams:
+    kinect_rect:
+      baseline_shift: 0.0
+      f_shift: 0.0
+      cx_shift: 0.0
+      cy_shift: 0.0
+      cov: {u: 0.125, v: 0.125}
+
+  checkerboards:
+    small_cb_4x5:
+      corners_x: 4
+      corners_y: 5
+      spacing_x: .0245
+      spacing_y: .0245
+    large_cb_7x6:
+      corners_x: 7
+      corners_y: 6
+      spacing_x: .108
+      spacing_y: .108

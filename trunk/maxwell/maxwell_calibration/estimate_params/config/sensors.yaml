@@ -1,0 +1,18 @@
+
+  camera_chains:
+    - sensor_id:    kinect_rect
+      camera_id:    kinect_rect
+      chain:
+        before_chain: [head_pan_joint]
+        chain_id:     head_chain
+        dh_link_num:  1  # Connects after head pan
+        after_chain:  [head_sensor_frame_joint, 
+        after_chain:  [head_chain_tip_adj, head_sensor_frame_joint, head_kinect_frame_joint, head_kinect_ir_joint, 
+                       head_kinect_rgb_joint, head_kinect_rgb_optical_frame_joint]
+
+  chains:
+    - sensor_id:    arm_chain
+      before_chain: [arm_shoulder_pan_joint]
+      chain_id:     arm_chain
+      after_chain:  [arm_tip_adj, arm_cb]
+      dh_link_num:  4
