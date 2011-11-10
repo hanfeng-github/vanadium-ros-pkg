@@ -13,6 +13,7 @@
   
   <include filename="$(find maxwell_defs)/urdf/hardware/ax12.xacro" />
   <include filename="$(find maxwell_defs)/urdf/hardware/rx64.xacro" />
+  <include filename="$(find maxwell_defs)/urdf/sensors/kinect_camera.urdf.xacro" />
   
   <!-- The following included files set up definitions of parts of the robot body -->
   <include filename="$(find maxwell_defs)/urdf/base.urdf.xacro" />
@@ -44,5 +45,8 @@
   <maxwell_head name="head" parent="torso" color="Orange">
     <origin xyz="0 0 ${column_height}"/>
   </maxwell_head>
+  <kinect_camera name="head_kinect" parent="head_sensor_frame">
+    <origin xyz="0 0 0"/>
+  </kinect_camera>
 
 </robot>

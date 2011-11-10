@@ -72,7 +72,7 @@
       <child link="${name}_sensor_frame"/>
     </joint>
     <link name="${name}_sensor_frame">
-      <visual>
+      <!--<visual>
         <origin xyz="-0.03 0 0" rpy="0 0 -1.57" />
         <geometry>
           <mesh filename="package://maxwell_defs/meshes/kinect.stl" />
@@ -84,16 +84,16 @@
         <geometry>
           <box size="0.064 0.28 0.04"/>
         </geometry>
-      </collision>
+      </collision>-->
     </link>
 
-    <!-- Openni Link -->
+    <!-- Openni Link 
     <joint name="openni_camera_joint" type="fixed">
       <origin xyz="${calib_cam_x} ${calib_cam_y} ${calib_cam_z}" rpy="${calib_cam_rr} ${calib_cam_rp} ${calib_cam_ry}" />
       <parent link="${name}_sensor_frame"/>
       <child link="openni_camera"/>
     </joint>
-    <link name="openni_camera"/>
+    <link name="openni_camera"/>-->
 
   </macro>
 
