@@ -8,7 +8,7 @@ arm_controller:
   - arm_wrist_roll_joint
 
 head_traj_controller:
-  topic: head_traj_controller/command
+  topic: head_controller/command
   joint_names:
   - head_pan_joint
   - head_tilt_joint

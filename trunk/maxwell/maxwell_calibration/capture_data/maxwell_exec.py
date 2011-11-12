@@ -31,7 +31,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import roslib; roslib.load_manifest('pr2_calibration_launch')
+import roslib; roslib.load_manifest('maxwell_calibration')
 import rospy
 import yaml
 import sys
@@ -52,7 +52,7 @@ config_dir = rospy.myargv()[2]
 executive = pr2_calibration_executive.capture_exec.CaptureExecutive(config_dir)
 time.sleep(1.0)
 
-samples_names = [x for x in os.listdir(samples_dir) if ".yaml" in x]
+sample_names = [x for x in os.listdir(samples_dir) if ".yaml" in x]
 sample_names.sort()
 
 print "Samples: \n - %s" % "\n - ".join(sample_names)

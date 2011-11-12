@@ -3,7 +3,7 @@
   <node type="maxwell_exec.py"
         pkg="maxwell_calibration"
         name="calibration_exec"
-        args="$(find maxwell_calibration)/capture_data/samples $(find maxwell_calibration)/capture_data/hardware_config"
+        args="$(find maxwell_calibration)/capture_data/samples/ $(find maxwell_calibration)/capture_data/hardware_config"
         output="screen" >
 
     <remap from="kinect_rect/camera_info" to="camera/rgb/camera_info"/>
