@@ -66,7 +66,7 @@
   <macro name="rx64_side_revolute" params="parent name color llimit ulimit vlimit *origin">
     <joint name="${name}_joint" type="revolute">
       <insert_block name="origin" />
-       <axis xyz="1 0 0"/>
+       <axis xyz="0 0 1"/>
       <limit effort="30" velocity="${vlimit}" lower="${llimit}" upper="${ulimit}" />
       <parent link="${parent}"/>
       <child link="${name}_link" />
@@ -81,7 +81,7 @@
           izz="1.0" />
       </inertial>
       <visual>
-        <origin xyz=" 0 0 0 " rpy="1.57 1.57 0" />
+        <origin xyz=" 0 0 0 " rpy="1.57 0 0" />
         <geometry>
           <mesh filename="package://maxwell_defs/meshes/rx64-side-bracket.stl" scale="1 1 1"/>
         </geometry>
