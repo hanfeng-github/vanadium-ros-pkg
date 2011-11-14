@@ -36,7 +36,8 @@
     head_kinect_frame_joint:                    [ 0, 0.07, 0.02, 0, -0.06, 0]               # head_sensor_frame -> head_kinect_frame_joint
     head_kinect_ir_joint:                       [ 0, 0, 0, 0, 0, 0]
     head_kinect_rgb_joint:                      [ 0, -0.03, 0, 0, 0, 0]                     # TODO this initial value was plucked from thin air... or worse.
-    head_kinect_rgb_optical_frame_joint:        [0, 0, 0, -pi/2, 0, -pi/2]
+    head_kinect_rgb_optical_frame_joint:        [0, 0, 0, 0, 0, -pi/2]
+    head_kinect_rgb_optical_frame_joint2:       [0, 0, 0, -pi/2, 0, 0]
 
   rectified_cams:
     kinect_rect:
