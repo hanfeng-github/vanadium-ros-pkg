@@ -29,6 +29,7 @@
 
 import roslib; roslib.load_manifest('arbotix_python')
 import rospy
+import sys
 
 from arbotix_msgs.msg import *
 from arbotix_msgs.srv import *
@@ -102,9 +103,14 @@ class ArbotixROS(ArbotiX):
             if rospy.has_param("~digital_servos") or rospy.has_param("~digital_sensors") or rospy.has_param("~analog_sensors"):
                 pause = True
             if pause:
+                count = 0
                 while self.getDigital(1) == -1:
                     rospy.loginfo("Waiting for response...")
                     rospy.sleep(0.25)
+                    if count > 10:
+                        rospy.loginfo("No response, exiting...")
+                        sys.exit(0)
+                    count += 1
             rospy.loginfo("ArbotiX connected.")
 
         for controller in self.controllers:
