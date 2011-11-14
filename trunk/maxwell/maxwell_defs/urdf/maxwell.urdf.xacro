@@ -8,8 +8,8 @@
   <property name='calib_cam_rp' value='0.00482693' />
   <property name='calib_cam_ry' value='0.0643122' />
 
-  <property name="arm_height" value="0.6619375 " /> <!-- deck to arm_link -->
-  <property name="column_height" value="1.171575" /> <!-- deck to top of 80/20: 46-1/8" -->
+  <property name="arm_height" value="0.7239"/> <!-- deck to arm_link at max height-->
+  <property name="column_height" value="1.160075" /> <!-- deck to top of 80/20: 46-1/8" -->
   
   <include filename="$(find maxwell_defs)/urdf/hardware/ax12.xacro" />
   <include filename="$(find maxwell_defs)/urdf/hardware/rx64.xacro" />
@@ -28,25 +28,25 @@
 
   <!-- Add Torso Upright -->
   <maxwell_torso name="torso" parent="base">
-    <origin xyz="-0.00635 0 ${base_size_z}"/>
+    <origin xyz="-0.00635 0 ${base_size_z}" rpy="0 -0.01 0"/>
   </maxwell_torso>
 
   <!-- Arm -->
   <maxwell_arm name="arm" parent="torso">
-    <origin xyz="0.0611 0 ${arm_height}"/>
+    <origin xyz="0.0611 0 ${arm_height}" rpy="0 0 0"/>
   </maxwell_arm>
 
   <!-- Gripper -->
   <maxwell_gripper name="gripper" parent="arm_wrist_roll" color="Orange">
-    <origin xyz="0 0 0" /> 
+    <origin xyz="0 0 0" rpy="0 0 0" /> 
   </maxwell_gripper>
 
   <!-- Head -->
   <maxwell_head name="head" parent="torso" color="Orange">
-    <origin xyz="0 0 ${column_height}"/>
+    <origin xyz="0 0 ${column_height}" rpy="0 0 0"/>
   </maxwell_head>
   <kinect_camera name="head_kinect" parent="head_sensor_frame">
-    <origin xyz="0 0 0"/>
+    <origin xyz="0 .07 .02" rpy="0 -.06 0"/> <!-- TODO: these values work, update underlying aspects for ASUS Xtion -->
   </kinect_camera>
 
 </robot>
