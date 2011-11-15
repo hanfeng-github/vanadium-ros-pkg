@@ -32,14 +32,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import roslib; roslib.load_manifest('pr2_calibration_propagation')
+import roslib; roslib.load_manifest('maxwell_calibration')
 import rospy
-#import pr2_calibration_propagation.update_urdf as update_urdf
 
-#import math
 import pdb
 import sys
-# from ros import rosrecord
 import rosbag
 
 try:
@@ -54,24 +51,11 @@ import tf.transformations as transformations
 import math
 
 def update_urdf(initial_system, calibrated_system, xml_in):
-    #find dh_param offsets for all requested dh chains
-#   dh_offsets = {"right_arm_chain":[],
-#                 "left_arm_chain":[],
-#                 "head_chain":[]}
     dh_offsets = {"arm_chain":[],
                   "head_chain":[]}
 
-#    dh_joint_names = {"right_arm_chain" : ['r_shoulder_pan_joint', 'r_shoulder_lift_joint', 'r_upper_arm_roll_joint', 'r_elbow_flex_joint', 'r_forearm_roll_joint', 'r_wrist_flex_joint', 'r_wrist_roll_joint'],
-#                      "left_arm_chain"  : ['l_shoulder_pan_joint', 'l_shoulder_lift_joint', 'l_upper_arm_roll_joint', 'l_elbow_flex_joint', 'l_forearm_roll_joint', 'l_wrist_flex_joint', 'l_wrist_roll_joint'],
-#                      "head_chain"      : ['head_pan_joint', 'head_tilt_joint'] }
     dh_joint_names = {"arm_chain"       : ['arm_shoulder_pan_joint', 'arm_shoulder_lift_joint', 'arm_elbow_flex_joint', 'arm_wrist_flex_joint', 'arm_wrist_roll_joint'],
                       "head_chain"      : ['head_pan_joint', 'head_tilt_joint'] }
-
-    # Check that the chains are in fact in the yaml system config
-#    chains_to_remove = [x for x in dh_offsets.keys() if x not in initial_system['dh_chains'].keys()];
-#    print "Need to ignore the following chains:", chains_to_remove
-#    for chain_to_remove in chains_to_remove:
-#      del dh_offsets[chain_to_remove]
 
     print "Computing All dh chain offsets"
     for chain_name in dh_offsets.keys():
@@ -88,23 +72,7 @@ def update_urdf(initial_system, calibrated_system, xml_in):
     transformdict = dict()
     for(name, rotvect) in calibrated_system['transforms'].iteritems():
         floatvect = [mixed_to_float(x) for x in rotvect]
-        #print name, pplist(floatvect), angle_axis_to_RPY(floatvect[3:6])
         transformdict[name] = [floatvect[0:3], angle_axis_to_RPY(floatvect[3:6])]
-
-    # Hack in transforms for tilting laser
-
-    # PR2 Lite doesn't have a tilt laser
-    #floatvect = [mixed_to_float(x) for x in calibrated_system['tilting_lasers']['tilt_laser']['before_joint'] ]
-    #transformdict['laser_tilt_mount_joint'] =  [floatvect[0:3], angle_axis_to_RPY(floatvect[3:6])]
-
-    #print "Floatvec: ", floatvec
-    #print "tuple: ", transformdict['laser_tilt_mount_joint']
-    #import code; code.interact(local=locals())
-    #assert(False)
-
-    #floatvect = [mixed_to_float(x) for x in calibrated_system['tilting_lasers']['tilt_laser']['after_joint'] ]
-    #transformdict['laser_tilt_joint'] = [floatvect[0:3], angle_axis_to_RPY(floatvect[3:6])]
-
 
     # Combine the transforms and joint offsets into a single dict
     joints_dict = dict([(joint_name, [None, None, None]) for joint_name in transformdict.keys() + joint_offsets.keys()])
@@ -119,26 +87,19 @@ def update_urdf(initial_system, calibrated_system, xml_in):
     changelist = []
 
     for joint_name, val in joints_dict.items():
+        print joint_name
         cur_cl = update_joint.update_joint(xml_in, joint_name, xyz=val[0], rpy=val[1], ref_shift=val[2])
         if cur_cl is not None:
+            for span, result in cur_cl:
+                print "\"%s\" -> \"%s\"" % (xml_in[span[0]:span[1]], result)
             not_found.remove(joint_name)
             changelist.extend(cur_cl)
 
-    # Hack to change laser gearing. Assumes that the laser reference position is 0
-
-    # PR2 Lite Doesn't have a tilt laser
-    #reduction_scale = 1.0 / calibrated_system['tilting_lasers']['tilt_laser']['gearing']
-    #cur_cl = update_joint.update_transmission(xml_in, 'laser_tilt_mount_trans', reduction_scale)
-    #changelist.extend(cur_cl)
-
     print "jointnames never found: ", not_found
 
-    for span, result in changelist:
-        print "\"%s\" -> \"%s\"" % (xml_in[span[0]:span[1]], result)
-
     xml_out = process_changelist.process_changelist(changelist, xml_in)
-
     return xml_out
+
 
 #pretty-print list to string
 def pplist(list):
@@ -181,9 +142,7 @@ def find_dh_param_offsets(chain_name, system_default, system_calibrated):
         if epsEq(diff, 0):
             diff = None
         offsets.append(diff)
-
     return offsets
-
 
 
 #convert from rotation-axis-with-angle-as-magnitude representation to Euler RPY
@@ -210,10 +169,7 @@ def parse_xyz(line):
     return [float(x) for x in line.split("xyz=\"")[1].split("\"")[0].split()]
 
 
-
 if __name__ == '__main__':
-
-    #rospy.init_node("propagate_config")
 
     if len(rospy.myargv()) < 5:
         print "Usage: ./propagate_config [initial.yaml] [calibrated.yaml] [cal_measurements.bag] [cal_output.xml]"
@@ -234,12 +190,12 @@ if __name__ == '__main__':
         print "Error: Could not find URDF in bagfile. Make sure topic 'robot_description' exists"
         sys.exit(-1)
     bag.close()
-
+    
     #read in files
     system_default = yaml.load(file(initial_yaml_filename, 'r'))
     system_calibrated = yaml.load(file(calibrated_yaml_filename, 'r'))
 
-    xml_out = update_urdf.update_urdf(system_default, system_calibrated, xml_in)
+    xml_out = update_urdf(system_default, system_calibrated, xml_in)
 
     outfile = open(output_filename, 'w')
     outfile.write(xml_out)
