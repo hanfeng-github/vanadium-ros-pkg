@@ -19,7 +19,7 @@
     arm_shoulder_pan_joint:                 [ 0, 0, 0, 0, 0, 0 ]
     arm_cb:                                 [ 0, 0, 0, 0, 0, 0 ]
 
-    head_joint:                             [ 0, 0, 0, 0, 0, 0 ]
+    head_joint:                             [ 0, 0, 1, 0, 0, 0 ]
     head_pan_joint:                         [ 0, 0, 0, 0, 0, 0 ]
     head_plate_frame_joint:                 [ 0, 0, 0, 0, 0, 0 ]
 

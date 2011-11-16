@@ -2,32 +2,29 @@
   dh_chains:
     arm_chain:
       dh:     
-        - [ 0, 0, 0, 0 ]        # Shoulder Pan
-        - [ 0, 0, 0, 0 ]        # Shoulder Lift
-        - [ 0, 0, 0, 0 ]        # Elbow Flex
-        - [ 0, 0, 0, 0 ]        # Wrist flex
-        - [ 0, 0, 0, 0 ]        # Wrist roll
+        - [ 0, 0, 0, 0, 0, 0 ]        # Shoulder Pan
+        - [ 0, 0, 0, 0, 0, 0 ]        # Shoulder Lift
+        - [ 0, 0, 0, 0, 0, 0 ]        # Elbow Flex
+        - [ 0, 0, 0, 0, 0, 0 ]        # Wrist flex
+        - [ 0, 0, 0, 0, 0, 0 ]        # Wrist roll
       gearing: [0, 0, 0, 0, 0]
 
     head_chain:
       dh:
-        - [ 0, 0, 0, 0 ]        # Head Pan
-        - [ 0, 0, 0, 0 ]        # Head Tilt
+        - [ 0, 0, 0, 0, 0, 0 ]        # Head Pan
+        - [ 0, 0, 0, 0, 0, 0 ]        # Head Tilt
       gearing: [0, 0]
 
   transforms:
     arm_shoulder_pan_joint:                 [ 0, 0, 0, 0, 0, 0 ]
-    head_pan_joint:                         [ 0, 0, 0, 0, 0, 0 ]
+    arm_cb:                                 [ 1, 1, 1, 1, 1, 1 ]
 
     head_joint:                             [ 0, 0, 0, 0, 0, 0 ]
-    head_chain_tip_adj:                     [ 0, 0, 0, 0, 0, 0 ]
+    head_pan_joint:                         [ 0, 0, 0, 0, 0, 0 ]
     head_plate_frame_joint:                 [ 0, 0, 0, 0, 0, 0 ]
 
     head_kinect_rgb_joint:                  [ 0, 0, 0, 0, 0, 0 ]
     head_kinect_rgb_optical_frame_joint:    [ 0, 0, 0, 0, 0, 0 ]
-
-    arm_tip_adj:                            [ 0, 0, 0, 0, 0, 0 ]
-    arm_cb:                                 [ 1, 1, 1, 1, 1, 1 ]
 
   rectified_cams:
     kinect_rect:

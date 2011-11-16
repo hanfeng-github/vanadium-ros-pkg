@@ -3,7 +3,7 @@
   <group ns="calibration_config" clear_params="true">
 
     <group ns="sensors">
-      <param name="all"    textfile="$(find maxwell_calibration)/estimate_params/config/sensors.yaml" />
+      <param name="all" textfile="$(find maxwell_calibration)/estimate_params/config/sensors.yaml" />
     </group>
 
     <group ns="cal_steps">
@@ -29,17 +29,6 @@
         </rosparam>
         <param name="output_filename" type="string" value="system_calibrated" />
       </group>
-
-      <!--<group ns="Maxwell - 02 - Locking Head Sensors. Estimating Arm Joint Offsets">
-        <param name="free_params" textfile="$(find maxwell_calibration)/estimate_params/config/free_arms.yaml" />
-        <param name="use_cov" type="bool" value="True" />
-        <rosparam>
-          sensors:
-          - arm_chain
-          - kinect_rect
-        </rosparam>
-        <param name="output_filename" type="string" value="system_calibrated" />
-      </group>-->
 
     </group>
 

@@ -2,20 +2,21 @@
   dh_chains:
     arm_chain:
      dh:
-     - [ 0, -pi/2, 0, 0.0526]
-     - [ 0, 0, 0.162, 0]      # r_shoulder_pan_joint
-     - [ 0, 0, .124, 0 ]        # r_shoulder_lift_joint
-     - [ pi/2, pi/2, 0, 0 ]      # r_elbow_flex_joint
-     - [ 0,  0, 0, 0.031 ]      # r_wrist_flex_joint
-
+     - [ 0, 0, 0.0526, 0, 0, 0]
+     - [ 0.162, 0, 0, 0, 0, 0]
+     - [ 0.124, 0, 0, 0, 0, 0]
+     - [ 0.031, 0, 0, 0, 0, 0]
+     - [ 0, 0, 0, 0, 0, 0]
+     axis: [ 6, 5, 5, 5, 4]
      cov:
        joint_angles: [0.001, 0.001, 0.001, 0.001, 0.001]
      gearing: [1.0, 1.0, 1.0, 1.0, 1.0]
 
     head_chain:
      dh:
-     - [   0,   -pi/2,   0,   0 ]     # head_pan_joint
-     - [   0,    0,     0,    0 ]     # head_tilt_joint
+     - [ 0, 0, 0, 0, 0, 0 ]
+     - [ 0, 0, 0, 0, 0, 0 ]
+     axis: [ 6, 5]
      cov:
       joint_angles: [0.001, 0.001]
      gearing: [1.0, 1.0]
@@ -23,21 +24,17 @@
   transforms:
     arm_base_joint:                             [ 0.06114, 0, 0.7239, 0, 0, 0]              # torso_link -> arm_link
     arm_shoulder_pan_joint:                     [ 0, 0, 0.0235, 0, 0, 0]                    # arm_link -> arm_shoulder_pan_joint
-
-    arm_tip_adj:                                [ 0, 0, 0, 0, -pi/2, 0]                     # Doesn't correspond to URDF! From tip of right arm chain to a more natural coordinate frame (x forward, y left, z up)
     arm_cb:                                     [ .25, 0, 0, -pi/2, 0, 0]                   # Doesn't correspond to URDF! From r_wrist_roll joint to checkerboard in hand
 
     head_joint:                                 [ 0, 0, 1.171575+0.0415-0.01, 0, 0, 0]      # torso_link -> head_link
     head_pan_servo_joint:                       [ 0.010, 0, 0.0254, 0, 0, 0]                # head_link -> head_pan_servo_link
     head_pan_joint:                             [ 0, 0, 0.019, 0, 0, 0]                     # head_pan_servo_link -> head_pan_link
 
-    head_chain_tip_adj:                         [ 0, 0, 0, pi/2, 0, 0]                      # Doesn't correspond to URDF! From dh head_chain to head_pan_link frame
     head_sensor_frame_joint:                    [ 0, 0, 0.0425, 0, 0, 0]                    # head_tilt_link -> head_sensor_frame
     head_kinect_frame_joint:                    [ 0, 0.07, 0.02, 0, -0.06, 0]               # head_sensor_frame -> head_kinect_frame_joint
     head_kinect_ir_joint:                       [ 0, 0, 0, 0, 0, 0]
     head_kinect_rgb_joint:                      [ 0, -0.03, 0, 0, 0, 0]                     # TODO this initial value was plucked from thin air... or worse.
-    head_kinect_rgb_optical_frame_joint:        [0, 0, 0, 0, 0, -pi/2]
-    head_kinect_rgb_optical_frame_joint2:       [0, 0, 0, -pi/2, 0, 0]
+    head_kinect_rgb_optical_frame_joint:        [0, 0, 0, -pi/2, 0, -pi/2]
 
   rectified_cams:
     kinect_rect:

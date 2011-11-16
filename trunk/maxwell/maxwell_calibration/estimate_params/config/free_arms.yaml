@@ -20,13 +20,11 @@
     head_pan_joint:                         [ 0, 0, 0, 0, 0, 0 ]
 
     head_joint:                             [ 0, 0, 0, 0, 0, 0 ]
-    head_chain_tip_adj:                     [ 0, 0, 0, 0, 0, 0 ]
     head_plate_frame_joint:                 [ 0, 0, 0, 0, 0, 0 ]
 
     head_kinect_rgb_joint:                  [ 0, 0, 0, 0, 0, 0 ]
     head_kinect_rgb_optical_frame_joint:    [ 0, 0, 0, 0, 0, 0 ]
 
-    arm_tip_adj:                            [ 0, 0, 0, 0, 0, 0 ]
     arm_cb:                                 [ 0, 0, 0, 0, 0, 0 ]
 
   rectified_cams:
