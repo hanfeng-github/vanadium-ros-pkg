@@ -122,7 +122,7 @@ class TestMaxwellFk(LoadData):
         before_chain: [head_joint, head_pan_servo_joint, head_pan_joint]
         chain_id:     head_chain
         after_chain:  [head_chain_tip_adj, head_sensor_frame_joint, head_kinect_frame_joint, head_kinect_ir_joint, 
-                       head_kinect_rgb_joint, head_kinect_rgb_optical_frame_joint, head_kinect_rgb_optical_frame_joint2]
+                       head_kinect_rgb_joint, head_kinect_rgb_optical_frame_joint]
         dh_link_num:  1 '''
         print SingleTransform([0, 0, 0, -pi/2, 0, -pi/2]).transform
         print SingleTransform([0, 0, 0, -pi/2, 0, 0]).transform * SingleTransform([0, 0, 0, 0, 0, -pi/2]).transform
