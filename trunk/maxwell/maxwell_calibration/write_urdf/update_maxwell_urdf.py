@@ -72,7 +72,7 @@ def update_urdf(initial_system, calibrated_system, xml_in):
     transformdict = dict()
     for(name, rotvect) in calibrated_system['transforms'].iteritems():
         floatvect = [mixed_to_float(x) for x in rotvect]
-        transformdict[name] = [floatvect[0:3], angle_axis_to_RPY(floatvect[3:6])]
+        transformdict[name] = [floatvect[0:3], floatvect[3:6]]
 
     # Combine the transforms and joint offsets into a single dict
     joints_dict = dict([(joint_name, [None, None, None]) for joint_name in transformdict.keys() + joint_offsets.keys()])
