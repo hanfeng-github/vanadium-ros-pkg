@@ -94,7 +94,7 @@ class TestMaxwellFk(LoadData):
         config_str = '''
         before_chain: [arm_base_joint, arm_shoulder_pan_joint]
         chain_id:     arm_chain
-        after_chain:  [arm_tip_adj]
+        after_chain:  []
         dh_link_num:  4
         '''
 

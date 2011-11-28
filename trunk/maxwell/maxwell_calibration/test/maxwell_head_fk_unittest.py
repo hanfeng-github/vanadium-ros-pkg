@@ -93,9 +93,9 @@ class TestMaxwellFk(LoadData):
     def test_head_tilt_link(self):
         print ""
         config_str = '''
-        before_chain: [head_joint, head_pan_servo_joint, head_pan_joint]
+        before_chain: [head_joint, head_pan_servo_joint, head_pan_joint, head_tilt_servo_joint]
         chain_id:     head_chain
-        after_chain:  [head_chain_tip_adj]
+        after_chain:  []
         dh_link_num:  1
         '''
         full_chain = FullChainRobotParams(yaml.load(config_str))
@@ -106,9 +106,9 @@ class TestMaxwellFk(LoadData):
     def test_kinect_head_def(self):
         print ""
         config_str = '''
-        before_chain: [head_joint, head_pan_servo_joint, head_pan_joint]
+        before_chain: [head_joint, head_pan_servo_joint, head_pan_joint, head_tilt_servo_joint]
         chain_id:     head_chain
-        after_chain:  [head_chain_tip_adj, head_sensor_frame_joint, head_kinect_frame_joint, head_kinect_ir_joint, 
+        after_chain:  [head_sensor_frame_joint, head_kinect_frame_joint, head_kinect_ir_joint, 
                        head_kinect_rgb_joint]
         dh_link_num:  1 '''
         full_chain = FullChainRobotParams(yaml.load(config_str))
@@ -119,9 +119,9 @@ class TestMaxwellFk(LoadData):
     def test_kinect_head_optical(self):
         print ""
         config_str = '''
-        before_chain: [head_joint, head_pan_servo_joint, head_pan_joint]
+        before_chain: [head_joint, head_pan_servo_joint, head_pan_joint, head_tilt_servo_joint]
         chain_id:     head_chain
-        after_chain:  [head_chain_tip_adj, head_sensor_frame_joint, head_kinect_frame_joint, head_kinect_ir_joint, 
+        after_chain:  [head_sensor_frame_joint, head_kinect_frame_joint, head_kinect_ir_joint, 
                        head_kinect_rgb_joint, head_kinect_rgb_optical_frame_joint]
         dh_link_num:  1 '''
         print SingleTransform([0, 0, 0, -pi/2, 0, -pi/2]).transform
