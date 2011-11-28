@@ -35,7 +35,7 @@ import roslib; roslib.load_manifest('maxwell_calibration')
 import rospy
 import yaml
 import sys
-import pr2_calibration_executive.capture_exec
+import capture_executive.capture_exec
 import time
 from calibration_msgs.msg import RobotMeasurement
 import os
@@ -49,7 +49,7 @@ rospy.init_node("maxwell_capture_executive_node")
 samples_dir = rospy.myargv()[1]
 config_dir = rospy.myargv()[2]
 
-executive = pr2_calibration_executive.capture_exec.CaptureExecutive(config_dir)
+executive = capture_executive.capture_exec.CaptureExecutive(config_dir)
 time.sleep(1.0)
 
 sample_names = [x for x in os.listdir(samples_dir) if ".yaml" in x]
@@ -97,3 +97,4 @@ time.sleep(1)
 print "Calibration data collection has completed!"
 print ""
 print "You can now kill this node, along with any other calibration nodes that are running."
+

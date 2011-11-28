@@ -6,7 +6,7 @@
 
   <param name="camera/rgb/annotated_viewer/filename_format"    type="string" value="/tmp/maxwell_calibration/cb_fail/cb_kinect_%04i.jpg" />
 
-  <include file="$(find pr2_calibration_launch)/capture_data/monocam_viewer.launch"
+  <include file="$(find calibration_launch)/capture_data/annotated_viewer.launch"
            ns="camera/rgb" />
 
 </launch>

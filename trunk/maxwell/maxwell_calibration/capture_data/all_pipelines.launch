@@ -31,16 +31,9 @@
   </group>
 
   <!-- Cameras -->
-  <include file="$(find pr2_calibration_launch)/capture_data/monocam_pipeline.launch"
-           ns="camera/rgb" />
-  <node type="relay"
-        pkg="topic_tools"
-        name="camera_rgb_relay"
-        args="/camera/rgb/image_mono /camera/rgb/image_rect" />
-  <node type="throttle"
-        pkg="topic_tools"
-        name="camera_rgb_throttle"
-        args="messages /camera/rgb/image_rect 2" />
+  <include file="$(find calibration_launch)/capture_data/monocam_pipeline.launch" ns="camera/rgb" >    
+    <arg name="image_topic" value="image_mono"/>
+  </include>
 
   <!-- Intersector -->
   <node type="interval_intersection_action"
