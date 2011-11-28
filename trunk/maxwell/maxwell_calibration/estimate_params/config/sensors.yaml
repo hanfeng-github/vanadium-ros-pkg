@@ -3,7 +3,7 @@
     - sensor_id:    kinect_rect
       camera_id:    kinect_rect
       chain:
-        before_chain: [head_joint, head_pan_servo_joint, head_pan_joint]
+        before_chain: [head_joint, head_pan_servo_joint, head_pan_joint, head_tilt_servo_joint]
         chain_id:     head_chain
         dh_link_num:  1  # Connects after head pan
         after_chain:  [head_sensor_frame_joint, head_kinect_frame_joint, head_kinect_ir_joint, 

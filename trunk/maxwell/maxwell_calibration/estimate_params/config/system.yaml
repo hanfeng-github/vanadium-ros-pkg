@@ -26,15 +26,16 @@
     arm_shoulder_pan_joint:                     [ 0, 0, 0.0235, 0, 0, 0]                    # arm_link -> arm_shoulder_pan_joint
     arm_cb:                                     [ .25, 0, 0, -pi/2, 0, 0]                   # Doesn't correspond to URDF! From r_wrist_roll joint to checkerboard in hand
 
-    head_joint:                                 [ 0, 0, 1.171575+0.0415-0.01, 0, 0, 0]      # torso_link -> head_link
+    head_joint:                                 [ 0, 0, 1.160075, 0, 0, 0]                  # torso_link -> head_link
     head_pan_servo_joint:                       [ 0.010, 0, 0.0254, 0, 0, 0]                # head_link -> head_pan_servo_link
     head_pan_joint:                             [ 0, 0, 0.019, 0, 0, 0]                     # head_pan_servo_link -> head_pan_link
+    head_tilt_servo_joint:                      [ 0, 0, 0.0415, 0, 0, 0]
 
     head_sensor_frame_joint:                    [ 0, 0, 0.0425, 0, 0, 0]                    # head_tilt_link -> head_sensor_frame
     head_kinect_frame_joint:                    [ 0, 0.07, 0.02, 0, -0.06, 0]               # head_sensor_frame -> head_kinect_frame_joint
     head_kinect_ir_joint:                       [ 0, 0, 0, 0, 0, 0]
     head_kinect_rgb_joint:                      [ 0, -0.03, 0, 0, 0, 0]                     # TODO this initial value was plucked from thin air... or worse.
-    head_kinect_rgb_optical_frame_joint:        [0, 0, 0, -pi/2, 0, -pi/2]
+    head_kinect_rgb_optical_frame_joint:        [0, 0, 0, -1.2091995761561452, 1.2091995761561452, -1.2091995761561452]
 
   rectified_cams:
     kinect_rect:
