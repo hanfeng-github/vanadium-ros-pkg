@@ -45,9 +45,8 @@ class DiffController(Controller):
     """ Controller to handle movement & odometry feedback for a differential 
             drive mobile base. """
     def __init__(self, device, name):
-        self.name = name
-        self.device = device
-        self.fake = device.fake
+        Controller.__init__(self, device, name)
+        self.pause = True
         self.last_cmd = rospy.Time.now()
 
         # parameters: rates and geometry

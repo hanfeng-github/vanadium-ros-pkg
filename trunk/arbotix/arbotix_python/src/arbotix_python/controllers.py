@@ -40,6 +40,7 @@ class Controller:
         self.name = name
         self.device = device
         self.fake = device.fake
+        self.pause = False
 
         # output for joint states publisher
         self.joint_names = list()

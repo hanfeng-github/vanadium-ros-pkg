@@ -40,9 +40,9 @@ from joints import *
 
 class DynamixelServo(Joint):
 
-    def __init__(self, device, name):
+    def __init__(self, device, name, ns="~joints"):
         Joint.__init__(self, device, name)
-        n = "~dynamixels/"+name+"/"
+        n = ns+"/"+name+"/"
         
         self.id = int(rospy.get_param(n+"id"))
         self.ticks = rospy.get_param(n+"ticks", 1024)
@@ -208,9 +208,9 @@ class DynamixelServo(Joint):
 
 class HobbyServo(Joint):
 
-    def __init__(self, device, name):
+    def __init__(self, device, name, ns="~joints"):
         Joint.__init__(self, device, name)
-        n = "~servos/"+name+"/"
+        n = ns+"/"+name+"/"
         
         self.id = int(rospy.get_param(n+"id"))
         self.ticks = rospy.get_param(n+"ticks", 2000)
