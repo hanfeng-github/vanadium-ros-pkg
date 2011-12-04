@@ -33,6 +33,9 @@ from joints import *
 from controllers import *
 from std_msgs.msg import Float64
 from diagnostic_msgs.msg import *
+from std_srvs.srv import *
+
+from struct import unpack
 
 class LinearJoint(Joint):
     def __init__(self, device, name):
@@ -45,13 +48,18 @@ class LinearJoint(Joint):
         self.last = rospy.Time.now()
 
         # TODO: load these from URDF
-        self.min = rospy.get_param('~controllers/'+name+'/min_position',0.0)
-        self.max = rospy.get_param('~controllers/'+name+'/max_position',0.5)
-        self.max_speed = rospy.get_param('~controllers/'+name+'/max_speed',0.05)
+        self.min = rospy.get_param('~joints/'+name+'/min_position',0.0)
+        self.max = rospy.get_param('~joints/'+name+'/max_position',0.5)
+        self.max_speed = rospy.get_param('~joints/'+name+'/max_speed',0.05)
 
-        # calibration data {reading: position} 
-        self.cal = { 72: 0, 67: 0.0127,  64: 0.0255, 52: 0.0762, 44: 0.127, 38: 0.1778, 33: 0.2286, 30: 0.2794, 24: 0.4064, 20: 0.4953 }
+        # calibration data {reading: position}
+        self.cal = { -1: -1, 1: 1 }
+        self.cal_raw = rospy.get_param('~joints/'+name+'/calibration_data', self.cal)
+        self.cal = dict()
+        for key, value in self.cal_raw.items():
+            self.cal[int(key)] = value
         self.keys = sorted(self.cal.keys())
+        print self.cal
 
         rospy.Subscriber(name+'/command', Float64, self.commandCb)
         
@@ -77,12 +85,17 @@ class LinearJoint(Joint):
             t = rospy.Time.now()
             self.velocity = (self.position - last_angle)/((t - self.last).to_nsec()/1000000000.0)
             self.last = t
+        else:
+            rospy.logerr(self.name + ": feedback reading out of range")
 
     def setControlOutput(self, position):
         """ Set the position that controller is moving to. 
             Returns output value in raw_data format. """
-        self.desired = position
-        self.dirty = True
+        if position <= self.max and position >= self.min:
+            self.desired = position
+            self.dirty = True
+        else:
+            rospy.logerr(self.name + ": requested position is out of range")
         return None # TODO
     
     def getDiagnostics(self):
@@ -102,8 +115,11 @@ class LinearJoint(Joint):
         if self.device.fake:
             self.position = req.data
         else:
-            self.desired = req.data
-            self.dirty = True
+            if req.data <= self.max and req.data >= self.min:
+                self.desired = req.data
+                self.dirty = True
+            else:
+                rospy.logerr(self.name + ": requested position is out of range")
 
     def readingToPosition(self, reading):
         low = 0
@@ -116,12 +132,11 @@ class LinearJoint(Joint):
         y = self.cal[self.keys[high]] - self.cal[self.keys[low]]
         x1 = reading - self.keys[low]
         y1 = y * ( float(x1)/float(x) )
-        #print reading, low, high, x, y, x1, self.cal[self.keys[high]] + y1, self.keys                         
         return self.cal[self.keys[low]] + y1
 
 
-class LinearController(Controller):
-    """ A controller for a linear actuator. """
+class LinearControllerAbsolute(Controller):
+    """ A controller for a linear actuator, with absolute positional feedback. """
 
     def __init__(self, device, name):
         Controller.__init__(self, device, name)
@@ -129,21 +144,20 @@ class LinearController(Controller):
         self.a = rospy.get_param('~controllers/'+name+'/motor_a',13)
         self.b = rospy.get_param('~controllers/'+name+'/motor_b',14)
         self.p = rospy.get_param('~controllers/'+name+'/motor_pwm',15)
-        print self.a, self.b, self.p
         self.analog = rospy.get_param('~controllers/'+name+'/feedback',0)
         self.last = 0
 
         self.delta = rospy.Duration(1.0/rospy.get_param('~controllers/'+name+'/rate', 10.0))
         self.next = rospy.Time.now() + self.delta
 
-        self.joint = LinearJoint(device, name)
-        device.joints[name] = self.joint
+        self.joint = device.joints[rospy.get_param('~controllers/'+name+'/joint')]
 
         # ROS interfaces
         rospy.loginfo("Started LinearController ("+self.name+").")
 
     def startup(self):
-        self.joint.setCurrentFeedback(self.device.getAnalog(self.analog))
+        if not self.fake:
+            self.joint.setCurrentFeedback(self.device.getAnalog(self.analog))
 
     def update(self):
         now = rospy.Time.now()
@@ -155,7 +169,6 @@ class LinearController(Controller):
             output = self.joint.interpolate(1.0/self.delta.to_sec())
             if self.last != output: 
                 self.last = output
-                #print self.device.getAnalog(self.analog), self.joint.position, self.joint.dirty, self.joint.desired, output
                 if output == 1:
                     self.device.setDigital(self.a, 0); self.device.setDigital(self.b, 1); # up
                     self.device.setDigital(self.p, 1)
@@ -170,7 +183,108 @@ class LinearController(Controller):
             self.next = now + self.delta
     
     def shutdown(self):
-        self.device.setDigital(self.p, 0)
+        if not self.fake:
+            self.device.setDigital(self.p, 0)
+
+    def getDiagnostics(self):
+        """ Get a diagnostics status. """
+        msg = DiagnosticStatus()
+        msg.name = self.name
+        msg.level = DiagnosticStatus.OK
+        msg.message = "OK"
+        return msg
+
+
+class LinearControllerIncremental(Controller):
+    """ A controller for a linear actuator, without absolute encoder. """
+    POSITION_L  = 100
+    POSITION_H  = 101
+    DIRECTION   = 102
+
+    def __init__(self, device, name):
+        Controller.__init__(self, device, name)
+        self.pause = True
+
+        self.a = rospy.get_param('~controllers/'+name+'/motor_a',13)
+        self.b = rospy.get_param('~controllers/'+name+'/motor_b',14)
+        self.p = rospy.get_param('~controllers/'+name+'/motor_pwm',15)
+        self.last = 0
+
+        self.delta = rospy.Duration(1.0/rospy.get_param('~controllers/'+name+'/rate', 10.0))
+        self.next = rospy.Time.now() + self.delta
+
+        self.joint = device.joints[rospy.get_param('~controllers/'+name+'/joint')]
+
+        rospy.Service(name+'/zero', Empty, self.zeroCb)
+
+        # ROS interfaces
+        rospy.loginfo("Started LinearControllerIncremental ("+self.name+").")
+
+    def startup(self):
+        if not self.fake:
+            self.zeroEncoder()
+
+    def update(self):
+        now = rospy.Time.now()
+        if now > self.next:
+            # read current position
+            if self.joint.dirty:
+                try:
+                    self.joint.setCurrentFeedback(self.getPosition())
+                except Exception as e:
+                    print "linear", e
+                # update movement
+                output = self.joint.interpolate(1.0/self.delta.to_sec())
+                if self.last != output: 
+                    self.setSpeed(output)
+                    self.last = output
+                    if output == 0:
+                        self.joint.dirty = False
+            self.next = now + self.delta
+
+    def setSpeed(self, speed):
+        """ Set speed of actuator. """
+        if speed > 0:
+            self.device.write(253, self.DIRECTION, [1])
+            self.device.setDigital(self.a, 0); self.device.setDigital(self.b, 1);   # up
+            self.device.setDigital(self.p, 1)
+        elif speed < 0:
+            self.device.write(253, self.DIRECTION, [0])
+            self.device.setDigital(self.a, 1); self.device.setDigital(self.b, 0);   # down
+            self.device.setDigital(self.p, 1)
+        else:
+            self.device.setDigital(self.p, 0)
+
+    def getPosition(self):
+        return unpack('=h', "".join([chr(k) for k in self.device.read(253, self.POSITION_L, 2)]) )[0]
+
+    def zeroEncoder(self, timeout=15.0):
+        rospy.loginfo(self.name + ': zeroing encoder')
+        self.setSpeed(1)
+        last_pos = None
+        for i in range(int(timeout)):
+            if rospy.is_shutdown():
+                return
+            try:
+                new_pos = self.getPosition()
+            except:
+                pass
+            #print "new_pos:",new_pos
+            if last_pos == new_pos:
+                break
+            last_pos = new_pos
+            rospy.sleep(1)
+        self.setSpeed(0)
+        self.device.write(253, self.POSITION_L, [0, 0])
+
+    def zeroCb(self, msg):
+        if not self.fake:
+            self.zeroEncoder(15.0)
+        return EmptyResponse()
+
+    def shutdown(self):
+        if not self.fake:
+            self.setSpeed(0)
 
     def getDiagnostics(self):
         """ Get a diagnostics status. """
