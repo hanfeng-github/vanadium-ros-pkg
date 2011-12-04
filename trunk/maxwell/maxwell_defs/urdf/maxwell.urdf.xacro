@@ -28,12 +28,22 @@
 
   <!-- Add Torso Upright -->
   <maxwell_torso name="torso" parent="base">
-    <origin xyz="-0.00635 0 ${base_size_z}" rpy="0 -0.01 0"/>
+    <origin xyz="-0.00635 0 ${base_size_z+arm_height}" rpy="0 0 0"/>
   </maxwell_torso>
 
+  <!-- Live joint between torso and arm -->
+  <joint name="arm_lift_joint" type="prismatic">
+    <axis xyz="0 0 1" />
+    <limit lower="-0.464" upper="0" effort="30" velocity="0.013"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="torso_link"/>
+    <child link="arm_lift_link"/>
+  </joint>
+  <link name="arm_lift_link"/>
+
   <!-- Arm -->
-  <maxwell_arm name="arm" parent="torso">
-    <origin xyz="0.0611 0 ${arm_height}" rpy="0 0 0"/>
+  <maxwell_arm name="arm" parent="arm_lift">
+    <origin xyz="0.0611 0 0" rpy="0 0 0"/>
   </maxwell_arm>
 
   <!-- Gripper -->
@@ -43,7 +53,7 @@
 
   <!-- Head -->
   <maxwell_head name="head" parent="torso" color="Orange">
-    <origin xyz="0 0 ${column_height}" rpy="0 0 0"/>
+    <origin xyz="0 0 ${column_height-arm_height}" rpy="0 0 0"/>
   </maxwell_head>
   <kinect_camera name="head_kinect" parent="head_sensor_frame">
     <origin xyz="0 .07 .02" rpy="0 -.06 0"/> <!-- TODO: these values work, update underlying aspects for ASUS Xtion -->
