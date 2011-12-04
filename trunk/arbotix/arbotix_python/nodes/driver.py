@@ -43,10 +43,11 @@ from arbotix_python.publishers import *
 from arbotix_python.io import *
 
 # name: [ControllerClass, pause]
-controller_types = { "follow_controller" : [FollowController,False],
-                     "diff_controller"   : [DiffController,True],
-#                    "omni_controller"   : [OmniController,True],
-                     "linear_controller" : [LinearController,False] }
+controller_types = { "follow_controller" : FollowController,
+                     "diff_controller"   : DiffController,
+#                    "omni_controller"   : OmniController,
+                     "linear_controller" : LinearControllerAbsolute,
+                     "linear_controller_i" : LinearControllerIncremental }
 
 ###############################################################################
 # Main ROS interface
@@ -79,24 +80,43 @@ class ArbotixROS(ArbotiX):
 
         # setup joints
         self.joints = dict()
-        controller = ServoController(self, "servos")
-        for name in rospy.get_param("~dynamixels", dict()).keys():
-            self.joints[name] = DynamixelServo(self, name)
-            controller.dynamixels.append(self.joints[name])
-        for name in rospy.get_param("~servos", dict()).keys():
-            self.joints[name] = HobbyServo(self, name)
-            controller.hobbyservos.append(self.joint[name])
+        servo_controller = ServoController(self, "servos")
+
+    # TODO: <BEGIN> REMOVE THIS BEFORE 1.0
+        if len(rospy.get_param("~dynamixels", dict()).keys()) > 0:
+            rospy.logwarn("Warning: use of dynamixels as a dictionary is deprecated")
+            for name in rospy.get_param("~dynamixels", dict()).keys():
+                self.joints[name] = DynamixelServo(self, name, "~dynamixels")
+                servo_controller.dynamixels.append(self.joints[name])
+        if len(rospy.get_param("~servos", dict()).keys()) > 0:
+            rospy.logwarn("Warning: use of servos as a dictionary is deprecated")
+            for name in rospy.get_param("~servos", dict()).keys():
+                self.joints[name] = HobbyServo(self, name, "~servos")
+                servo_controller.hobbyservos.append(self.joint[name])
+    # TODO: <END> REMOVE THIS BEFORE 1.0
+
+        for name in rospy.get_param("~joints", dict()).keys():
+            joint_type = rospy.get_param("~joints/"+name+"/type", "dynamixel")
+            if joint_type == "dynamixel":
+                self.joints[name] = DynamixelServo(self, name)
+                servo_controller.dynamixels.append(self.joints[name])   # TODO: move this to servo controller
+            elif joint_type == "hobby_servo":
+                self.joints[name] = HobbyServo(self, name)
+                servo_controller.hobbyservos.append(self.joint[name])   # TODO: move this to servo controller
+            elif joint_type == "calibrated_linear":
+                self.joints[name] = LinearJoint(self, name)
 
         # setup controller
         self.controllers = list()
         controllers = rospy.get_param("~controllers", dict())
         for name, params in controllers.items():
             try:
-                self.controllers.append( controller_types[params["type"]][0](self, name) )
-                pause = pause or controller_types[params["type"]][1]
+                controller = controller_types[params["type"]](self, name)
+                self.controllers.append( controller )
+                pause = pause or controller.pause
             except:
                 rospy.logerr("Unrecognized controller: " + params["type"])
-        self.controllers.append(controller)
+        self.controllers.append(servo_controller)
 
         # wait for arbotix to start up (especially after reset)
         if not self.fake:

@@ -90,7 +90,8 @@ class controllerGUI(wx.Frame):
         joint_defaults = getJointsFromURDF()
         
         i = 0
-        dynamixels = rospy.get_param("/arbotix/dynamixels", dict())
+    # TODO: <BEGIN> REMOVE THIS BEFORE 1.0
+        dynamixels = rospy.get_param('/arbotix/dynamixels', dict())
         self.servos = list()
         self.publishers = list()
         self.relaxers = list()
@@ -107,6 +108,26 @@ class controllerGUI(wx.Frame):
             servoSizer.Add(s.position,(i,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
             self.servos.append(s)
             i += 1
+    # TODO: <END> REMOVE THIS BEFORE 1.0
+
+        joints = rospy.get_param('/arbotix/joints', dict())
+        # create sliders and publishers
+        for name in sorted(joints.keys()):
+            # pull angles
+            min_angle, max_angle = getJointLimits(name, joint_defaults)
+            # create publisher
+            self.publishers.append(rospy.Publisher(name+'/command', Float64))
+            if rospy.get_param('/arbotix/joints/'+name+'/type','dynamixel') == 'dynamixel':
+                self.relaxers.append(rospy.ServiceProxy(name+'/relax', Relax))
+            else:
+                self.relaxers.append(None)
+            # create slider
+            s = servoSlider(self, min_angle, max_angle, name, i)
+            servoSizer.Add(s.enabled,(i,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)   
+            servoSizer.Add(s.position,(i,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
+            self.servos.append(s)
+            i += 1
+
         # add everything
         servoBox.Add(servoSizer) 
         sizer.Add(servoBox, (0,1), wx.GBSpan(1,1), wx.EXPAND|wx.TOP|wx.BOTTOM|wx.RIGHT,5)
@@ -138,7 +159,8 @@ class controllerGUI(wx.Frame):
             self.servos[servo].position.Enable()
         else:
             self.servos[servo].position.Disable()
-            self.relaxers[servo]()
+            if self.relaxers[servo]:
+                self.relaxers[servo]()
 
     def stateCb(self, msg):        
         for servo in self.servos:
