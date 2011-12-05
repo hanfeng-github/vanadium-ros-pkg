@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<language id="yaml" _name="YAML" version="2.0" _section="Markup">
+  <metadata>
+    <property name="mimetypes">text/x-yaml</property>
+    <property name="globs">*.yaml</property>
+    <property name="line-comment-start">#</property>
+  </metadata>
+
+  <styles>
+    <style id="comment" _name="Comment" map-to="def:comment"/>
+    <style id="string" _name="String" map-to="def:string"/>
+    <style id="character" _name="Character" map-to="def:character"/>
+    <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+    <style id="type" _name="Type" map-to="def:type"/>
+    <style id="boolean" _name="Boolean value" map-to="def:boolean"/>
+    <style id="base-n-number" _name="Base-N Integer" map-to="def:base-n-integer"/>
+    <style id="real" _name="Real number" map-to="def:floating-point"/>
+    <style id="number" _name="Number" map-to="def:number"/>
+  </styles>
+
+  <default-regex-options case-sensitive="false"/>
+
+  <definitions>
+
+    <context id="line-comment" style-ref="comment" end-at-line-end="true" class="comment" class-disabled="no-spell-check">
+      <start>#</start>
+      <include>
+        <context ref="def:in-line-comment"/>
+      </include>
+    </context>
+
+    <context id="string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
+      <start>"</start>
+      <end>"</end>
+    </context>
+
+    <context id="type" class="type">
+      <match extended="true">
+        (^[\w_]*:)
+        (\W[\w_]*:)
+      </match>
+    </context>
+
+    <context id="boolean" style-ref="boolean">
+      <keyword>false</keyword>
+      <keyword>true</keyword>
+    </context>
+
+    <define-regex id="hexnum">[0-9a-f][0-9a-f_]*</define-regex>
+    <define-regex id="exponent">[Ee][+-]?[0-9][0-9_]*</define-regex>
+
+    <context id="real" style-ref="real">
+      <match extended="true">
+        (?&lt;![\w\.])
+        [0-9][0-9_]*\.[0-9][0-9_]*\%{exponent}?
+        (?![\w\.])
+      </match>
+    </context>
+
+    <context id="number" style-ref="number">
+      <match extended="true">
+        (?&lt;![\w\.])
+        [0-9][0-9_]*(E[+]?[0-9][0-9_]*)?
+        (?![\w\.])
+      </match>
+    </context>
+
+    <context id="yaml" class="no-spell-check">
+      <include>
+        <context ref="line-comment"/>
+        <context ref="string"/>
+        <context ref="type"/>
+        <context ref="boolean"/>
+        <context ref="real"/>
+        <context ref="number"/>
+      </include>
+    </context>
+
+  </definitions>
+
+</language>
+
+
