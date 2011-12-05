@@ -1,7 +1,7 @@
 
-  dh_chains:
+  chains:
     arm_chain:
-      dh:     
+      transforms:     
         - [ 0, 0, 0, 0, 0, 0 ]        # Shoulder Pan
         - [ 0, 0, 0, 0, 0, 0 ]        # Shoulder Lift
         - [ 0, 0, 0, 0, 0, 0 ]        # Elbow Flex
@@ -10,7 +10,7 @@
       gearing: [0, 0, 0, 0, 0]
 
     head_chain:
-      dh:
+      transforms:
         - [ 0, 0, 0, 0, 0, 0 ]        # Head Pan
         - [ 0, 0, 0, 0, 0, 0 ]        # Head Tilt
       gearing: [0, 0]

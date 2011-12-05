@@ -5,7 +5,7 @@
       chain:
         before_chain: [head_joint, head_pan_servo_joint, head_pan_joint, head_tilt_servo_joint]
         chain_id:     head_chain
-        dh_link_num:  1  # Connects after head pan
+        link_num:     1  # Connects after head pan
         after_chain:  [head_sensor_frame_joint, head_kinect_frame_joint, head_kinect_ir_joint, 
                        head_kinect_rgb_joint, head_kinect_rgb_optical_frame_joint]
 
@@ -14,4 +14,4 @@
       before_chain: [arm_base_joint, arm_shoulder_pan_joint]
       chain_id:     arm_chain
       after_chain:  [arm_cb]
-      dh_link_num:  4
+      link_num:  4
