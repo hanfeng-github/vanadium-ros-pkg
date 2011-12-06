@@ -1,36 +1,4 @@
 #!/usr/bin/env python
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2008, Willow Garage, Inc.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Willow Garage, Inc. nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
 import roslib; roslib.load_manifest('maxwell_calibration')
 
 import sys
@@ -38,8 +6,8 @@ import unittest
 import rospy
 import time
 
-from pr2_calibration_estimation.full_chain import FullChainRobotParams
-from pr2_calibration_estimation.robot_params import RobotParams
+from calibration_estimation.full_chain import FullChainRobotParams
+from calibration_estimation.urdf_params import UrdfParams
 from sensor_msgs.msg import JointState
 
 import yaml
@@ -49,11 +17,8 @@ import numpy
 
 class LoadData(unittest.TestCase):
     def setUp(self):
-        f = rospy.get_param("system")
-        all_config = yaml.load(f)
-
-        self.robot_params = RobotParams()
-        self.robot_params.configure(all_config)
+        config = yaml.load(open(rospy.get_param('config_file')))
+        self.robot_params = UrdfParams(rospy.get_param('robot_description'),config)
 
         rospy.wait_for_service('fk', 3.0)
         self._fk_ref = rospy.ServiceProxy('fk', FkTest)
@@ -90,15 +55,7 @@ class TestMaxwellFk(LoadData):
 
     def test_arm_fk(self):
         print "\n\n\n"
-
-        config_str = '''
-        before_chain: [arm_base_joint, arm_shoulder_pan_joint]
-        chain_id:     arm_chain
-        after_chain:  []
-        dh_link_num:  4
-        '''
-
-        full_chain = FullChainRobotParams(yaml.load(config_str))
+        full_chain = FullChainRobotParams('arm_chain', 'arm_wrist_roll_link')
         full_chain.update_config(self.robot_params)
 
         cmds = self.loadCommands('arm_commands')
