@@ -25,13 +25,12 @@
     </link>
   </macro>
 
-
   <!-- origin is center of head tilt rotation -->
   <macro name="maxwell_head" params="name parent color *origin">
 
     <joint name="${name}_joint" type="fixed">
       <insert_block name="origin" />
-      <parent link="${parent}_link"/>
+      <parent link="${parent}"/>
       <child link="${name}_link"/>
     </joint>
     <link name="${name}_link"/>
@@ -64,36 +63,6 @@
     <ax12_hinge_revolute parent="${name}_tilt_servo_link" name="${name}_tilt" llimit="-1.57" ulimit="1.57" vlimit="1.0" color="${color}">
      <origin xyz="0 0 0" rpy="0 0 0"/>
     </ax12_hinge_revolute>
-
-    <!-- Head sensor frame -->
-    <joint name="${name}_sensor_frame_joint" type="fixed">
-      <origin xyz="0 0 0.0425"/>
-      <parent link="${name}_tilt_link"/>
-      <child link="${name}_sensor_frame"/>
-    </joint>
-    <link name="${name}_sensor_frame">
-      <!--<visual>
-        <origin xyz="-0.03 0 0" rpy="0 0 -1.57" />
-        <geometry>
-          <mesh filename="package://maxwell_defs/meshes/kinect.stl" />
-        </geometry>
-        <material name="Black" />
-      </visual>
-      <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <geometry>
-          <box size="0.064 0.28 0.04"/>
-        </geometry>
-      </collision>-->
-    </link>
-
-    <!-- Openni Link 
-    <joint name="openni_camera_joint" type="fixed">
-      <origin xyz="${calib_cam_x} ${calib_cam_y} ${calib_cam_z}" rpy="${calib_cam_rr} ${calib_cam_rp} ${calib_cam_ry}" />
-      <parent link="${name}_sensor_frame"/>
-      <child link="openni_camera"/>
-    </joint>
-    <link name="openni_camera"/>-->
 
   </macro>
 

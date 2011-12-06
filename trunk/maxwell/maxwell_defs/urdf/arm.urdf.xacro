@@ -37,7 +37,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="1.57 3.14 0" />
         <geometry>
-          <mesh filename="package://maxwell_defs/meshes/arm_mount.stl" scale="1 1 1"/>
+          <mesh filename="package://maxwell_defs/meshes/arm_mount.stl" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="Black"/>
       </visual>
@@ -56,15 +56,15 @@
     <!-- Arm Link -->
     <joint name="${name}_base_joint" type="fixed">
       <insert_block name="origin" />
-      <parent link="${parent}_link"/>
+      <parent link="${parent}"/>
       <child link="${name}_link"/>
     </joint>
     <link name="${name}_link"/>
     <arm_mount name="${name}_left_mount" parent="${name}_link">
-      <origin xyz="-0.0611 0.0254 0" rpy="0 0 0"/>
+      <origin xyz="-0.0611 0.0254 -0.034" rpy="0 0 0"/>
     </arm_mount>
     <arm_mount name="${name}_right_mount" parent="${name}_link">
-      <origin xyz="-0.0611 ${-0.0254+0.0047625} 0" rpy="0 0 0"/>
+      <origin xyz="-0.0611 ${-0.0254} 0.034" rpy="3.14 0 0"/>
     </arm_mount>
 
     <!-- Shoulder pan -->
