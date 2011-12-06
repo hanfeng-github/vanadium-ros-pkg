@@ -23,7 +23,7 @@
   <include filename="$(find maxwell_defs)/urdf/materials.urdf.xacro" />
 
   <!-- Now we can start using the macros included above to define the actual Maxwell -->
-  <armadillo_base name="base"/>
+  <armadillo_base name="base" color="Orange"/>
 
   <!-- Add Torso Upright -->
   <maxwell_torso name="torso" parent="base">
@@ -31,9 +31,10 @@
   </maxwell_torso>
 
   <!-- Live joint between torso and arm -->
-  <joint name="arm_lift_joint" type="prismatic">
+  <joint name="torso_lift_joint" type="prismatic">
     <axis xyz="0 0 1" />
-    <limit lower="-0.45" upper="0.05" effort="30" velocity="0.013"/>
+    <!--<limit lower="${arm_height-0.508+0.05}" upper="${arm_height-0.05}" effort="30" velocity="0.013"/>-->
+    <limit lower="${arm_height-0.4572+0.05}" upper="${arm_height-0.05}" effort="30" velocity="0.013"/>
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="torso_link"/>
     <child link="arm_lift_link"/>
@@ -42,16 +43,17 @@
 
   <!-- Arm -->
   <maxwell_arm name="arm" parent="arm_lift">
-    <origin xyz="0.0611 0 ${arm_height}"/>
+    <!--<origin xyz="0.0611 0 ${arm_height}"/>-->
+    <origin xyz="0.0611 0 0"/>
   </maxwell_arm>
 
   <!-- Gripper -->
-  <maxwell_gripper name="gripper" parent="arm_wrist_roll">
+  <maxwell_gripper name="gripper" parent="arm_wrist_roll" color="Orange">
     <origin xyz="0 0 0" /> 
   </maxwell_gripper>
 
   <!-- Head -->
-  <maxwell_head name="head" parent="torso">
+  <maxwell_head name="head" parent="torso" color="Orange">
     <origin xyz="0 0 ${column_height}"/>
   </maxwell_head>
 
