@@ -13,7 +13,7 @@ arm:
     - LBKPIECEkConfig1
   projection_evaluator: joint_state
 arm_cartesian:
-  parent_frame: arm_link
+  parent_frame: torso_link
   physical_group: arm
   planner_type: RPYIKTaskSpacePlanner
   state_spaces:
@@ -46,6 +46,6 @@ arm_cartesian:
     - LBKPIECEkConfig1
   kinematics_solver: arm_kinematics_constraint_aware/KDLArmKinematicsPlugin
   tip_name: gripper_link
-  root_name: arm_link
+  root_name: torso_link
   projection_evaluator: joint_state
   longest_valid_segment_fraction: 0.001

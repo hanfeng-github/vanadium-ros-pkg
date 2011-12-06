@@ -7,6 +7,8 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/maxwell_arm_navigation</url>
 
+  <depend package="actionlib"/>
+  <depend package="arm_navigation_msgs"/>
   <depend package="planning_environment"/>
   <depend package="arm_kinematics_constraint_aware"/>
   <depend package="ompl_ros_interface"/>
