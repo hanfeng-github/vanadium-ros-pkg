@@ -28,6 +28,4 @@ fi
 # Make all the temporary files writable
 chmod ag+w /tmp/maxwell_calibration/*
 
-rosrun maxwell_calibration write_maxwell.sh
-
 #rosrun pr2_calibration_launch backup_measurements.sh

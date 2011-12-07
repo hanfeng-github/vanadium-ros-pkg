@@ -9,8 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/maxwell_calibration</url>
   <depend package="calibration_launch"/>
-  <depend package="pr2_calibration_estimation"/>
-  <depend package="pr2_calibration_propagation"/>
+  <depend package="calibration_estimation"/>
 
   <!-- For running tests -->
   <depend package="kdl" />
