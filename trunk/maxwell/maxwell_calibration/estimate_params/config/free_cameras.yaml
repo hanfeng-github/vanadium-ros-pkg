@@ -1,30 +1,12 @@
 
+  transforms:
+    head_kinect_rgb_joint: [ 1, 1, 1, 1, 1, 1 ]
+  
   chains:
     arm_chain:
-      transforms:     
-        - [ 0, 0, 0, 0, 0, 0 ]        # Shoulder Pan
-        - [ 0, 0, 0, 0, 0, 0 ]        # Shoulder Lift
-        - [ 0, 0, 0, 0, 0, 0 ]        # Elbow Flex
-        - [ 0, 0, 0, 0, 0, 0 ]        # Wrist flex
-        - [ 0, 0, 0, 0, 0, 0 ]        # Wrist roll
       gearing: [0, 0, 0, 0, 0]
-
     head_chain:
-      transforms:
-        - [ 0, 0, 0, 0, 0, 0 ]        # Head Pan
-        - [ 0, 0, 0, 0, 0, 0 ]        # Head Tilt
       gearing: [0, 0]
-
-  transforms:
-    arm_shoulder_pan_joint:                 [ 0, 0, 0, 0, 0, 0 ]
-    arm_cb:                                 [ 0, 0, 0, 0, 0, 0 ]
-
-    head_joint:                             [ 0, 0, 0, 0, 0, 0 ]
-    head_pan_joint:                         [ 0, 0, 0, 0, 0, 0 ]
-    head_plate_frame_joint:                 [ 0, 0, 0, 0, 0, 0 ]
-
-    head_kinect_rgb_joint:                  [ 1, 1, 1, 1, 1, 1 ]
-    head_kinect_rgb_optical_frame_joint:    [ 0, 0, 0, 0, 0, 0 ]
 
   rectified_cams:
     kinect_rect:
@@ -33,7 +15,10 @@
       cx_shift: 0
       cy_shift: 0
 
+  tilting_lasers: {}
+
   checkerboards:
     small_cb_4x5:
       spacing_x: 0
       spacing_y: 0
+

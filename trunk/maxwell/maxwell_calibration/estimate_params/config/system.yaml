@@ -1,53 +1,51 @@
+base_link: torso_link
+
+sensors:
 
   chains:
     arm_chain:
-     transforms:
-     - [ 0, 0, 0.0526, 0, 0, 0]
-     - [ 0.162, 0, 0, 0, 0, 0]
-     - [ 0.124, 0, 0, 0, 0, 0]
-     - [ 0.031, 0, 0, 0, 0, 0]
-     - [ 0, 0, 0, 0, 0, 0]
-     axis: [ 6, 5, 5, 5, 4]
-     cov:
+      sensor_id: arm_chain # TODO: get rid of sensor_id(s)
+      root: torso_link
+      tip: arm_wrist_roll_link
+      cov:
        joint_angles: [0.001, 0.001, 0.001, 0.001, 0.001]
-     gearing: [1.0, 1.0, 1.0, 1.0, 1.0]
-
+      gearing: [1.0, 1.0, 1.0, 1.0, 1.0]
     head_chain:
-     transforms:
-     - [ 0, 0, 0, 0, 0, 0 ]
-     - [ 0, 0, 0, 0, 0, 0 ]
-     axis: [ 6, 5]
-     cov:
-      joint_angles: [0.001, 0.001]
-     gearing: [1.0, 1.0]
-
-  transforms:
-    arm_base_joint:                             [ 0.06114, 0, 0.7239, 0, 0, 0]              # torso_link -> arm_link
-    arm_shoulder_pan_joint:                     [ 0, 0, 0.0235, 0, 0, 0]                    # arm_link -> arm_shoulder_pan_joint
-    arm_cb:                                     [ .25, 0, 0, -pi/2, 0, 0]                   # Doesn't correspond to URDF! From r_wrist_roll joint to checkerboard in hand
-
-    head_joint:                                 [ 0, 0, 1.160075, 0, 0, 0]                  # torso_link -> head_link
-    head_pan_servo_joint:                       [ 0.010, 0, 0.0254, 0, 0, 0]                # head_link -> head_pan_servo_link
-    head_pan_joint:                             [ 0, 0, 0.019, 0, 0, 0]                     # head_pan_servo_link -> head_pan_link
-    head_tilt_servo_joint:                      [ 0, 0, 0.0415, 0, 0, 0]
-
-    head_sensor_frame_joint:                    [ 0, 0, 0.0425, 0, 0, 0]                    # head_tilt_link -> head_sensor_frame
-    head_kinect_frame_joint:                    [ 0, 0.07, 0.02, 0, -0.06, 0]               # head_sensor_frame -> head_kinect_frame_joint
-    head_kinect_ir_joint:                       [ 0, 0, 0, 0, 0, 0]
-    head_kinect_rgb_joint:                      [ 0, -0.03, 0, 0, 0, 0]                     # TODO this initial value was plucked from thin air... or worse.
-    head_kinect_rgb_optical_frame_joint:        [0, 0, 0, -1.2091995761561452, 1.2091995761561452, -1.2091995761561452]
+      sensor_id: head_chain
+      root: head_link
+      tip: head_tilt_link
+      cov:
+       joint_angles: [0.001, 0.001]
+      gearing: [1.0, 1.0]
 
   rectified_cams:
     kinect_rect:
+      sensor_id: kinect_rect
+      chain_id: head_chain  #TODO: get rid of this
+      frame_id: head_kinect_rgb_optical_frame
       baseline_shift: 0.0
       f_shift: 0.0
       cx_shift: 0.0
       cy_shift: 0.0
       cov: {u: 0.125, v: 0.125}
 
+  tilting_lasers: {}
+#   tilt_laser:
+#     joint: tilt_laser_joint
+#     frame_id: tilt_laser_link
+#     gearing: 1.0
+#     cov:
+#       bearing: 0.0005
+#       range: 0.005
+#       tilt: 0.0005
+
   checkerboards:
     small_cb_4x5:
       corners_x: 4
       corners_y: 5
-      spacing_x: .0245
-      spacing_y: .0245
+      spacing_x: 0.0245
+      spacing_y: 0.0245
+
+transforms:
+  arm_chain_cb:   [ .25, 0, 0, -pi/2, 0, 0]
+

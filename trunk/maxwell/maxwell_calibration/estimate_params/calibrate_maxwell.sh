@@ -16,7 +16,7 @@ rm robot_calibrated.xml
 echo "Success"
 
 roslaunch maxwell_calibration estimation_config.launch
-rosrun pr2_calibration_estimation multi_step_cov_estimator.py /tmp/maxwell_calibration/cal_measurements.bag /tmp/maxwell_calibration __name:=cal_cov_estimator
+rosrun calibration_estimation multi_step_cov_estimator.py /tmp/maxwell_calibration/cal_measurements.bag /tmp/maxwell_calibration __name:=cal_cov_estimator
 
 est_return_val=$?
 

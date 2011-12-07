@@ -1,11 +1,8 @@
 <launch>
 
   <group ns="calibration_config" clear_params="true">
-
-    <group ns="sensors">
-      <param name="all" textfile="$(find maxwell_calibration)/estimate_params/config/sensors.yaml" />
-    </group>
-
+    <rosparam file="$(find maxwell_calibration)/estimate_params/config/system.yaml" command="load" />
+    
     <group ns="cal_steps">
 
       <group ns="Maxwell - 00 - Estimating Checkerboard Locations">
@@ -31,8 +28,6 @@
       </group>
 
     </group>
-
-    <param name="initial_system" textfile="$(find maxwell_calibration)/estimate_params/config/system.yaml" />
 
   </group>
 
