@@ -17,7 +17,7 @@ sensors:
       gearing: [1.0, 1.0]
 
   rectified_cams:
-    kinect_rect:
+    head_camera:
       chain_id: head_chain  #TODO: get rid of this
       frame_id: head_camera_rgb_optical_frame
       baseline_shift: 0.0

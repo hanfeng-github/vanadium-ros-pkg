@@ -13,7 +13,7 @@ from sensor_msgs.msg import JointState
 import string
 
 header1 = """camera_measurements:
-- {cam_id: kinect_rect, config: small_cb_4x5}
+- {cam_id: head_camera, config: small_cb_4x5}
 joint_commands:
 - controller: head_traj_controller
   segments:

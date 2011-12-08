@@ -6,10 +6,10 @@
         args="$(find maxwell_calibration)/capture_data/samples/ $(find maxwell_calibration)/capture_data/hardware_config"
         output="screen" >
 
-    <remap from="kinect_rect/camera_info" to="camera/rgb/camera_info"/>
-    <remap from="kinect_rect/image_rect"  to="camera/rgb/image_rect_throttle"/>
-    <remap from="kinect_rect/image"       to="camera/rgb/image_rect_throttle"/>
-    <remap from="kinect_rect/features"    to="camera/rgb/features"/>
+    <remap from="head_camera/camera_info" to="camera/rgb/camera_info"/>
+    <remap from="head_camera/image_rect"  to="camera/rgb/image_rect_throttle"/>
+    <remap from="head_camera/image"       to="camera/rgb/image_rect_throttle"/>
+    <remap from="head_camera/features"    to="camera/rgb/features"/>
   </node>
 
   <node type="urdf_pub.py" pkg="calibration_launch" name="urdf_pub"/>
