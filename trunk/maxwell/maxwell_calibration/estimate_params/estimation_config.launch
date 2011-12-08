@@ -11,7 +11,7 @@
         <rosparam>
           sensors:
           - arm_chain
-          - kinect_rect
+          - head_camera
         </rosparam>
         <param name="output_filename" type="string" value="config_0" />
       </group>
@@ -22,7 +22,7 @@
         <rosparam>
           sensors:
           - arm_chain
-          - kinect_rect
+          - head_camera
         </rosparam>
         <param name="output_filename" type="string" value="system_calibrated" />
       </group>

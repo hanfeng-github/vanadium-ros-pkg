@@ -8,12 +8,12 @@
   
   chains:
     arm_chain:
-      gearing: [0, 0, 0, 0, 0]
+      gearing: [0, 0, 0, 0, 0, 0]
     head_chain:
       gearing: [0, 0]
 
   rectified_cams:
-    kinect_rect:
+    head_camera:
       baseline_shift: 0
       f_shift: 0
       cx_shift: 0
