@@ -19,6 +19,7 @@ arm_chain:
         - 0.002
         - 0.002
         - 0.002
+        - 0.002
         max_step:   1.0
         cache_size: 1500
 
