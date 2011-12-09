@@ -38,7 +38,7 @@ class SampleMaker:
         rospy.init_node("make_samples")
         rospy.Subscriber("joint_states", JointState, self.callback)
 
-        self.arm_joints = ["arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_flex_joint", "arm_wrist_flex_joint", "arm_wrist_roll_joint"]
+        self.arm_joints = ["arm_lift_joint", "arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_flex_joint", "arm_wrist_flex_joint", "arm_wrist_roll_joint"]
         self.arm_state = [0.0 for joint in self.arm_joints]
         self.head_joints = ["head_pan_joint", "head_tilt_joint"]
         self.head_state = [0.0 for joint in self.head_joints]
