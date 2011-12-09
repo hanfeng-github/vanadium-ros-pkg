@@ -1,4 +1,4 @@
-base_link: base_link
+base_link: torso_link
 
 sensors:
 
@@ -24,7 +24,7 @@ sensors:
       f_shift: 0.0
       cx_shift: 0.0
       cy_shift: 0.0
-      cov: {u: 0.125, v: 0.125}
+      cov: {u: 0.25, v: 0.25}
 
   tilting_lasers: {}
 
@@ -36,5 +36,5 @@ checkerboards:
     spacing_y: 0.0245
 
 transforms:
-  arm_chain_cb:   [ .25, 0, 0, -pi/2, 0, 0]
+  arm_chain_cb:   [ .25, 0, 0, pi/2, 0, 0]
 
