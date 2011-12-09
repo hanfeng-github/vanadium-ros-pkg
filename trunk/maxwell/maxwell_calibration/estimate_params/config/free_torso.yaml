@@ -1,7 +1,8 @@
 
   transforms:
     head_joint: [0, 0, 1, 0, 0, 0]
-    head_camera_rgb_joint: [1, 1, 1, 1, 1, 1]
+    arm_chain_cb: [1, 1, 1, 0, 1, 1]
+    arm_wrist_roll_joint: [0, 0, 0, 1, 0, 0]
 
   chains:
     arm_chain:
@@ -15,6 +16,8 @@
       f_shift: 0
       cx_shift: 0
       cy_shift: 0
+
+  tilting_lasers: {}
 
   checkerboards:
     small_cb_4x5:
