@@ -4,11 +4,11 @@ joint_commands:
 - controller: head_traj_controller
   segments:
   - duration: 2.0
-    positions: [0.61870558444720869, 0.63915866161901724]
+    positions: [-0.74653731677101209, 0.77210366323577273]
 - controller: arm_controller
   segments:
   - duration: 2.0
-    positions: [0.0, 1.1300325137424223, 0.20985709389824397, -1.2964268186505732, -0.27100327252646328, 1.0993528979847096]
+    positions: [0.0, -0.49598712141635731, 0.21944447382252924, -0.44101947651712187, -0.78233020182167701, 1.564660403643354]
 joint_measurements:
 - {chain_id: head_chain, config: tight_tol}
 - {chain_id: arm_chain, config: tight_tol}
