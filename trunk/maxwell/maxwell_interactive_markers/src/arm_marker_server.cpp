@@ -94,8 +94,8 @@ public:
     : nh("~"), client("move_arm", true), server("arm_marker_server"), tf_listener(nh), immediate_commands(true), in_move(false)
   {
     // Get general arm parameters
-    nh.param<std::string>("root_link", root_link, "/arm_base_link");
-    nh.param<std::string>("tip_link", tip_link, "/gripper_link");
+    nh.param<std::string>("root_link", root_link, "torso_link");
+    nh.param<std::string>("tip_link", tip_link, "gripper_link");
     nh.param<double>("move_time", move_time, 2.0);
     
     // Get the joint list
