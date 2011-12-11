@@ -1,9 +1,9 @@
 <launch>
 
-  <node pkg="robot_self_filter" type="self_filter" respawn="false" name="kinect_self_filter" output="screen">
+  <node pkg="robot_self_filter" type="self_filter" respawn="false" name="head_camera_self_filter" output="screen">
      <remap from="cloud_in" to="/camera/rgb/points" />
      <remap from="cloud_out" to="/points_filtered2" />
-     <param name="sensor_frame" type="string" value="openni_rgb_optical_frame" />
+     <param name="sensor_frame" type="string" value="head_camera_rgb_optical_frame" />
      <param name="subsample_value" type="double" value=".01"/>
      <rosparam command="load" file="$(find maxwell_arm_navigation)/config/self_filter.yaml" />
   </node>

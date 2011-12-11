@@ -2,5 +2,5 @@ cloud_sources:
   - name: points_filtered2
     frame_subsample: 1
     point_subsample: 1
-    sensor_frame: openni_rgb_optical_frame
+    sensor_frame: head_camera_rgb_optical_frame
 
