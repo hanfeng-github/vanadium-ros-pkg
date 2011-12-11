@@ -1,13 +1,11 @@
 <package>
-  <description brief="turtlebot_arm_interactive_markers">
-
-     turtlebot_arm_interactive_markers allows the user to control the TurtleBot arm using rviz interactive markers.
-
+  <description brief="maxwell_interactive_markers">
+    This is an adaptation of the turtlebot interactive marker server to the Maxwell robot.
   </description>
-  <author>Helen Oleynikova</author>
+  <author>Michael Ferguson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/turtlebot_arm_interactive_markers</url>
+  <url>http://ros.org/wiki/maxwell_interactive_markers</url>
 
   <depend package="roscpp"/>
   <depend package="visualization_msgs"/>
@@ -18,5 +16,3 @@
   <depend package="actionlib"/>
 
 </package>
-
-
