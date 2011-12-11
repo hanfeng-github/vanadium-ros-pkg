@@ -2,7 +2,7 @@ joint_limits:
   arm_lift_joint:
     has_position_limits: true
     has_velocity_limits: true
-    max_velocity: 0.013
+    max_velocity: 0.0508
     has_acceleration_limits: true
     max_acceleration: 1
     angle_wraparound: false

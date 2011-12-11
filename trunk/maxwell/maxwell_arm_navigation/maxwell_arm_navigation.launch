@@ -8,5 +8,5 @@
     <include file="$(find maxwell_arm_navigation)/launch/ompl_planning.launch" />
     <include file="$(find maxwell_arm_navigation)/launch/trajectory_filter_server.launch" />
     <include file="$(find maxwell_arm_navigation)/launch/move_arm.launch" />
-    <include file="$(find maxwell_arm_navigation)/launch/kinect_perception.launch" />
+    <include file="$(find maxwell_arm_navigation)/launch/maxwell_arm_perception.launch" />
 </launch>
