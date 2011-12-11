@@ -35,7 +35,7 @@
     </joint>
     <link name="${name}_link">
       <visual>
-        <origin xyz="0 0 0" rpy="1.57 3.14 0" />
+        <origin xyz="0 0 -0.034" rpy="1.57 3.14 0" />
         <geometry>
           <mesh filename="package://maxwell_defs/meshes/arm_mount.stl" scale="0.001 0.001 0.001"/>
         </geometry>
@@ -61,10 +61,10 @@
     </joint>
     <link name="${name}_link"/>
     <arm_mount name="${name}_left_mount" parent="${name}_link">
-      <origin xyz="-0.0611 0.0254 -0.034" rpy="0 0 0"/>
+      <origin xyz="-0.0611 0.0254 0" rpy="0 0 0"/>
     </arm_mount>
     <arm_mount name="${name}_right_mount" parent="${name}_link">
-      <origin xyz="-0.0611 ${-0.0254} 0.034" rpy="3.14 0 0"/>
+      <origin xyz="-0.0611 ${-0.0254} 0" rpy="3.14 0 0"/>
     </arm_mount>
 
     <!-- Shoulder pan -->
@@ -96,13 +96,13 @@
     <rx64_hinge_hxl parent="${name}_elbow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.57" ulimit="2.617" vlimit="0.524" color="Grey">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
     </rx64_hinge_hxl>
-    <standoffs parent="${name}_elbow_flex_link" name="${name}_elbow_standoff" length="0">
+   <!--<standoffs parent="${name}_elbow_flex_link" name="${name}_elbow_standoff" length="0">
       <origin xyz="${0.048+0.0235} 0 0.0" rpy="0 0 0"/>
-    </standoffs>
+    </standoffs>-->
 
     <!-- Wrist flex -->
-    <rx64_side_fixed parent="${name}_elbow_standoff_link" name="${name}_wrist_flex_fixed" color="Grey">
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+    <rx64_side_fixed parent="${name}_elbow_flex_link" name="${name}_wrist_flex_fixed" color="Grey">
+      <origin xyz="${0.048+0.0235} 0 0" rpy="0 0 0"/>
     </rx64_side_fixed>
     <dynamixel_rx64_tilt parent="${name}_wrist_flex_fixed_link" name="${name}_wrist_flex_servo" color="Black">
       <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>

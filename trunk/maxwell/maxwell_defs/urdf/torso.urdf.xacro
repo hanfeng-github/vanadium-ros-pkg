@@ -36,12 +36,12 @@
         </geometry>
         <material name="Grey"/>
       </visual>
-      <!--<collision>
-        <origin xyz="0 0 ${column_height/2 - arm_height}" rpy="0 0 0 " />
+      <collision>
+        <origin xyz="-0.03 0 ${-0.650/2+.08}" rpy="0 0 0 " />
         <geometry>
-          <box size="0.0254 0.0254 ${column_height}"/>
+          <box size="0.03 0.0254 0.650"/>
         </geometry>
-      </collision>-->
+      </collision>
     </link>
 
   </macro>
