@@ -33,7 +33,6 @@ from control_msgs.msg import FollowJointTrajectoryAction
 from trajectory_msgs.msg import JointTrajectory
 from diagnostic_msgs.msg import *
 
-#from controller import Controller
 from ax12 import *
 from controllers import *
 
@@ -89,7 +88,7 @@ class FollowController(Controller):
             return
 
         if self.executeTrajectory(traj):   
-            self.server.set_succeeded() 
+            self.server.set_succeeded()
         else:
             self.server.set_aborted(text="Execution failed.")
 
@@ -124,7 +123,7 @@ class FollowController(Controller):
             while rospy.Time.now() + rospy.Duration(0.01) < endtime:
                 err = [ (d-c) for d,c in zip(desired,last) ]
                 velocity = [ abs(x / (self.rate * (endtime - rospy.Time.now()).to_sec())) for x in err ]
-                rospy.loginfo(err)
+                rospy.logdebug(err)
                 for i in range(len(self.joints)):
                     if err[i] > 0.001 or err[i] < -0.001:
                         cmd = err[i] 
