@@ -50,7 +50,7 @@ class LinearJoint(Joint):
         # TODO: load these from URDF
         self.min = rospy.get_param('~joints/'+name+'/min_position',0.0)
         self.max = rospy.get_param('~joints/'+name+'/max_position',0.5)
-        self.max_speed = rospy.get_param('~joints/'+name+'/max_speed',0.05)
+        self.max_speed = rospy.get_param('~joints/'+name+'/max_speed',0.0508)
 
         # calibration data {reading: position}
         self.cal = { -1: -1, 1: 1 }
@@ -59,7 +59,6 @@ class LinearJoint(Joint):
         for key, value in self.cal_raw.items():
             self.cal[int(key)] = value
         self.keys = sorted(self.cal.keys())
-        print self.cal
 
         rospy.Subscriber(name+'/command', Float64, self.commandCb)
         
@@ -67,6 +66,10 @@ class LinearJoint(Joint):
         """ Get new output: 1 = increase position, -1 is decrease position. """
         if self.dirty:
             cmd = self.desired - self.position
+            if self.device.fake: 
+                self.position = self.desired
+                self.dirty = False
+                return None
             if cmd > 0.01:
                 return 1
             elif cmd < -0.01:
@@ -103,7 +106,7 @@ class LinearJoint(Joint):
         msg = DiagnosticStatus()
         msg.name = self.name
         msg.level = DiagnosticStatus.OK
-        if self.dirty:        
+        if self.dirty:
             msg.message = "Moving"
         else:
             msg.message = "OK"
@@ -164,24 +167,32 @@ class LinearControllerAbsolute(Controller):
         if now > self.next:
             # read current position
             if self.joint.dirty:
-                self.joint.setCurrentFeedback(self.device.getAnalog(self.analog))
-            # update movement
-            output = self.joint.interpolate(1.0/self.delta.to_sec())
-            if self.last != output: 
-                self.last = output
-                if output == 1:
-                    self.device.setDigital(self.a, 0); self.device.setDigital(self.b, 1); # up
-                    self.device.setDigital(self.p, 1)
-                    print "up"
-                elif output == -1:
-                    self.device.setDigital(self.a, 1); self.device.setDigital(self.b, 0); # down
-                    self.device.setDigital(self.p, 1)
-                    print "down"
-                elif output == 0:
-                    self.device.setDigital(self.p, 0)
-                    print "stop"
+                if not self.fake:
+                    try:
+                        self.joint.setCurrentFeedback(self.getPosition())
+                    except Exception as e:
+                        print "linear error: ", e
+                # update movement
+                output = self.joint.interpolate(1.0/self.delta.to_sec())
+                if self.last != output and not self.fake: 
+                    self.setSpeed(output)
+                    self.last = output
             self.next = now + self.delta
     
+    def setSpeed(self, speed):
+        """ Set speed of actuator. """
+        if speed > 0:
+            self.device.setDigital(self.a, 0); self.device.setDigital(self.b, 1);   # up
+            self.device.setDigital(self.p, 1)
+        elif speed < 0:
+            self.device.setDigital(self.a, 1); self.device.setDigital(self.b, 0);   # down
+            self.device.setDigital(self.p, 1)
+        else:
+            self.device.setDigital(self.p, 0)
+
+    def getPosition(self):
+        return self.device.getAnalog(self.analog)
+
     def shutdown(self):
         if not self.fake:
             self.device.setDigital(self.p, 0)
@@ -195,7 +206,7 @@ class LinearControllerAbsolute(Controller):
         return msg
 
 
-class LinearControllerIncremental(Controller):
+class LinearControllerIncremental(LinearControllerAbsolute):
     """ A controller for a linear actuator, without absolute encoder. """
     POSITION_L  = 100
     POSITION_H  = 101
@@ -224,26 +235,8 @@ class LinearControllerIncremental(Controller):
         if not self.fake:
             self.zeroEncoder()
 
-    def update(self):
-        now = rospy.Time.now()
-        if now > self.next:
-            # read current position
-            if self.joint.dirty:
-                try:
-                    self.joint.setCurrentFeedback(self.getPosition())
-                except Exception as e:
-                    print "linear", e
-                # update movement
-                output = self.joint.interpolate(1.0/self.delta.to_sec())
-                if self.last != output: 
-                    self.setSpeed(output)
-                    self.last = output
-                    if output == 0:
-                        self.joint.dirty = False
-            self.next = now + self.delta
-
     def setSpeed(self, speed):
-        """ Set speed of actuator. """
+        """ Set speed of actuator. We need to set direction for encoder. """
         if speed > 0:
             self.device.write(253, self.DIRECTION, [1])
             self.device.setDigital(self.a, 0); self.device.setDigital(self.b, 1);   # up
@@ -285,12 +278,4 @@ class LinearControllerIncremental(Controller):
     def shutdown(self):
         if not self.fake:
             self.setSpeed(0)
-
-    def getDiagnostics(self):
-        """ Get a diagnostics status. """
-        msg = DiagnosticStatus()
-        msg.name = self.name
-        msg.level = DiagnosticStatus.OK
-        msg.message = "OK"
-        return msg
 
