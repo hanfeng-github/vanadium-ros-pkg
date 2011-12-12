@@ -1,7 +1,12 @@
 <launch>
 
   <node name="simple_arm_navigation_server" type="simple_arm_navigation_server" pkg="simple_arm_server" output="screen">
+    <remap from="/gripper_controller/command" to="/gripper/command"/>
     <param name="root_name" value="torso_link" />
+    <param name="iterations" value="1" />
+    <rosparam>
+      step_list: [-0.025,0.025,-0.05,0.05,-0.1,0.1,-0.2,0.2]
+    </rosparam>
   </node>
 
   <node name="arm_marker_server" type="arm_marker_server" pkg="maxwell_interactive_markers" output="screen">
