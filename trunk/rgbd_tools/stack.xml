@@ -1,0 +1,10 @@
+<stack>
+  <description brief="rgbd_tools">
+    A collection of tools for use with Kinect-like devices.
+  </description>
+  <author>Maintained by Michael Ferguson</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rgbd_tools</url>
+  <depend stack="ros" />
+</stack>
