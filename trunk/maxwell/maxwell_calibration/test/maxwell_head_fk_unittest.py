@@ -61,16 +61,16 @@ class TestMaxwellFk(LoadData):
         self.run_test(full_chain, 'torso_link', 'head_tilt_link', cmds)
 
     def test_kinect_head_def(self):
-        full_chain = FullChainRobotParams('head_chain','head_kinect_rgb_link')
+        full_chain = FullChainRobotParams('head_chain','head_camera_rgb_link')
         full_chain.update_config(self.robot_params)
         cmds = self.loadCommands('head_commands')
-        self.run_test(full_chain, 'torso_link', 'head_kinect_rgb_link', cmds)
+        self.run_test(full_chain, 'torso_link', 'head_camera_rgb_link', cmds)
 
     def test_kinect_head_optical(self):
-        full_chain = FullChainRobotParams('head_chain','head_kinect_rgb_optical_frame')
+        full_chain = FullChainRobotParams('head_chain','head_camera_rgb_optical_frame')
         full_chain.update_config(self.robot_params)
         cmds = self.loadCommands('head_commands')
-        self.run_test(full_chain, 'torso_link', 'head_kinect_rgb_optical_frame', cmds)
+        self.run_test(full_chain, 'torso_link', 'head_camera_rgb_optical_frame', cmds)
 
 if __name__ == '__main__':
     import rostest

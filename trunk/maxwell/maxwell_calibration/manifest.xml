@@ -11,6 +11,7 @@
   <depend package="calibration_estimation"/>
 
   <!-- For running tests -->
+  <depend package="pr2_calibration_estimation"/>
   <depend package="kdl" />
   <depend package="kdl_parser" />
 </package>

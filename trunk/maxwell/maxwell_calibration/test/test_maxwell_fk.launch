@@ -6,8 +6,7 @@
         type="pr2_fk_ref"
         name="pr2_fk_ref"/>
 
-  <param name="config_file" value="$(find maxwell_calibration)/estimate_params/config/new_config.yaml" />
-  <!--<param name="system" textfile="$(find maxwell_calibration)/estimate_params/config/system.yaml" />-->
+  <param name="config_file" value="$(find maxwell_calibration)/estimate_params/config/system.yaml" />
   <param name="arm_commands" textfile="$(find maxwell_calibration)/test/data/arm.txt" />
   <param name="head_commands" textfile="$(find maxwell_calibration)/test/data/head.txt" />
 
