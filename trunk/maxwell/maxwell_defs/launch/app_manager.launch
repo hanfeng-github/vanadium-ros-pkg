@@ -1,4 +1,7 @@
 <launch>
+  <param name="robot/name" value="Maxwell"/>
+  <param name="robot/type" value="Maxwell"/>
+
   <node pkg="app_manager" type="appmaster" name="appmaster" args="-p 11312"/>
   <node pkg="app_manager" type="app_manager" name="app_manager" args="--applist $(find maxwell_defs)/apps" output="screen">
     <param name="interface_master" value="http://localhost:11312"/>
