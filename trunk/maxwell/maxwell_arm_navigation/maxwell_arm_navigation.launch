@@ -1,12 +1,23 @@
 <launch>
-    <include file="$(find maxwell_arm_navigation)/launch/maxwell_planning_environment.launch" />
-    <include file="$(find planning_environment)/launch/environment_server.launch">
-        <arg name="use_monitor" value="true" />
-        <arg name="use_collision_map" value="true" />
-    </include>
-    <include file="$(find maxwell_arm_navigation)/launch/constraint_aware_kinematics.launch" />
-    <include file="$(find maxwell_arm_navigation)/launch/ompl_planning.launch" />
-    <include file="$(find maxwell_arm_navigation)/launch/trajectory_filter_server.launch" />
-    <include file="$(find maxwell_arm_navigation)/launch/move_arm.launch" />
-    <include file="$(find maxwell_arm_navigation)/launch/maxwell_arm_perception.launch" />
+
+  <include file="$(find maxwell_arm_navigation)/launch/maxwell_planning_environment.launch" />
+  <include file="$(find planning_environment)/launch/environment_server.launch">
+    <arg name="use_monitor" value="true" />
+    <arg name="use_collision_map" value="true" />
+  </include>
+  <include file="$(find maxwell_arm_navigation)/launch/constraint_aware_kinematics.launch" />
+  <include file="$(find maxwell_arm_navigation)/launch/ompl_planning.launch" />
+  <include file="$(find maxwell_arm_navigation)/launch/trajectory_filter_server.launch" />
+  <include file="$(find maxwell_arm_navigation)/launch/move_arm.launch" />
+  <include file="$(find maxwell_arm_navigation)/launch/maxwell_arm_perception.launch" />
+
+  <node name="simple_arm_navigation_server" type="simple_arm_navigation_server" pkg="simple_arm_server" output="screen">
+    <remap from="/gripper_controller/command" to="/gripper/command"/>
+    <param name="root_name" value="torso_link" />
+    <param name="iterations" value="1" />
+    <rosparam>
+      step_list: [-0.025,0.025,-0.05,0.05,-0.1,0.1,-0.2,0.2]
+    </rosparam>
+  </node>
+
 </launch>
