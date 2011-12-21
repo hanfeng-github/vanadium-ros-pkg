@@ -155,7 +155,6 @@ class LinearControllerAbsolute(Controller):
 
         self.joint = device.joints[rospy.get_param('~controllers/'+name+'/joint')]
 
-        # ROS interfaces
         rospy.loginfo("Started LinearController ("+self.name+").")
 
     def startup(self):
@@ -227,8 +226,6 @@ class LinearControllerIncremental(LinearControllerAbsolute):
         self.joint = device.joints[rospy.get_param('~controllers/'+name+'/joint')]
 
         rospy.Service(name+'/zero', Empty, self.zeroCb)
-
-        # ROS interfaces
         rospy.loginfo("Started LinearControllerIncremental ("+self.name+").")
 
     def startup(self):
@@ -262,13 +259,13 @@ class LinearControllerIncremental(LinearControllerAbsolute):
                 new_pos = self.getPosition()
             except:
                 pass
-            #print "new_pos:",new_pos
             if last_pos == new_pos:
                 break
             last_pos = new_pos
             rospy.sleep(1)
         self.setSpeed(0)
         self.device.write(253, self.POSITION_L, [0, 0])
+        self.joint.setCurrentFeedback(0)
 
     def zeroCb(self, msg):
         if not self.fake:
