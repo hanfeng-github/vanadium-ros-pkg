@@ -155,8 +155,8 @@ class SimpleArmNavigationServer
                 }
 
                 // wiggle if needed
-                int tries; 
-                actionlib::SimpleClientGoalState state = actionlib::SimpleClientGoalState::PENDING;
+                int tries;
+                bool goal_reached = false;
                 for( tries = 0; tries <= max_tries_; tries++ ){
                     for(size_t i=0; i<step_list_.size(); i++){
                         // construct the representation of a pose goal (define the position of the end effector)
@@ -201,18 +201,33 @@ class SimpleArmNavigationServer
                         if( !finished_within_time )
                         {
                             client.cancelGoal();
-                            ROS_INFO("Timed out");
+                            ROS_INFO("Continue: goal timed out");
                         }
                         else
                         {
-                            ROS_INFO("Goal returned");
-                            state = client.getState();
+                            actionlib::SimpleClientGoalState state = client.getState();
+                            arm_navigation_msgs::MoveArmResultConstPtr result = client.getResult();
+                            //arm_navigation_msgs::ArmNavigationErrorCodes error = result->error_code;
+                            if(state == actionlib::SimpleClientGoalState::SUCCEEDED){
+                                ROS_INFO("Continue: goal succeeded.");
+                                goal_reached = true;
+                            }else if( result->error_code.val == int(arm_navigation_msgs::ArmNavigationErrorCodes::START_STATE_IN_COLLISION) ){
+                                ROS_INFO("Abort: start state in collision.");
+                                result_.success = false;
+                                server.setAborted(result_);
+                                return;
+                            }else if( ( result->error_code.val == arm_navigation_msgs::ArmNavigationErrorCodes::GOAL_CONSTRAINTS_VIOLATED) ||
+                                      ( result->error_code.val == arm_navigation_msgs::ArmNavigationErrorCodes::PATH_CONSTRAINTS_VIOLATED) ) {
+                                ROS_INFO("Continue: goal constraints violated.");
+                                goal_reached = true;
+                            }else{
+                                ROS_INFO("Continue: path failed, trying again.");
+                            }
                         }
-
                         if(tries==0) break;
-	                    if(state == actionlib::SimpleClientGoalState::SUCCEEDED) break;
+	                    if(goal_reached) break;
                     } // end of steps
-	                if(state == actionlib::SimpleClientGoalState::SUCCEEDED) break;
+	                if(goal_reached) break;
                 } // end of tries                   
                 if( tries > max_tries_ ){
                     result_.success = false;
