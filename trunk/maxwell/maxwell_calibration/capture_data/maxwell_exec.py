@@ -42,7 +42,7 @@ import os
 import string
 
 print "Starting executive..."
-time.sleep(7.0)
+time.sleep(2.0)
 
 rospy.init_node("maxwell_capture_executive_node")
 
@@ -77,7 +77,7 @@ try:
         for cur_sample_path in full_paths:
             print "On sample [%s]" % cur_sample_path
             cur_config = yaml.load(open(cur_sample_path))
-            m_robot = executive.capture(cur_config, rospy.Duration(40))
+            m_robot = executive.capture(cur_config, rospy.Duration(20))
             if m_robot is None:
                 print "--------------- Failed To Capture a Sample -----------------"
                 fail_count += 1
