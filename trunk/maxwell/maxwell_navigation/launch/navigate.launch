@@ -3,11 +3,11 @@
   <param name="use_sim_time" value="false"/>
 
   <!-- Run Map Server -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find maxwell_navigation)/maps/ils.yaml"/>
+  <arg name="map" default="apt_313"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find vanadium_maps)/$(arg map).yaml"/>
 
   <!--- Run AMCL -->
-  <include file="$(find maxwell_navigation)/launch/amcl.launch" />  
-  <node name="republish" pkg="maxwell_navigation" type="republish.py" />
+  <include file="$(find maxwell_navigation)/launch/amcl.launch" />
 
   <!--- Run Move Base --> 
   <include file="$(find maxwell_navigation)/launch/move_base.launch" /> 
