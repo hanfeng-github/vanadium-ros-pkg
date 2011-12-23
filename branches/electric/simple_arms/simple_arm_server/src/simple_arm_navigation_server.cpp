@@ -183,7 +183,6 @@ class SimpleArmNavigationServer
                         desired_pose.pose.position.y = pose.pose.position.y;
                         desired_pose.pose.position.z = pose.pose.position.z;
 
-                        //double attempt = pitch+(pow(-1.0,tries)*(tries/2)*0.05);
                         double attempt = pitch + (tries * step_list_[i]);
                         q.setRPY(roll, attempt, yaw);
 
@@ -197,7 +196,7 @@ class SimpleArmNavigationServer
 
                         // send request
                         client.sendGoal(goal);
-                        bool finished_within_time = client.waitForResult(ros::Duration(60.0));
+                        bool finished_within_time = client.waitForResult(ros::Duration(300.0));
                         if( !finished_within_time )
                         {
                             client.cancelGoal();
@@ -207,8 +206,8 @@ class SimpleArmNavigationServer
                         {
                             actionlib::SimpleClientGoalState state = client.getState();
                             arm_navigation_msgs::MoveArmResultConstPtr result = client.getResult();
-                            //arm_navigation_msgs::ArmNavigationErrorCodes error = result->error_code;
-                            if(state == actionlib::SimpleClientGoalState::SUCCEEDED){
+                            //if(state == actionlib::SimpleClientGoalState::SUCCEEDED){
+                            if(result->error_code.val == arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS ){
                                 ROS_INFO("Continue: goal succeeded.");
                                 goal_reached = true;
                             }else if( result->error_code.val == int(arm_navigation_msgs::ArmNavigationErrorCodes::START_STATE_IN_COLLISION) ){
@@ -216,12 +215,12 @@ class SimpleArmNavigationServer
                                 result_.success = false;
                                 server.setAborted(result_);
                                 return;
-                            }else if( ( result->error_code.val == arm_navigation_msgs::ArmNavigationErrorCodes::GOAL_CONSTRAINTS_VIOLATED) ||
-                                      ( result->error_code.val == arm_navigation_msgs::ArmNavigationErrorCodes::PATH_CONSTRAINTS_VIOLATED) ) {
+                            }else if( (result->error_code.val == arm_navigation_msgs::ArmNavigationErrorCodes::GOAL_CONSTRAINTS_VIOLATED) ||
+                                      (result->error_code.val == arm_navigation_msgs::ArmNavigationErrorCodes::PATH_CONSTRAINTS_VIOLATED) ) {
                                 ROS_INFO("Continue: goal constraints violated.");
                                 goal_reached = true;
                             }else{
-                                ROS_INFO("Continue: path failed, trying again.");
+                                ROS_INFO("Continue: path failed, trying again");
                             }
                         }
                         if(tries==0) break;
