@@ -384,8 +384,10 @@ class ServoController(Controller):
                         for joint in self.dynamixels:
                             try:
                                 i = synclist.index(joint.id)*2
-                                joint.voltage = val[i]/10.0
-                                joint.temperature = val[i+1]
+                                if val[i] < 250:
+                                    joint.voltage = val[i]/10.0
+                                if val[i+1] < 100:
+                                    joint.temperature = val[i+1]
                             except:
                                 # not a readable servo
                                 continue 
