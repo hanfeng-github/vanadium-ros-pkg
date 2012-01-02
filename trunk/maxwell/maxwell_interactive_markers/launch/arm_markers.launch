@@ -1,7 +1,6 @@
 <launch>
 
   <node name="arm_marker_server" type="arm_marker_server" pkg="maxwell_interactive_markers" output="screen">
-    <remap from="move_arm" to="simple_arm_navigation_server/move_arm"/>
     <param name="root_link" value="torso_link" />
     <param name="tip_link" value="gripper_link" />
     <rosparam>

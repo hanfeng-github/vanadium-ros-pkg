@@ -91,7 +91,7 @@ class ArmMarkerServer
     
 public:
   ArmMarkerServer()
-    : nh("~"), client("move_arm", true), server("arm_marker_server"), tf_listener(nh), immediate_commands(true), in_move(false)
+    : nh("~"), client("simple_move_arm", true), server("arm_marker_server"), tf_listener(nh), immediate_commands(true), in_move(false)
   {
     // Get general arm parameters
     nh.param<std::string>("root_link", root_link, "torso_link");
