@@ -17,4 +17,4 @@ rosbuild_genmsg()
 #uncomment if you have defined services
 rosbuild_gensrv()
 
-rosbuild_add_executable(simple_arm_navigation_server src/simple_arm_navigation_server.cpp)
+rosbuild_add_executable(simple_move_arm_server src/simple_move_arm_server.cpp)
