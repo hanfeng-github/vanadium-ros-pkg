@@ -1,8 +1,5 @@
 <launch>
 
-  <node pkg="capabilities_requester" type="requester.py" name="requester_head_laser" output="screen"
-    args="$(find maxwell_defs)/launch/head_laser.capability" />
-
   <node pkg="nodelet" type="nodelet" name="head_laser_manager" output="screen" respawn="true" args="manager"/>
 
   <!-- Fake Laser -->
