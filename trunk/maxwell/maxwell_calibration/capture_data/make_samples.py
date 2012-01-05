@@ -52,7 +52,7 @@ class SampleMaker:
             else:
                 # save a sample:
                 count = str(self.count).zfill(4)
-                f = open("samples/arm_"+count+".yaml", "w")
+                f = open("samples/arm/arm_"+count+".yaml", "w")
                 f.write(header1)
                 print>>f, self.head_state
                 f.write(header2)
