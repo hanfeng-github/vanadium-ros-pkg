@@ -57,7 +57,14 @@
       <parent link="${parent}_link"/>
       <child link="${name}_link"/>
     </joint>
-    <link name="${name}_link"/>
+    <link name="${name}_link">
+      <visual>
+        <origin xyz="0.0 0.0 0" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="0.0005"/>
+        </geometry>
+      </visual>
+    </link>
   </macro>
 
 </robot>

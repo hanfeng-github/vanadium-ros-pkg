@@ -3,7 +3,7 @@
        This launch file brings him to life. -->
 
   <param name="/use_sim_time" value="false"/>
-  <include file="$(find maxwell_defs)/launch/upload_maxwell.launch" />
+  <include file="$(find maxwell_defs)/launch/upload_calibrated.launch" />
 
   <!-- ArbotiX and Controllers -->
   <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
