@@ -1,36 +1,7 @@
 <launch>
 
-  <group ns="arm_chain">
-    <node pkg="joint_states_settler" type="joint_states_settler_action"
-          name="settler" output="screen">
-      <remap from="joint_states" to="/joint_states" />
-      <remap from="pruned_joint_states" to="chain_state" />
-      <param name="joint_name_00" type="string" value="arm_lift_joint" />
-      <param name="joint_tol_00"  type="double" value="0.015" />
-      <param name="joint_name_01" type="string" value="arm_shoulder_pan_joint" />
-      <param name="joint_tol_01"  type="double" value="0.015" />
-      <param name="joint_name_02" type="string" value="arm_shoulder_lift_joint" />
-      <param name="joint_tol_02"  type="double" value="0.01" />
-      <param name="joint_name_03" type="string" value="arm_elbow_flex_joint" />
-      <param name="joint_tol_03"  type="double" value="0.01" />
-      <param name="joint_name_04" type="string" value="arm_wrist_flex_joint" />
-      <param name="joint_tol_04"  type="double" value="0.015" />
-      <param name="joint_name_05" type="string" value="arm_wrist_roll_joint" />
-      <param name="joint_tol_05"  type="double" value="0.015" />
-    </node>
-  </group>
-
-  <group ns="head_chain">
-    <node pkg="joint_states_settler" type="joint_states_settler_action"
-          name="settler" output="screen">
-      <remap from="joint_states" to="/joint_states" />
-      <remap from="pruned_joint_states" to="chain_state" />
-      <param name="joint_name_00" type="string" value="head_pan_joint" />
-      <param name="joint_tol_00"  type="double" value="0.03" />
-      <param name="joint_name_01" type="string" value="head_tilt_joint" />
-      <param name="joint_tol_01"  type="double" value="0.03" />
-    </node>
-  </group>
+  <include file="$(find calibration_launch)/capture_data/chain_settler.launch" ns="arm_chain" />
+  <include file="$(find calibration_launch)/capture_data/chain_settler.launch" ns="head_chain" />
 
   <!-- Cameras -->
   <include file="$(find calibration_launch)/capture_data/monocam_pipeline.launch" ns="camera/rgb" >    
@@ -45,7 +16,6 @@
     <remap from="head_chain" to="head_chain/settled_interval" />
     <remap from="arm_chain" to="arm_chain/settled_interval" />
     <remap from="head_camera" to="camera/rgb/settled_interval" />
-    <remap from="interval" to="request_interval" />
   </node>
 
 </launch>
