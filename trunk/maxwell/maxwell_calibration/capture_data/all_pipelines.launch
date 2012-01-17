@@ -3,12 +3,8 @@
   <include file="$(find calibration_launch)/capture_data/chain_settler.launch" ns="arm_chain" />
   <include file="$(find calibration_launch)/capture_data/chain_settler.launch" ns="head_chain" />
 
-  <!-- Cameras -->
-  <include file="$(find calibration_launch)/capture_data/monocam_pipeline.launch" ns="camera/rgb" >    
-    <arg name="image_topic" value="image_mono"/>
-  </include>
+  <include file="$(find calibration_launch)/capture_data/kinect_pipeline.launch" ns="camera/rgb" />
 
-  <!-- Intersector -->
   <node type="interval_intersection_action"
         pkg="interval_intersection"
         name="interval_intersection"

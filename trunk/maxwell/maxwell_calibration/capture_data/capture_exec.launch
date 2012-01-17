@@ -7,9 +7,8 @@
         output="screen" >
 
     <remap from="head_camera/camera_info" to="camera/rgb/camera_info"/>
-    <remap from="head_camera/image_rect"  to="camera/rgb/image_rect_throttle"/>
-    <remap from="head_camera/image"       to="camera/rgb/image_rect_throttle"/>
     <remap from="head_camera/features"    to="camera/rgb/features"/>
+    <remap from="head_camera/points"      to="camera/rgb/points_throttle"/>
   </node>
 
   <node type="urdf_pub.py" pkg="calibration_launch" name="urdf_pub"/>
