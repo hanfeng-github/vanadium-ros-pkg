@@ -18,14 +18,14 @@ sensors:
 
   rectified_cams:
     head_camera:
-      rgbd: True
       chain_id: head_chain  #TODO: get rid of this
       frame_id: head_camera_rgb_optical_frame
       baseline_shift: 0.0
+      baseline_rgbd: 0.075
       f_shift: 0.0
       cx_shift: 0.0
       cy_shift: 0.0
-      cov: {x: 0.001, y: 0.001, z: 0.001}
+      cov: {u: 0.025, v: 0.025, x: 0.025}
 
   tilting_lasers: {}
 
