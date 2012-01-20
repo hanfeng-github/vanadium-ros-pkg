@@ -7,13 +7,13 @@ sensors:
       root: torso_link
       tip: arm_wrist_roll_link
       cov:
-       joint_angles: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
+       joint_angles: [0.01, 0.0025, 0.0025, 0.01, 0.01, 0.01]
       gearing: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     head_chain:
       root: head_link
       tip: head_tilt_link
       cov:
-       joint_angles: [0.001, 0.001]
+       joint_angles: [0.01, 0.01]
       gearing: [1.0, 1.0]
 
   rectified_cams:
@@ -25,7 +25,7 @@ sensors:
       f_shift: 0.0
       cx_shift: 0.0
       cy_shift: 0.0
-      cov: {u: 0.025, v: 0.025, x: 0.025}
+      cov: {u: 0.25, v: 0.25, x: 0.25}
 
   tilting_lasers: {}
 

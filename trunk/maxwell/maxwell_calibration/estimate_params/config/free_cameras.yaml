@@ -1,7 +1,7 @@
 
   transforms:
-    head_camera_rgb_joint: [1, 1, 0, 1, 1, 1]
-    head_joint: [0, 0, 1, 0, 0, 0]
+    arm_chain_cb: [1, 0, 1, 1, 1, 1]
+    head_camera_rgb_joint: [1, 1, 1, 1, 1, 1]
   
   chains:
     arm_chain:

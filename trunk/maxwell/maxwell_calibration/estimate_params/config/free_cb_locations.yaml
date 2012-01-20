@@ -1,7 +1,6 @@
 
   transforms:
-    arm_chain_cb: [1, 1, 1, 0, 1, 1]
-    arm_wrist_roll_joint: [0, 0, 0, 1, 0, 0]
+    arm_chain_cb: [1, 0, 1, 1, 1, 1]
 
   chains:
     arm_chain:

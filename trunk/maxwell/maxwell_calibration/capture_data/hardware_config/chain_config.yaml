@@ -34,7 +34,7 @@ head_chain:
         - head_pan_joint
         - head_tilt_joint
         tolerances:
-        - 0.002
-        - 0.002
+        - 0.01
+        - 0.01
         max_step:   1.0
         cache_size: 1500
