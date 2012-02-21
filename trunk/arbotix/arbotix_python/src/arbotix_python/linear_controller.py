@@ -98,7 +98,7 @@ class LinearJoint(Joint):
             self.desired = position
             self.dirty = True
         else:
-            rospy.logerr(self.name + ": requested position is out of range")
+            rospy.logerr(self.name + ": requested position is out of range: " + str(position))
         return None # TODO
     
     def getDiagnostics(self):
@@ -122,7 +122,7 @@ class LinearJoint(Joint):
                 self.desired = req.data
                 self.dirty = True
             else:
-                rospy.logerr(self.name + ": requested position is out of range")
+                rospy.logerr(self.name + ": requested position is out of range: " + str(req))
 
     def readingToPosition(self, reading):
         low = 0
@@ -149,6 +149,7 @@ class LinearControllerAbsolute(Controller):
         self.p = rospy.get_param('~controllers/'+name+'/motor_pwm',15)
         self.analog = rospy.get_param('~controllers/'+name+'/feedback',0)
         self.last = 0
+        self.last_reading = 0
 
         self.delta = rospy.Duration(1.0/rospy.get_param('~controllers/'+name+'/rate', 10.0))
         self.next = rospy.Time.now() + self.delta
@@ -168,7 +169,8 @@ class LinearControllerAbsolute(Controller):
             if self.joint.dirty:
                 if not self.fake:
                     try:
-                        self.joint.setCurrentFeedback(self.getPosition())
+                        self.last_reading = self.getPosition()
+                        self.joint.setCurrentFeedback(self.last_reading)
                     except Exception as e:
                         print "linear error: ", e
                 # update movement
@@ -202,6 +204,9 @@ class LinearControllerAbsolute(Controller):
         msg.name = self.name
         msg.level = DiagnosticStatus.OK
         msg.message = "OK"
+        if not self.fake:
+            msg.values.append(KeyValue("Encoder Reading", str(self.last_reading)))
+        
         return msg
 
 

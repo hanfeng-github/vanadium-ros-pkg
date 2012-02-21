@@ -130,6 +130,14 @@ def getJointLimits(name, joint_defaults, default_min=-150, default_max=150):
         min_angle = radians(rospy.get_param("/arbotix/dynamixels/"+name+"/min_angle"))
     except:
         pass
+    try: 
+        min_angle = radians(rospy.get_param("/arbotix/joints/"+name+"/min_angle"))
+    except:
+        pass
+    try: 
+        min_angle = rospy.get_param("/arbotix/joints/"+name+"/min_position")
+    except:
+        pass
 
     try: 
         max_angle = joint_defaults[name]['max']
@@ -137,6 +145,14 @@ def getJointLimits(name, joint_defaults, default_min=-150, default_max=150):
         pass
     try: 
         max_angle = radians(rospy.get_param("/arbotix/dynamixels/"+name+"/max_angle"))
+    except:
+        pass
+    try: 
+        max_angle = radians(rospy.get_param("/arbotix/joints/"+name+"/max_angle"))
+    except:
+        pass
+    try: 
+        max_angle = rospy.get_param("/arbotix/joints/"+name+"/max_position")
     except:
         pass
 
