@@ -57,6 +57,9 @@ class DiffController(Controller):
         self.ticks_meter = float(rospy.get_param('~controllers/'+name+'/ticks_meter'))
         self.base_width = float(rospy.get_param('~controllers/'+name+'/base_width'))
 
+        self.base_frame_id = rospy.get_param('~controllers/'+name+'/base_frame_id', 'base_link')
+        self.odom_frame_id = rospy.get_param('~controllers/'+name+'/odom_frame_id', 'odom')
+
         # parameters: PID
         self.Kp = rospy.get_param('~controllers/'+name+'/Kp', 5)
         self.Kd = rospy.get_param('~controllers/'+name+'/Kd', 1)
@@ -152,17 +155,17 @@ class DiffController(Controller):
                 (self.x, self.y, 0), 
                 (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
                 rospy.Time.now(),
-                "base_link",
-                "odom"
+                self.base_frame_id,
+                self.odom_frame_id
                 )
 
             odom = Odometry()
-            odom.header.frame_id = "odom"
+            odom.header.frame_id = self.odom_frame_id
             odom.pose.pose.position.x = self.x
             odom.pose.pose.position.y = self.y
             odom.pose.pose.position.z = 0
             odom.pose.pose.orientation = quaternion
-            odom.child_frame_id = "base_link"
+            odom.child_frame_id = self.base_frame_id
             odom.twist.twist.linear.x = self.dx
             odom.twist.twist.linear.y = 0
             odom.twist.twist.angular.z = self.dr
