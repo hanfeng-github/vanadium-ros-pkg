@@ -4,6 +4,7 @@
  
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
+
       * Redistributions of source code must retain the above copyright
         notice, this list of conditions and the following disclaimer.
       * Redistributions in binary form must reproduce the above copyright
@@ -64,7 +65,3 @@ unsigned char params[143];      // parameters (match RX-64 buffer size)
 unsigned char index = 0;        // index in param buffer
 
 int checksum;                   // checksum
-
-#define INSTRUCTION_ERROR   0x40
-#define CHECKSUM_ERROR      0x10
-
