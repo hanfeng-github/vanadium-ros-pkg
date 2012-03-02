@@ -1,6 +1,6 @@
 /* 
   ArbotiX Firmware for ROS driver
-  Copyright (c) 2008-2011 Vanadium Labs LLC.  All right reserved.
+  Copyright (c) 2008-2012 Vanadium Labs LLC.  All right reserved.
  
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -118,25 +118,11 @@ unsigned char handleWrite(){
     if(addr < REG_BAUD_RATE){
       return ERR_INSTRUCTION;
     }else if(addr == REG_BAUD_RATE){
-      UBRR1L = params[k];      
+      UBRR1L = params[k];
     }else if(addr < REG_RESCAN){
-      // write digital 
-      int pin = addr - REG_DIGITAL;
-    #ifdef SERVO_STIK
-      pin = 31-pin;
-    #endif
-      if(params[k] & 0x02)    // high
-        digitalWrite(pin, HIGH);
-      else
-        digitalWrite(pin, LOW);
-      if(params[k] & 0x01)    // output
-        pinMode(pin, OUTPUT);
-      else
-        pinMode(pin, INPUT);
+      return ERR_INSTRUCTION; // can't write digital inputs
     }else if(addr == REG_RESCAN){
-#if defined(AX_RX_SWITCHED)
       scan();
-#endif
     }else if(addr == REG_RETURN_LEVEL){
       ret_level = params[k];
     }else if(addr == REG_ALARM_LED){
@@ -168,23 +154,28 @@ unsigned char handleWrite(){
           }
         }
       }
+    }else if(addr == REG_MOVING){
+      return ERR_INSTRUCTION;
+    }else if(addr < REG_RESERVED){
+      // write digital pin
+      int pin = addr - REG_DIGITAL_OUT0;
+    #ifdef SERVO_STIK
+      if(pin < 8)
+        pin = pin+24;
+      else
+        pin = pin+5; // servo stick 8 = D13...
+    #endif
+      if(params[k] & 0x02)    // high
+        digitalWrite(pin, HIGH);
+      else
+        digitalWrite(pin, LOW);
+      if(params[k] & 0x01)    // output
+        pinMode(pin, OUTPUT);
+      else
+        pinMode(pin, INPUT);
     }else{
-      // write higher ID digitals
-      int pin = addr - REG_DIGITAL2;
-      if(pin < 8){
-        pin = 31 - pin;
-        if(params[k] & 0x02)    // high
-          digitalWrite(pin, HIGH);
-        else
-          digitalWrite(pin, LOW);
-        if(params[k] & 0x01)    // output
-          pinMode(pin, OUTPUT);
-        else
-          pinMode(pin, INPUT);
-      }else{
-        int ret = userWrite(addr, params[k]);
-        if(ret > ERR_NONE) return ret;
-      }
+      int ret = userWrite(addr, params[k]);
+      if(ret > ERR_NONE) return ret;
     }
     addr++;k++;bytes--;
   }
@@ -212,26 +203,26 @@ int handleRead(){
       v = 253;
     }else if(addr == REG_BAUD_RATE){
       v = 34; // 56700
-    }else if(addr < REG_RETURN_LEVEL){
-      // send digital read
-      if(addr == REG_DIGITAL){
-        // 0->7
+    }else if(addr == REG_DIGITAL_IN0){
+      // digital 0-7
     #ifdef SERVO_STIK
-        v = PINA;
+      v = PINA;
     #else
-        v = PINB;
+      v = PINB;
     #endif
-      }else if(addr == REG_DIGITAL+1){
-        // 8-15
+    }else if(addr == REG_DIGITAL_IN1){
+      // digital 8-15
     #ifdef SERVO_STIK
-        v = (PINB>>1);
+      v = (PINB>>1);
     #else
-        v = PINA;  // was previously PIND
+      v = PIND;
     #endif        
-      }else{
-        // 16-23
-        v = PIND;
-      }
+    }else if(addr == REG_DIGITAL_IN2){
+      // digital 16-23
+      v = PINC;
+    }else if(addr == REG_DIGITAL_IN3){
+      // digital 24-31
+      v = PINA;
     }else if(addr == REG_RETURN_LEVEL){
       v = ret_level;
     }else if(addr == REG_ALARM_LED){
@@ -247,8 +238,8 @@ int handleRead(){
       // send servo position
       v = 0;      
     }else{
-      v = userRead(addr);        
-    }
+      v = userRead(addr);  
+    } 
     checksum += v;
     Serial.write(v);
     addr++;bytes--;

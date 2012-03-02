@@ -1,6 +1,6 @@
 /* 
   Common Definitions for ROS driver ArbotiX Firmware
-  Copyright (c) 2008-2011 Vanadium Labs LLC.  All right reserved.
+  Copyright (c) 2008-2012 Vanadium Labs LLC.  All right reserved.
  
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -44,15 +44,24 @@
 #define REG_VERSION         2
 #define REG_ID              3
 #define REG_BAUD_RATE       4
-#define REG_DIGITAL         5   // First block of digital pins to read
-                                // base + index, bit 1 = value (0,1), bit 0 = direction (0,1)
+
+#define REG_DIGITAL_IN0     5  // First block of digital pins to read
+#define REG_DIGITAL_IN1     6
+#define REG_DIGITAL_IN2     7
+#define REG_DIGITAL_IN3     8
+
 #define REG_RESCAN          15
 #define REG_RETURN_LEVEL    16
 #define REG_ALARM_LED       17
 #define REG_ANA_BASE        18  // First Analog Port
 #define REG_SERVO_BASE      26  // Up to 10 servos, each uses 2 bytes (L, then H), pulse width (0, 1000-2000ms)
 #define REG_MOVING          46
-#define REG_DIGITAL2        50
+
+#define REG_DIGITAL_OUT0    47  // First digital pin to write
+                                // base + index, bit 1 = value (0,1), bit 0 = direction (0,1)
+
+#define REG_RESERVED        79  // 79 -- 99 are reserved for future use
+#define REG_USER            100 // 
 
 /* Packet Decoding */
 int mode = 0;                   // where we are in the frame
