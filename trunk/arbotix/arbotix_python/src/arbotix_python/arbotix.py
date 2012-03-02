@@ -400,7 +400,10 @@ class ArbotiX:
     # ArbotiX-specific register table
     # We do Model, Version, ID, Baud, just like the AX-12
     ## Register base address for reading digital ports
-    DIG_BASE = 5
+    REG_DIGITAL_IN0 = 5
+    REG_DIGITAL_IN1 = 6
+    REG_DIGITAL_IN2 = 7
+    REG_DIGITAL_IN3 = 8
     ## Register address for triggering rescan
     REG_RESCAN = 15
     # 16, 17 = RETURN, ALARM
@@ -411,7 +414,7 @@ class ArbotiX:
     ## uses 2 bytes (L, then H), pulse width (0, 1000-2000ms) (Write only)
     SERVO_BASE = 26
     # Address 46 is Moving, just like an AX-12
-    DIG_BASE2 = 50
+    REG_DIGITAL_OUT0 = 47
 
     ## @brief Force the ArbotiX2 to rescan the Dynamixel busses.
     def rescan(self):
@@ -430,17 +433,15 @@ class ArbotiX:
 
     ## @brief Get the value of an digital input pin.
     ##
-    ## @param index The ID of the pin to read (0 to 15).
+    ## @param index The ID of the pin to read (0 to 31).
     ##
     ## @return 0 for low, 255 for high, -1 if error.
     def getDigital(self, index):
         try:
-            if index > 15:
-                x = self.read(253, self.DIG_BASE+2, 1)[0]
-            elif index > 7:
-                x = self.read(253, self.DIG_BASE+1, 1)[0]
+            if index < 32:
+                x = self.read(253, self.REG_DIGITAL_IN0 + int(index/8), 1)[0]
             else:
-                x = self.read(253, self.DIG_BASE, 1)[0]                
+                return -1
         except:
             return -1
         if x & (2**(index%8)):
@@ -450,8 +451,7 @@ class ArbotiX:
 
     ## @brief Get the value of an digital input pin.
     ##
-    ## @param index The ID of the pin to write. Note that this
-    ## only works on the lower half of the digital IO (ID 0 to 7).
+    ## @param index The ID of the pin to write (0 to 31).
     ##
     ## @param value The value of the port, >0 is high.
     ##
@@ -459,20 +459,15 @@ class ArbotiX:
     ##
     ## @return -1 if error.
     def setDigital(self, index, value, direction=0xff):
-        print index, value, direction
-        if index > 15: return -1
-        reg = self.DIG_BASE
-        if index > 7:
-            reg = self.DIG_BASE2
-            index = index - 8        
+        if index > 31: return -1
         if value == 0 and direction > 0:
-            self.write(253, reg + int(index), [1])
+            self.write(253, self.REG_DIGITAL_OUT0 + int(index), [1])
         elif value > 0 and direction > 0:
-            self.write(253, reg + int(index), [3])
+            self.write(253, self.REG_DIGITAL_OUT0 + int(index), [3])
         elif value > 0 and direction == 0:
-            self.write(253, reg + int(index), [2])
+            self.write(253, self.REG_DIGITAL_OUT0 + int(index), [2])
         else:
-            self.write(253, reg + int(index), [0])
+            self.write(253, self.REG_DIGITAL_OUT0 + int(index), [0])
         return 0
 
     ## @brief Set the position of a hobby servo.
