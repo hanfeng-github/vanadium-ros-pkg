@@ -318,7 +318,7 @@ class ServoController(Controller):
         self.iter = 0
 
         # steal some servos
-        for joint in device.joints:
+        for joint in device.joints.values():
             if isinstance(joint, DynamixelServo):
                 self.dynamixels.append(joint)
             elif isinstance(joint, HobbyServo):
