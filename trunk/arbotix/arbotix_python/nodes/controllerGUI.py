@@ -90,25 +90,10 @@ class controllerGUI(wx.Frame):
         joint_defaults = getJointsFromURDF()
         
         i = 0
-    # TODO: <BEGIN> REMOVE THIS BEFORE 1.0
         dynamixels = rospy.get_param('/arbotix/dynamixels', dict())
         self.servos = list()
         self.publishers = list()
         self.relaxers = list()
-        # create sliders and publishers
-        for name in sorted(dynamixels.keys()):
-            # pull angles
-            min_angle, max_angle = getJointLimits(name, joint_defaults)
-            # create publisher
-            self.publishers.append(rospy.Publisher(name+'/command', Float64))
-            self.relaxers.append(rospy.ServiceProxy(name+'/relax', Relax))
-            # create slider
-            s = servoSlider(self, min_angle, max_angle, name, i)
-            servoSizer.Add(s.enabled,(i,0), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)   
-            servoSizer.Add(s.position,(i,1), wx.GBSpan(1,1),wx.ALIGN_CENTER_VERTICAL)
-            self.servos.append(s)
-            i += 1
-    # TODO: <END> REMOVE THIS BEFORE 1.0
 
         joints = rospy.get_param('/arbotix/joints', dict())
         # create sliders and publishers
