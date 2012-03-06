@@ -205,7 +205,6 @@ class DynamixelServo(Joint):
             self.relaxed = False
             self.desired = req.data
 
-
 class HobbyServo(Joint):
 
     def __init__(self, device, name, ns="~joints"):
@@ -324,12 +323,6 @@ class ServoController(Controller):
                 self.dynamixels.append(joint)
             elif isinstance(joint, HobbyServo):
                 self.hobbyservos.append(joint)
-
-        if len(rospy.get_param("~servos", dict()).keys()) > 0:
-            rospy.logwarn("Warning: use of servos as a dictionary is deprecated")
-            for name in rospy.get_param("~servos", dict()).keys():
-                self.joints[name] = HobbyServo(self, name, "~servos")
-                servo_controller.hobbyservos.append(self.joint[name])
 
         self.w_delta = rospy.Duration(1.0/rospy.get_param("~write_rate", 10.0))
         self.w_next = rospy.Time.now() + self.w_delta
