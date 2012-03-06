@@ -377,6 +377,8 @@ class ArbotiX:
     ##
     ## @return 
     def setWheelSpeed(self, index, direction, speed):
+        if speed > 1023:
+            speed = 1023
         if direction == self.FORWARD:
             # 0~1023 is forward, it is stopped by setting to 0 while rotating to CCW direction.
             self.write(index, P_GOAL_SPEED_L, [speed%256, speed>>8])
