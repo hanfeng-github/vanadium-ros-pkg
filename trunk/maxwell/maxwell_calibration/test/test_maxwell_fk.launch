@@ -2,7 +2,7 @@
 
   <include file="$(find maxwell_defs)/launch/upload_maxwell.launch"/>
 
-  <node pkg="pr2_calibration_estimation"
+  <node pkg="pr2_calibration_launch"
         type="pr2_fk_ref"
         name="pr2_fk_ref"/>
 

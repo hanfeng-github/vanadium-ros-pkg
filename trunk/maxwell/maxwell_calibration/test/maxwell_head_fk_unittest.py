@@ -12,7 +12,7 @@ from calibration_estimation.single_transform import SingleTransform
 from sensor_msgs.msg import JointState
 
 import yaml
-from pr2_calibration_estimation.srv import FkTest
+from pr2_calibration_launch.srv import FkTest
 from numpy import *
 import numpy
 
