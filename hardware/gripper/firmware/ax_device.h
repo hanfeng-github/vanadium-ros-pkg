@@ -125,3 +125,4 @@ void delayus(unsigned int us);
 #define RX_BUFFER_SIZE              143
 #define MAX_REGISTER                75
 
+extern uint8_t shared_table[];

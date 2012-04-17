@@ -21,7 +21,7 @@
 # revisions:
 #   02-07-08	added avr-size option
 
-PRG            = axm1
+PRG            = gripper
 SRC            = main.c ax_device.c
 MCU_TARGET     = atmega328p
 F_CPU 		   = 16000000

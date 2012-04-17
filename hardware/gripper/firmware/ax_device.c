@@ -37,7 +37,7 @@ uint8_t shared_table[] = {
   12,   /* AX_MODEL_NUMBER_L */
    0,   /* AX_MODEL_NUMBER_H */
    0,   /* AX_VERSION */
-  42,   /* AX_ID */                 /* TODO: SET ID HERE */
+   8,   /* AX_ID */                 /* TODO: SET ID HERE */
    1,   /* AX_BAUD_RATE */
  250,   /* AX_RETURN_DELAY_TIME */
    0,   /* AX_CW_ANGLE_LIMIT_L */
@@ -94,7 +94,8 @@ uint8_t shared_table[] = {
 
 /** waits (pauses) for us microseconds */
 void delayus(unsigned int us){
-    // Each cyle of the loop = 8 instr = 8 clock cycles = 1us @8Mhz
+    // Each cyle of the loop = 8 instr = 8 clock cycles = 0.5us @16Mhz
+    us <<= 1;
     while (us-- > 0){
         asm("nop");
         asm("nop");
@@ -127,7 +128,7 @@ void write_addr_to_eeprom(const uint8_t addr){
 /******************************************************************************
  * Buffer and serial interactions
  */
-unsigned char rx_buffer[64];
+unsigned char rx_buffer[143];
 volatile int rx_head;
 volatile int rx_tail;
 

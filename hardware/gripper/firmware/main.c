@@ -33,16 +33,77 @@
 #include <stdint.h>
 #include "ax_device.h"
 
-// current sense is ADC3 (PC3)
+/* Control Update Clock */
+volatile unsigned long systick = 0;
+// timer0 prescalar set to 1024 = 15 counts/ms
+// 100hz = 150 counts on timer0
+// 255 + 1 - 150 = 
+#define TCNT0_BOTTOM 106
+void systick_init()
+{
+    // normal mode
+    TCCR0A &= ~((1<<WGM01) | (1<<WGM00));  
+    TCCR0B &= ~(1<<WGM02);
+    // prescalar to 1024 (15 counts/ms)
+    TCCR0A |= (1<<CS02) | (1<<CS00);
+    TCCR0B &= ~(1<<CS01);
+    // enable systick
+    TIMSK0 |= (1<<TOIE0);
+}
+ISR(TIMER0_OVF_vect)
+{
+    TCNT0 = TCNT0_BOTTOM;
+    systick++;
+}
 
-/* LED */
-#define DDR_LED         DDRD
-#define PIN_LED         3
-
-/* Motors OC1A/OC1B */
-#define DDR_MOTORS      DDRB
+/* Motor on OC1A/OC1B */
+#define DDR_MOTOR       DDRB
 #define PIN_OC1A        1
 #define PIN_OC1B        2
+
+void motor_init()
+{
+    // set fast-PWM, 10-bit
+    TCCR1A |= (1<<WGM11) | (1<<WGM10);
+    TCCR1B |= (1<<WGM12);
+    TCCR1B &= ~(1<<WGM13);
+    // set pwm to 15Khz (no clock divider)
+    TCCR1B |= (1<<CS10);
+    TCCR1B &= ~(1<<CS11); 
+    TCCR1B &= ~(1<<CS12);
+    // initialize
+    OCR1A = OCR1B = 0;
+    // clear on compare
+    TCCR1A |= (1<<COM1A1) | (1<<COM1B1);
+    TCCR1A &= ~(1<<COM1A0) & ~(1<<COM1B0);
+}
+
+void motor_set(int pwm)
+{
+    if(pwm == 0)
+    {
+        // set a/b low, coast
+        OCR1A = OCR1B = 0;  
+    }
+    else if(pwm > 0)
+    {
+        // a high, pulse b low
+        OCR1A = 1023;
+        OCR1B = 1023-pwm;
+    }
+    else
+    {
+        // b high, pulse a low
+        OCR1A = 1023-pwm;
+        OCR1B = 1023;
+    }
+}
+
+void motor_brake()
+{
+    // set a/b high, applies brake
+    OCR1A = OCR1B = 1023;
+}
 
 /* AS5045 */
 #define DDR_SPI         DDRB
@@ -50,79 +111,164 @@
 #define PIN_CS          0
 #define PIN_MISO        4
 #define PIN_SCK         5
-
-void init_as5045(){
+void as5045_init()
+{
     DDR_SPI |= (1<<PIN_CS)|(1<<PIN_MISO)|(1<<PIN_SCK);
     SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
 }
-
-void read_as5045(){
+unsigned char as5045_data[3];
+int read_as5045()
+{
     PORT_SPI |= (1<<PIN_CS);
+    // TODO: ensure 500ns delay here
 
     SPDR = 0x00;    // dummy tranmission
     while(!SPSR & (1<<SPIF));
-    spi_data[0] = SPDR;
+    as5045_data[0] = SPDR<<4;
 
     SPDR = 0x00;
     while(!SPSR & (1<<SPIF));
-    spi_data[1] = SPDR;
-
+    as5045_data[1] = SPDR;
 
     SPDR = 0x00;
     while(!SPSR & (1<<SPIF));
-    spi_data[2] = SPDR;
+    as5045_data[2] = SPDR;
 
     PORT_SPI &= 0xff-(1<<SPIF);
+    return (as5045_data[0] << 4) + (as5045_data[1] >> 4);
 }
 
-int read_analog(const uint8_t address)
+/* Analog */
+#define PIN_VOLTAGE_SENSE   0
+#define PIN_TEMP_SENSE      1
+#define PIN_CURRENT_SENSE   3
+void analog_init()
+{
+    ADMUX = 0x00;     // Aref(5V)
+    ADCSRA = 0x86;    // enable, no auto trigger, no interrupt, clk/64
+}
+int read_analog(const uint8_t channel)
 {
     ADMUX &= ~0x1F;                 // clear channel selection (low 5 bits)
-    ADMUX |= address-REG_ANALOG;    // select specified channel
+    ADMUX |= (1<<channel);          // select specified channel
     
-    delayus(100);
+    delayus(1); //00);
     ADCSRA |= (1<<ADSC);            // ADC start conversion
     while ( ADCSRA&(1<<ADIF) )
         ;
 
-    delayus(100);
+    //delayus(100);
     ADCSRA |= (1<<ADSC);            // first is crap!
     while ( ADCSRA&(1<<ADIF) )
         ;
 
-    return ADC/4;
+    return ADC;
 }
 
-void write_led(const uint8_t address, const uint8_t value){
+/* LED */
+#define DDR_LED         DDRD
+#define PORT_LED        PORTD
+#define PIN_LED         3
+void init_led()
+{
+    DDR_LED |= (1<<PIN_LED);
+    PORT_LED |= (1<<PIN_LED);
+}
+void write_led(const uint8_t address, const uint8_t value)
+{
+    shared_table[address] = value;
     if(value > 0)
-        PORT_LED &= 0xff-(1<<LED_PIN);
+        PORT_LED &= 0xff-(1<<PIN_LED);
     else
-        PORT_LED |= 1<<LED_PIN;
+        PORT_LED |= 1<<PIN_LED;
 }
 
-int main(){
-    // initialize ADC    
-    ADMUX = 0x00;     // Aref(5V)
-    ADCSRA = 0x86;    // enable, no auto trigger, no interrupt, clk/64
+/* if we disable torque, turn off the motor */
+void write_enable(const uint8_t address, const uint8_t value)
+{
+    shared_table[address] = value;
+    if(value == 0)
+        motor_set(0);
+}
 
-    // initialize bus
+/* when second half of goal arrives, need to enable torque */
+void write_goal(const uint8_t address, const uint8_t value)
+{
+    shared_table[address] = value;
+    shared_table[AX_TORQUE_ENABLE] = 1;
+}
+
+// TODO: add scaling
+int read_voltage(const uint8_t address){ return read_analog(PIN_VOLTAGE_SENSE)/4; }
+int read_temp(const uint8_t address){ return read_analog(PIN_TEMP_SENSE)/4; }
+
+int main()
+{
+    // initialize
+    analog_init();
+    motor_init();
+    as5045_init();
     ax_device_init();
+    systick_init();
     sei();
 
-    // setup ports
-    DDR_LED |= (1<<LED_PIN);
-    PORT_LED |= (1<<LED_PIN);
-    init_as5045();
-
     // register callbacks
-    ax_device_register_callbacks(AX_GOAL_POSITION_L, 0, &write_goal);
-    ax_device_register_callbacks(AX_GOAL_POSITION_L+1, 0, &write_goal);
-    ax_device_register_callbacks(AX_PRESENT_POSITION_L, &read_position, 0);
-    ax_device_register_callbacks(AX_PRESENT_POSITION_L+1, &read_position, 0);
+    ax_device_register_callbacks(AX_TORQUE_ENABLE, 0, &write_enable);
     ax_device_register_callbacks(AX_LED, 0, &write_led);
+    //ax_device_register_callbacks(AX_GOAL_POSITION_L, 0, &write_goal);
+    ax_device_register_callbacks(AX_GOAL_POSITION_H, 0, &write_goal);
+    //ax_device_register_callbacks(AX_TORQUE_LIMIT_L, 0, &write_torque_limit);
+    //ax_device_register_callbacks(AX_TORQUE_LIMIT_H, 0, &write_torque_limit);
+    //ax_device_register_callbacks(AX_PRESENT_POSITION_L, &read_position, 0);
+    //ax_device_register_callbacks(AX_PRESENT_POSITION_H, &read_position, 0);
+    //ax_device_register_callbacks(AX_PRESENT_SPEED_L, &read_speed, 0);
+    //ax_device_register_callbacks(AX_PRESENT_SPEED_H, &read_speed, 0);
+    //ax_device_register_callbacks(AX_PRESENT_LOAD_L, &read_load, 0);
+    //ax_device_register_callbacks(AX_PRESENT_LOAD_H, &read_load, 0);
+    ax_device_register_callbacks(AX_PRESENT_VOLTAGE, &read_voltage, 0);
+    ax_device_register_callbacks(AX_PRESENT_TEMPERATURE, &read_temp, 0);
     
     // process
-    while(1){
+    unsigned long tick = 1;
+    int pwm = 0;
+    while(1)
+    {
+        if(systick > tick)
+        {
+            // 
+            int position = read_as5045();
+            // TODO: add offset
+            shared_table[AX_PRESENT_POSITION_L] = position&0xff;
+            shared_table[AX_PRESENT_POSITION_H] = (position>>8)&0x0f;
+
+            // do control loop
+            if(shared_table[AX_TORQUE_ENABLE] > 0)
+            {            
+                // current sense is ADC3 (PC3)
+                int current = read_analog(PIN_CURRENT_SENSE);
+                // TODO: scaling, offset?
+                shared_table[AX_PRESENT_LOAD_L] = current&0xff;
+                shared_table[AX_PRESENT_LOAD_H] = (current>>8)&0x03;
+
+                // try to approach target
+                int goal = shared_table[AX_GOAL_POSITION_L] + (shared_table[AX_GOAL_POSITION_H]<<8);
+                // but limit current, if needed
+                int current_limit = shared_table[AX_TORQUE_LIMIT_L] + (shared_table[AX_TORQUE_LIMIT_H]<<8);
+                if(current <= current_limit)
+                {
+                    pwm += (goal-position); // low (no?) gains to start
+                }
+                else
+                {
+                    if(pwm > 0)
+                        pwm--;
+                    else
+                        pwm++;
+                }
+            }
+
+            tick++;
+        }
         ax_device_process();
     }
 
