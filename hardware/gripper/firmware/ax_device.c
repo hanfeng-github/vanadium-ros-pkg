@@ -34,7 +34,7 @@
 /** Register Table */
 uint8_t shared_table[] = {
 /* EEPROM (24 bytes) */
-  12,   /* AX_MODEL_NUMBER_L */
+  42,   /* AX_MODEL_NUMBER_L */
    0,   /* AX_MODEL_NUMBER_H */
    0,   /* AX_VERSION */
    8,   /* AX_ID */                 /* TODO: SET ID HERE */

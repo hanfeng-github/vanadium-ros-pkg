@@ -33,6 +33,26 @@
 #include <stdint.h>
 #include "ax_device.h"
 
+/* LED */
+#define DDR_LED         DDRD
+#define PORT_LED        PORTD
+#define PIN_LED         3
+void led_init()
+{
+    DDR_LED |= (1<<PIN_LED);
+    PORT_LED |= (1<<PIN_LED);
+}
+void write_led(const uint8_t address, const uint8_t value)
+{
+    if(value > 0){
+        shared_table[address] = 1;
+        PORT_LED &= 0xff-(1<<PIN_LED);
+    }else{
+        shared_table[address] = 0;
+        PORT_LED |= 1<<PIN_LED;
+    }
+}
+
 /* Control Update Clock */
 volatile unsigned long systick = 0;
 // timer0 prescalar set to 1024 = 15 counts/ms
@@ -45,7 +65,7 @@ void systick_init()
     TCCR0A &= ~((1<<WGM01) | (1<<WGM00));  
     TCCR0B &= ~(1<<WGM02);
     // prescalar to 1024 (15 counts/ms)
-    TCCR0A |= (1<<CS02) | (1<<CS00);
+    TCCR0B |= (1<<CS02) | (1<<CS00);
     TCCR0B &= ~(1<<CS01);
     // enable systick
     TIMSK0 |= (1<<TOIE0);
@@ -76,6 +96,8 @@ void motor_init()
     // clear on compare
     TCCR1A |= (1<<COM1A1) | (1<<COM1B1);
     TCCR1A &= ~(1<<COM1A0) & ~(1<<COM1B0);
+    // enable outputs
+    DDR_MOTOR |= (1<<PIN_OC1A) | (1<<PIN_OC1B);
 }
 
 void motor_set(int pwm)
@@ -87,14 +109,16 @@ void motor_set(int pwm)
     }
     else if(pwm > 0)
     {
+        if(pwm > 512) pwm = 512;
         // a high, pulse b low
         OCR1A = 1023;
         OCR1B = 1023-pwm;
     }
     else
     {
+        if(pwm < -512) pwm = -512;
         // b high, pulse a low
-        OCR1A = 1023-pwm;
+        OCR1A = 1023+pwm;
         OCR1B = 1023;
     }
 }
@@ -113,29 +137,33 @@ void motor_brake()
 #define PIN_SCK         5
 void as5045_init()
 {
-    DDR_SPI |= (1<<PIN_CS)|(1<<PIN_MISO)|(1<<PIN_SCK);
-    SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
+    DDR_SPI |= (1<<PIN_CS)|(1<<PIN_SCK);
+    PORT_SPI |= (1<<PIN_CS);
+    SPCR = (1<<SPE)|(1<<MSTR)|(1<<CPOL)|(1<<SPR1)|(1<<SPR0);
 }
 unsigned char as5045_data[3];
 int read_as5045()
 {
-    PORT_SPI |= (1<<PIN_CS);
-    // TODO: ensure 500ns delay here
+    PORT_SPI &= 0xff-(1<<PIN_CS);
+    delayus(1);
 
     SPDR = 0x00;    // dummy tranmission
-    while(!SPSR & (1<<SPIF));
-    as5045_data[0] = SPDR<<4;
+    while(!(SPSR & (1<<SPIF)));
+    as5045_data[0] = SPDR;
 
     SPDR = 0x00;
-    while(!SPSR & (1<<SPIF));
+    while(!(SPSR & (1<<SPIF)));
     as5045_data[1] = SPDR;
 
     SPDR = 0x00;
-    while(!SPSR & (1<<SPIF));
+    while(!(SPSR & (1<<SPIF)));
     as5045_data[2] = SPDR;
 
-    PORT_SPI &= 0xff-(1<<SPIF);
-    return (as5045_data[0] << 4) + (as5045_data[1] >> 4);
+    PORT_SPI |= (1<<PIN_CS);
+    /* this is a huge hack...
+       the as5045 doesn't output data until after the first clock fall
+       however, the atmega samples, so we have to toss the first bit */
+    return ((int)as5045_data[0]<<5) + ((int)as5045_data[1] >> 3);
 }
 
 /* Analog */
@@ -165,24 +193,6 @@ int read_analog(const uint8_t channel)
     return ADC;
 }
 
-/* LED */
-#define DDR_LED         DDRD
-#define PORT_LED        PORTD
-#define PIN_LED         3
-void init_led()
-{
-    DDR_LED |= (1<<PIN_LED);
-    PORT_LED |= (1<<PIN_LED);
-}
-void write_led(const uint8_t address, const uint8_t value)
-{
-    shared_table[address] = value;
-    if(value > 0)
-        PORT_LED &= 0xff-(1<<PIN_LED);
-    else
-        PORT_LED |= 1<<PIN_LED;
-}
-
 /* if we disable torque, turn off the motor */
 void write_enable(const uint8_t address, const uint8_t value)
 {
@@ -205,6 +215,7 @@ int read_temp(const uint8_t address){ return read_analog(PIN_TEMP_SENSE)/4; }
 int main()
 {
     // initialize
+    led_init();
     analog_init();
     motor_init();
     as5045_init();
@@ -215,16 +226,7 @@ int main()
     // register callbacks
     ax_device_register_callbacks(AX_TORQUE_ENABLE, 0, &write_enable);
     ax_device_register_callbacks(AX_LED, 0, &write_led);
-    //ax_device_register_callbacks(AX_GOAL_POSITION_L, 0, &write_goal);
     ax_device_register_callbacks(AX_GOAL_POSITION_H, 0, &write_goal);
-    //ax_device_register_callbacks(AX_TORQUE_LIMIT_L, 0, &write_torque_limit);
-    //ax_device_register_callbacks(AX_TORQUE_LIMIT_H, 0, &write_torque_limit);
-    //ax_device_register_callbacks(AX_PRESENT_POSITION_L, &read_position, 0);
-    //ax_device_register_callbacks(AX_PRESENT_POSITION_H, &read_position, 0);
-    //ax_device_register_callbacks(AX_PRESENT_SPEED_L, &read_speed, 0);
-    //ax_device_register_callbacks(AX_PRESENT_SPEED_H, &read_speed, 0);
-    //ax_device_register_callbacks(AX_PRESENT_LOAD_L, &read_load, 0);
-    //ax_device_register_callbacks(AX_PRESENT_LOAD_H, &read_load, 0);
     ax_device_register_callbacks(AX_PRESENT_VOLTAGE, &read_voltage, 0);
     ax_device_register_callbacks(AX_PRESENT_TEMPERATURE, &read_temp, 0);
     
@@ -232,7 +234,7 @@ int main()
     unsigned long tick = 1;
     int pwm = 0;
     while(1)
-    {
+    {    
         if(systick > tick)
         {
             // 
@@ -251,7 +253,7 @@ int main()
                 shared_table[AX_PRESENT_LOAD_H] = (current>>8)&0x03;
 
                 // try to approach target
-                int goal = shared_table[AX_GOAL_POSITION_L] + (shared_table[AX_GOAL_POSITION_H]<<8);
+                /*int goal = shared_table[AX_GOAL_POSITION_L] + (shared_table[AX_GOAL_POSITION_H]<<8);
                 // but limit current, if needed
                 int current_limit = shared_table[AX_TORQUE_LIMIT_L] + (shared_table[AX_TORQUE_LIMIT_H]<<8);
                 if(current <= current_limit)
@@ -264,10 +266,17 @@ int main()
                         pwm--;
                     else
                         pwm++;
-                }
+                }*/
+                pwm = shared_table[AX_GOAL_POSITION_L]-128;
+                motor_set(pwm*4);
+            }else{
+                if(shared_table[AX_LED] > 0)
+                    write_led(AX_LED,0);
+                else
+                    write_led(AX_LED,1);
             }
 
-            tick++;
+            tick+=5;    // temporarily slowed down, so LED is visible
         }
         ax_device_process();
     }
