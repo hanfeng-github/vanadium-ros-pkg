@@ -79,33 +79,99 @@
     <dynamixel_rx64_tilt parent="${name}_shoulder_pan_link" name="${name}_shoulder_lift_servo" color="Black">
       <origin xyz="0 0 ${0.0611-0.013+0.0045}" rpy="0 -1.57 0"/>
     </dynamixel_rx64_tilt>
-    <rx64_hinge_hxl parent="${name}_shoulder_lift_servo_link" name="${name}_shoulder_lift" llimit="-1.77" ulimit="1.317" vlimit="0.524" color="Grey">
-      <origin xyz="0 0 0.0" rpy="0 1.57 0"/>
-    </rx64_hinge_hxl>
-    <standoffs parent="${name}_shoulder_lift_link" name="${name}_shoulder_standoff" length="0.0381">
-      <origin xyz="${0.048+0.0235} 0 0.0" rpy="0 0 0"/>
-    </standoffs>
+    <joint name="${name}_shoulder_lift_joint" type="revolute">
+      <origin xyz="0 0 0" rpy="0 1.57 0"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="30" velocity="0.524" lower="-1.77" upper="1.317" />
+      <parent link="${name}_shoulder_lift_servo_link"/>
+      <child link="${name}_shoulder_lift_link" />
+    </joint>
+    <link name="${name}_shoulder_lift_link">
+      <inertial>
+        <mass value="0.00001" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="-1.57 0 0" />
+        <geometry>
+          <mesh filename="package://maxwell_defs/meshes/arm_mx64_upper.stl" scale="1 1 1"/>
+        </geometry>
+        <material name="Black"/>
+      </visual>
+      <collision>
+        <origin xyz="0.08 0.0 0.0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.204 0.053 0.044"/>
+        </geometry>
+      </collision>
+    </link>
 
     <!-- Elbow -->
-    <rx64_side_fixed parent="${name}_shoulder_standoff_link" name="${name}_elbow_flex_fixed" color="Grey">
-      <origin xyz="0.0381 0 0" rpy="0 0 0"/>
-    </rx64_side_fixed>
-    <dynamixel_rx64_tilt parent="${name}_elbow_flex_fixed_link" name="${name}_elbow_flex_servo" color="Black">
-      <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
-    </dynamixel_rx64_tilt>
-    <rx64_hinge_hxl parent="${name}_elbow_flex_servo_link" name="${name}_elbow_flex" llimit="-1.57" ulimit="2.617" vlimit="0.524" color="Grey">
-      <origin xyz="0 0 0.0" rpy="0 0 0"/>
-    </rx64_hinge_hxl>
-   <!--<standoffs parent="${name}_elbow_flex_link" name="${name}_elbow_standoff" length="0">
-      <origin xyz="${0.048+0.0235} 0 0.0" rpy="0 0 0"/>
-    </standoffs>-->
+    <joint name="${name}_elbow_flex_joint" type="revolute">
+      <origin xyz="0.16 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="30" velocity="0.524" lower="-1.57" upper="2.617" />
+      <parent link="${name}_shoulder_lift_link"/>
+      <child link="${name}_elbow_flex_link" />
+    </joint>
+    <link name="${name}_elbow_flex_link">
+      <inertial>
+        <mass value="0.00001" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
+      <visual>
+        <origin xyz=" 0 0 0 " rpy="1.57 -1.57 0" />
+        <geometry>
+          <mesh filename="package://maxwell_defs/meshes/rx64.stl" scale="1 1 1"/>
+        </geometry>
+        <material name="Black"/>
+      </visual>
+      <collision>
+        <origin xyz="${(0.0611-0.026)/2} 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.0611 0.0470 0.0420"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Forearm -->
+    <joint name="${name}_forearm_fixed_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="${name}_elbow_flex_link"/>
+      <child link="${name}_forearm_link" />
+    </joint>
+    <link name="${name}_forearm_link">
+      <inertial>
+        <mass value="0.00001" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="-1.57 0 0" />
+        <geometry>
+          <mesh filename="package://maxwell_defs/meshes/arm_mx64_forearm.stl" scale="1 1 1"/>
+        </geometry>
+        <material name="Black"/>
+      </visual>
+      <collision>
+        <origin xyz="0.0625 0.0 0.0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.03 0.053 0.044"/>
+        </geometry>
+      </collision>
+    </link>
 
     <!-- Wrist flex -->
-    <rx64_side_fixed parent="${name}_elbow_flex_link" name="${name}_wrist_flex_fixed" color="Grey">
-      <origin xyz="${0.048+0.0235} 0 0" rpy="0 0 0"/>
-    </rx64_side_fixed>
-    <dynamixel_rx64_tilt parent="${name}_wrist_flex_fixed_link" name="${name}_wrist_flex_servo" color="Black">
-      <origin xyz="${0.0611-0.013+0.0045} 0 0" rpy="0 0 0"/>
+    <dynamixel_rx64_tilt parent="${name}_forearm_link" name="${name}_wrist_flex_servo" color="Black">
+      <origin xyz="0.125 0 0" rpy="0 0 0"/>
     </dynamixel_rx64_tilt>
     <rx64_hinge parent="${name}_wrist_flex_servo_link" name="${name}_wrist_flex" llimit="-1.57" ulimit="1.57" vlimit="0.785" color="Grey">
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
