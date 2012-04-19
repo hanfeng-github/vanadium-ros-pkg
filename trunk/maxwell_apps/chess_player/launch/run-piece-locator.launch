@@ -85,7 +85,7 @@
     </rosparam>
   </node>
 
-  <node pkg="nodelet" type="nodelet" name="extract_pieces" args="load chess_piece_locator/PieceExtraction pcl_manager" output="screen">
+  <node pkg="nodelet" type="nodelet" name="extract_pieces" args="load chess_player/PieceExtraction pcl_manager" output="screen">
     <remap from="~input"       to="/extract_objects_indices/output" />      
     <rosparam>
       cluster_tolerance: 0.01

@@ -1,7 +1,7 @@
 <launch>
   <!-- this launch file helps you to setup the chess_board_locator -->
 
-  <node pkg="chess_board_locator" type="chess_board_locator" name="chess_board_locator" output="screen"/>
+  <node pkg="chess_player" type="chess_board_locator" name="chess_board_locator" output="screen"/>
 
   <node pkg="dynamic_reconfigure" type="reconfigure_gui" name="reconfigure_gui"/>
 
