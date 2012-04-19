@@ -48,7 +48,7 @@
 
     <!-- rgb sensor physical attachment -->
     <joint name="${name}_rgb_joint" type="fixed">
-      <origin xyz="0 0.0777875 0" rpy="0 0 0"/>
+      <origin xyz="0 0.0552875 0" rpy="0 -0.08 0"/>
       <parent link="${name}_ir_link"/>
       <child link="${name}_rgb_link"/>
     </joint>

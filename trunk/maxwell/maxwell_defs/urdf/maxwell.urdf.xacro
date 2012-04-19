@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <robot name="maxwell" >
 
-  <property name="arm_height" value="0.6731"/> <!-- deck to arm_link at max height-->
-  <property name="column_height" value="1.160075" /> <!-- deck to top of 80/20: 46-1/8" -->
+  <property name="arm_height" value="0.6604"/> <!-- deck to arm_link at max height-->
+  <property name="column_height" value="1.172775" /> <!-- deck to top of 80/20 -->
   
   <include filename="$(find maxwell_defs)/urdf/hardware/ax12.xacro" />
   <include filename="$(find maxwell_defs)/urdf/hardware/rx64.xacro" />
