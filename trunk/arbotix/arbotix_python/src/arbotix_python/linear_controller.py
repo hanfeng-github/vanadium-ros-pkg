@@ -144,9 +144,9 @@ class LinearControllerAbsolute(Controller):
     def __init__(self, device, name):
         Controller.__init__(self, device, name)
 
-        self.a = rospy.get_param('~controllers/'+name+'/motor_a',13)
-        self.b = rospy.get_param('~controllers/'+name+'/motor_b',14)
-        self.p = rospy.get_param('~controllers/'+name+'/motor_pwm',15)
+        self.a = rospy.get_param('~controllers/'+name+'/motor_a',29)
+        self.b = rospy.get_param('~controllers/'+name+'/motor_b',30)
+        self.p = rospy.get_param('~controllers/'+name+'/motor_pwm',31)
         self.analog = rospy.get_param('~controllers/'+name+'/feedback',0)
         self.last = 0
         self.last_reading = 0
@@ -202,6 +202,7 @@ class LinearControllerAbsolute(Controller):
         """ Get a diagnostics status. """
         msg = DiagnosticStatus()
         msg.name = self.name
+
         msg.level = DiagnosticStatus.OK
         msg.message = "OK"
         if not self.fake:
@@ -220,10 +221,11 @@ class LinearControllerIncremental(LinearControllerAbsolute):
         Controller.__init__(self, device, name)
         self.pause = True
 
-        self.a = rospy.get_param('~controllers/'+name+'/motor_a',13)
-        self.b = rospy.get_param('~controllers/'+name+'/motor_b',14)
-        self.p = rospy.get_param('~controllers/'+name+'/motor_pwm',15)
+        self.a = rospy.get_param('~controllers/'+name+'/motor_a',29)
+        self.b = rospy.get_param('~controllers/'+name+'/motor_b',30)
+        self.p = rospy.get_param('~controllers/'+name+'/motor_pwm',31)
         self.last = 0
+        self.last_reading = 0
 
         self.delta = rospy.Duration(1.0/rospy.get_param('~controllers/'+name+'/rate', 10.0))
         self.next = rospy.Time.now() + self.delta
