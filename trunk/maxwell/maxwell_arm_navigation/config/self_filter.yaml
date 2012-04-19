@@ -10,15 +10,9 @@ self_see_links:
     padding: .03
   - name: arm_shoulder_lift_link
     padding: .03
-  - name: arm_shoulder_standoff_link
-    padding: .03
-  - name: arm_elbow_flex_fixed_link
-    padding: .03
-  - name: arm_elbow_flex_servo_link
-    padding: .03
   - name: arm_elbow_flex_link
     padding: .03
-  - name: arm_wrist_flex_fixed_link
+  - name: arm_forearm_link
     padding: .03
   - name: arm_wrist_flex_servo_link
     padding: .03
