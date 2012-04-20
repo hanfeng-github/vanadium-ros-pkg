@@ -210,6 +210,8 @@ class ChessBoardLocator
         for( size_t i = 0; i < lines.size(); i++ )
         {
             cv::Vec4i l = lines[i];
+            if( l[0] < 100 or l[0] > 500) continue;
+            if( l[2] < 100 or l[2] > 500) continue;
             int dx = l[2]-l[0]; int dy = l[3]-l[1];
             if(abs(dx) > abs(dy)){
                 h_indexes.push_back(i);
@@ -267,6 +269,7 @@ class ChessBoardLocator
         for( size_t i = 0; i < lines.size(); i++ )
         {
             cv::Vec4i l = lines[i];
+            
             cv::Point e1(l[0],l[1]);
             cv::Point e2(l[2],l[3]);
 

@@ -52,7 +52,7 @@ class HeadEngine:   # a crazy name, but matches our convention
         while self.last[0] == None:
             pass
         self.home_pan = 0.0
-        self.home_tilt = 1.05 #0.9561 #self.last[1]
+        self.home_tilt = 1.1 #1.05 #0.9561 #self.last[1]
     
     def stateCb(self, msg):
         """ Callback for JointState message. """

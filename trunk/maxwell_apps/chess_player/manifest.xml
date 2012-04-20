@@ -7,6 +7,7 @@
   <depend package="rospy"/>
   <depend package="chess_msgs"/>
   <depend package="simple_arm_server"/>
+  <depend package="diagnostic_msgs"/>
 
   <!-- from chess_board_locator -->
   <depend package="roscpp"/>

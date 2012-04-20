@@ -255,6 +255,7 @@ class BoardState:
         return "x"
 
     def getMoveText(self, move):
+        print move
         (col_f, rank_f) = self.toPosition(move[0:2])
         (col_t, rank_t) = self.toPosition(move[2:])
         piece = self.getPiece(col_f, rank_f)
@@ -497,7 +498,7 @@ class BoardUpdater(threading.Thread):
         # look up board location
         try: 
             (translation, rotation) = self.listener.lookupTransform('odom', 'chess_board_raw', rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException):
+        except:
             rospy.logerr("Failed to transform")
             return
         ps = PoseStamped()
