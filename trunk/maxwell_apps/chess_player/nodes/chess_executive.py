@@ -48,8 +48,10 @@ class ChessExecutive:
 
         # get arm planner
         rospy.loginfo('exec: Waiting for /simple_arm_server/move')
-        rospy.wait_for_service('/simple_arm_server/move')
-        self.planner = ArmPlanner( rospy.ServiceProxy('/simple_arm_server/move', MoveArm), listener = self.listener )
+        #rospy.wait_for_service('/simple_arm_server/move')
+        #self.planner = ArmPlanner( rospy.ServiceProxy('/simple_arm_server/move', MoveArm), listener = self.listener )
+        #self.planner = actionlib.SimpleActionClient('move_arm', MoveArmAction)
+        self.planner = ArmPlanner( listener = self.listener )
 
         # subscribe to input
         self.board = BoardState()

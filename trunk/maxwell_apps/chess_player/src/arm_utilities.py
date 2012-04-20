@@ -19,6 +19,7 @@
 """
 
 import roslib; roslib.load_manifest('chess_player')
+import rospy, actionlib
 from math import sqrt
 import pexpect
 
@@ -39,12 +40,14 @@ GRIPPER_CLOSE = 0.0075
 class ArmPlanner:
     """ Connection to the arm server. """
     
-    def __init__(self, srv=None, listener=None):
-        if srv==None:
-            rospy.wait_for_service('simple_arm_server/move')
-            self.move = rospy.ServiceProxy('simple_arm_server/move', MoveArm) 
+    def __init__(self, client=None, listener=None):
+        if client==None:
+            #rospy.wait_for_service('simple_arm_server/move')
+            #self.move = rospy.ServiceProxy('simple_arm_server/move', MoveArm) 
+            self.client = actionlib.SimpleActionClient('move_arm', MoveArmAction)
+            self.client.wait_for_server()
         else:
-            self.move = srv
+            self.client = client
         self.tuck_server = tuck_arm()
         self.success = True
         # setup tf for translating poses
@@ -63,8 +66,10 @@ class ArmPlanner:
         fr = board.getPiece(col_f, rank_f)
         to = board.getPiece(col_t, rank_t)
 
-        req = MoveArmRequest()  
-        req.header.frame_id = fr.header.frame_id
+        #req = MoveArmRequest()
+        #req.header.frame_id = fr.header.frame_id
+        goal = MoveArmGoal()
+        goal.header.frame_id = fr.header.frame_id
 
         # is this a capture?
         if to != None: 
@@ -73,18 +78,21 @@ class ArmPlanner:
             off_board.pose.position.x = -2 * SQUARE_SIZE
             off_board.pose.position.y = SQUARE_SIZE
             off_board.pose.position.z = fr.pose.position.z
-            self.addTransit(req, to.pose, off_board.pose)
+            self.addTransit(goal, to.pose, off_board.pose)
         
         to = ChessPiece()
         to.header.frame_id = fr.header.frame_id
         to.pose = self.getPose(col_t, rank_t, board, fr.pose.position.z)
 
-        self.addTransit(req, fr.pose, to.pose)
+        self.addTransit(goal, fr.pose, to.pose)
         
         # execute
         try:
-            self.success = self.move(req)
-            print self.success
+            #self.success = self.move(req)
+            #print self.success
+            self.client.send_goal(goal)
+            self.client.wait_for_result()   
+            print self.client.get_result()
         except rospy.ServiceException, e:
             print "Service did not process request: %s"%str(e)
 
@@ -98,7 +106,7 @@ class ArmPlanner:
         return to.pose
 
 
-    def addTransit(self, req, fr, to):
+    def addTransit(self, goal, fr, to):
         """ Move a piece from 'fr' to 'to' """
 
         # hover over piece
@@ -114,14 +122,14 @@ class ArmPlanner:
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
         action.move_time = rospy.Duration(2.5)
-        req.goals.append(action)
+        goal.motions.append(action)
 
         # open gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_GRIPPER
         action.command = GRIPPER_OPEN
         action.move_time = rospy.Duration(1.0)
-        req.goals.append(action)
+        goal.motions.append(action)
 
         # lower gripper
         action = ArmAction()
@@ -138,14 +146,14 @@ class ArmPlanner:
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
         action.move_time = rospy.Duration(1.5)
-        req.goals.append(action)
+        goal.motions.append(action)
 
         # close gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_GRIPPER
         action.command = GRIPPER_CLOSE
         action.move_time = rospy.Duration(3.0)
-        req.goals.append(action)
+        goal.motions.append(action)
 
         # raise gripper
         action = ArmAction()
@@ -160,7 +168,7 @@ class ArmPlanner:
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
         action.move_time = rospy.Duration(1.0)
-        req.goals.append(action)
+        goal.motions.append(action)
 
         # over over goal
         action = ArmAction()
@@ -174,7 +182,7 @@ class ArmPlanner:
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
         action.move_time = rospy.Duration(2.5)
-        req.goals.append(action)
+        goal.motions.append(action)
 
         # lower gripper
         action = ArmAction()
@@ -188,14 +196,14 @@ class ArmPlanner:
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
         action.move_time = rospy.Duration(1.5)
-        req.goals.append(action)
+        goal.motions.append(action)
         
         # open gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_GRIPPER
         action.command = GRIPPER_OPEN
         action.move_time = rospy.Duration(1.0)
-        req.goals.append(action)
+        goal.motions.append(action)
         
         # raise gripper
         action = ArmAction()
@@ -209,7 +217,7 @@ class ArmPlanner:
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
         action.move_time = rospy.Duration(1.0)
-        req.goals.append(action)
+        goal.motions.append(action)
 
     def getPose(self, col, rank, board, z=0):
         """ Find the reach required to get to a position """
