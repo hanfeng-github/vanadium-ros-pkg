@@ -28,9 +28,9 @@ from control_msgs.msg import *
 
 servos = ['arm_lift_joint', 'arm_shoulder_pan_joint', 'arm_shoulder_lift_joint', 'arm_elbow_flex_joint', 'arm_wrist_flex_joint', 'arm_wrist_roll_joint']
 
-forward = [0.0, -0.0409061543436171, 0.014913702104443736, 1.4817828305200882, 1.6515859816235403, -0.066472500808377785]
-to_side = [0.0, 1.4675082870772636, 0.024501082028728992, 1.4817828305200882, 1.6157930965728755, -0.066472500808377785]
-tucked = [0.0, 1.4675082870772636, -0.48576058283045309, 1.4817828305200882, 1.7180584824319183, -0.066472500808377785]
+forward = [0.0, -0.0409061543436171, -1.5550862978955564, 1.4817828305200882, 1.6515859816235403, -0.066472500808377785]
+to_side = [0.0, 1.4675082870772636, -1.545498917971271, 1.4817828305200882, 1.6157930965728755, -0.066472500808377785]
+tucked = [0.0, 1.4675082870772636, -2.055760582830453, 1.4817828305200882, 1.7180584824319183, -0.066472500808377785]
 
 class tuck_arm:
     
@@ -38,7 +38,7 @@ class tuck_arm:
         if client != None:
             self._client = client
         else:
-            self._client = actionlib.SimpleActionClient('follow_joint_trajectory', FollowJointTrajectoryAction)
+            self._client = actionlib.SimpleActionClient('arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         self._client.wait_for_server()
 
     def tuck(self):
@@ -63,10 +63,8 @@ class tuck_arm:
         point.time_from_start = rospy.Duration(11.0)
         msg.points.append(point)
 
-        # publish
+        # call action
         msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
-        #self.pub.publish(msg)
-
         goal = FollowJointTrajectoryGoal()
         goal.trajectory = msg
         self._client.send_goal(goal)
@@ -83,10 +81,8 @@ class tuck_arm:
         point.time_from_start = rospy.Duration(3.0)
         msg.points.append(point)
 
-        # publish
+        # call action
         msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
-        #self.pub.publish(msg)
-
         goal = FollowJointTrajectoryGoal()
         goal.trajectory = msg
         self._client.send_goal(goal)
