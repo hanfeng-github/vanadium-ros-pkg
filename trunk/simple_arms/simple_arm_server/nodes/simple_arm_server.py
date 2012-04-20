@@ -61,6 +61,7 @@ class SimpleArmServer:
         self.root = rospy.get_param("~root_name","base_link")
         self.tip = rospy.get_param("~tip_name","gripper_link")
         self.timeout = rospy.get_param("~timeout",5.0)
+        self.offset = rospy.get_param("~offset",0.0)
 
         # connect to arm kinematics
         rospy.wait_for_service('arm_kinematics/get_ik')
@@ -196,7 +197,7 @@ class SimpleArmServer:
         e = [i for i in e]
         if self.dof < 6:
             # 5DOF, so yaw angle = atan2(Y,X-shoulder offset)
-            e[2] = atan2(pose.pose.position.y, pose.pose.position.x)
+            e[2] = atan2(pose.pose.position.y, pose.pose.position.x-self.offset)
         if self.dof < 5:
             # 4 DOF, so yaw as above AND no roll
             e[0] = 0
