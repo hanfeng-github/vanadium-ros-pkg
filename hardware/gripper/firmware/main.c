@@ -33,6 +33,10 @@
 #include <stdint.h>
 #include "ax_device.h"
 
+#define ENCODER_OFFSET  3974
+#define LOWER_LIMIT     5
+#define UPPER_LIMIT     1172
+
 /* LED */
 #define DDR_LED         DDRD
 #define PORT_LED        PORTD
@@ -163,7 +167,7 @@ int read_as5045()
     /* this is a huge hack...
        the as5045 doesn't output data until after the first clock fall
        however, the atmega samples, so we have to toss the first bit */
-    return ((int)as5045_data[0]<<5) + ((int)as5045_data[1] >> 3);
+    return (((int)as5045_data[0]<<5) + ((int)as5045_data[1] >> 3) - ENCODER_OFFSET) & 0xfff;
 }
 
 /* Analog */
@@ -196,7 +200,7 @@ int read_analog(const uint8_t channel)
 /* if we disable torque, turn off the motor */
 void write_enable(const uint8_t address, const uint8_t value)
 {
-    shared_table[address] = value;
+    //shared_table[address] = value;
     if(value == 0)
         motor_set(0);
 }
@@ -204,13 +208,18 @@ void write_enable(const uint8_t address, const uint8_t value)
 /* when second half of goal arrives, need to enable torque */
 void write_goal(const uint8_t address, const uint8_t value)
 {
-    shared_table[address] = value;
+    //shared_table[address] = value;
     shared_table[AX_TORQUE_ENABLE] = 1;
 }
 
 // TODO: add scaling
 int read_voltage(const uint8_t address){ return read_analog(PIN_VOLTAGE_SENSE)/4; }
 int read_temp(const uint8_t address){ return read_analog(PIN_TEMP_SENSE)/4; }
+
+int read_systick(const uint8_t address){
+    int shift = address - 71;
+    return (systick>>(8*shift))&0xff;
+}
 
 int main()
 {
@@ -229,6 +238,10 @@ int main()
     ax_device_register_callbacks(AX_GOAL_POSITION_H, 0, &write_goal);
     ax_device_register_callbacks(AX_PRESENT_VOLTAGE, &read_voltage, 0);
     ax_device_register_callbacks(AX_PRESENT_TEMPERATURE, &read_temp, 0);
+    ax_device_register_callbacks(71, &read_systick, 0);
+    ax_device_register_callbacks(72, &read_systick, 0);
+    ax_device_register_callbacks(73, &read_systick, 0);
+    ax_device_register_callbacks(74, &read_systick, 0);
     
     // process
     unsigned long tick = 1;
@@ -242,33 +255,37 @@ int main()
             // TODO: add offset
             shared_table[AX_PRESENT_POSITION_L] = position&0xff;
             shared_table[AX_PRESENT_POSITION_H] = (position>>8)&0x0f;
+            position &= 0xfff;
+
+            // current sense is ADC3 (PC3)
+            int current = read_analog(PIN_CURRENT_SENSE);
+            // TODO: scaling, offset?
+            shared_table[AX_PRESENT_LOAD_L] = current&0xff;
+            shared_table[AX_PRESENT_LOAD_H] = (current>>8)&0x03;
 
             // do control loop
             if(shared_table[AX_TORQUE_ENABLE] > 0)
             {            
-                // current sense is ADC3 (PC3)
-                int current = read_analog(PIN_CURRENT_SENSE);
-                // TODO: scaling, offset?
-                shared_table[AX_PRESENT_LOAD_L] = current&0xff;
-                shared_table[AX_PRESENT_LOAD_H] = (current>>8)&0x03;
 
                 // try to approach target
-                /*int goal = shared_table[AX_GOAL_POSITION_L] + (shared_table[AX_GOAL_POSITION_H]<<8);
-                // but limit current, if needed
-                int current_limit = shared_table[AX_TORQUE_LIMIT_L] + (shared_table[AX_TORQUE_LIMIT_H]<<8);
-                if(current <= current_limit)
-                {
-                    pwm += (goal-position); // low (no?) gains to start
+                int goal = (shared_table[AX_GOAL_POSITION_L] + (shared_table[AX_GOAL_POSITION_H]<<8))&0xfff;
+                int err = goal - position;
+                pwm = err*3;
+
+
+
+
+
+/*              if(goal > (position+5)){
+                    pwm = 300;
+                }else if(goal < (position-5)){
+                    pwm = -300;
+                }else{
+                    pwm = 0;
                 }
-                else
-                {
-                    if(pwm > 0)
-                        pwm--;
-                    else
-                        pwm++;
-                }*/
-                pwm = shared_table[AX_GOAL_POSITION_L]-128;
-                motor_set(pwm*4);
+*/
+
+                motor_set(pwm);
             }else{
                 if(shared_table[AX_LED] > 0)
                     write_led(AX_LED,0);
@@ -276,7 +293,7 @@ int main()
                     write_led(AX_LED,1);
             }
 
-            tick+=5;    // temporarily slowed down, so LED is visible
+            tick+=1;    // temporarily slowed down, so LED is visible
         }
         ax_device_process();
     }
