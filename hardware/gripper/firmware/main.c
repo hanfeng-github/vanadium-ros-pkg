@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include "ax_device.h"
 
+/* Encoder Specs -- this should eventually move to the register table */
 #define ENCODER_OFFSET  3974
 #define LOWER_LIMIT     5
 #define UPPER_LIMIT     1172
@@ -84,7 +85,6 @@ ISR(TIMER0_OVF_vect)
 #define DDR_MOTOR       DDRB
 #define PIN_OC1A        1
 #define PIN_OC1B        2
-
 void motor_init()
 {
     // set fast-PWM, 10-bit
@@ -266,25 +266,10 @@ int main()
             // do control loop
             if(shared_table[AX_TORQUE_ENABLE] > 0)
             {            
-
                 // try to approach target
                 int goal = (shared_table[AX_GOAL_POSITION_L] + (shared_table[AX_GOAL_POSITION_H]<<8))&0xfff;
                 int err = goal - position;
                 pwm = err*3;
-
-
-
-
-
-/*              if(goal > (position+5)){
-                    pwm = 300;
-                }else if(goal < (position-5)){
-                    pwm = -300;
-                }else{
-                    pwm = 0;
-                }
-*/
-
                 motor_set(pwm);
             }else{
                 if(shared_table[AX_LED] > 0)
@@ -293,7 +278,7 @@ int main()
                     write_led(AX_LED,1);
             }
 
-            tick+=1;    // temporarily slowed down, so LED is visible
+            tick++;
         }
         ax_device_process();
     }
