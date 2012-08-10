@@ -78,6 +78,17 @@ class ArbotixROS(ArbotiX):
         else:
             rospy.loginfo("ArbotiX being simulated.")
 
+    # TODO: <BEGIN> REMOVE THIS BEFORE 1.0
+        if len(rospy.get_param("~dynamixels", dict()).keys()) > 0:
+            rospy.logwarn("Warning: use of dynamixels as a dictionary is deprecated and will be removed in 0.8.0")
+            for name in rospy.get_param("~dynamixels", dict()).keys():
+                self.joints[name] = DynamixelServo(self, name, "~dynamixels")
+        if len(rospy.get_param("~servos", dict()).keys()) > 0:
+            rospy.logwarn("Warning: use of servos as a dictionary is deprecated and will be removed in 0.8.0")
+            for name in rospy.get_param("~servos", dict()).keys():
+                self.joints[name] = HobbyServo(self, name, "~servos")
+    # TODO: <END> REMOVE THIS BEFORE 1.0
+
         # setup joints
         self.joints = dict()
         for name in rospy.get_param("~joints", dict()).keys():
