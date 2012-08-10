@@ -97,8 +97,11 @@ class ArbotixROS(ArbotiX):
                 controller = controller_types[params["type"]](self, name)
                 self.controllers.append( controller )
                 pause = pause or controller.pause
-            except:
-                rospy.logerr("Unrecognized controller: " + params["type"])
+            except Exception as e:
+                if type(e) == KeyError:
+                    rospy.logerr("Unrecognized controller: " + params["type"])
+                else:  
+                    rospy.logerr(str(type(e)) + str(e))
 
         # wait for arbotix to start up (especially after reset)
         if not self.fake:
